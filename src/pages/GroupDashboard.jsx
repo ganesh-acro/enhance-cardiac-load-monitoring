@@ -1,0 +1,567 @@
+import { useState, useEffect, useMemo } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+    Activity,
+    Zap,
+    Flame,
+    Scale,
+    Wind,
+    RotateCcw,
+    Maximize2,
+    Search,
+    ChevronDown,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
+    User,
+    Users as UsersIcon,
+    X
+} from "lucide-react"
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ReferenceLine,
+    ResponsiveContainer,
+    Cell
+} from "recharts"
+import { athletes } from "../data/dashboardData"
+import { fetchAthleteData } from "../utils/dataService"
+import { format } from "date-fns"
+
+const METRICS_CONFIG = [
+    {
+        key: 'avg_hr',
+        label: 'Avg HR',
+        unit: 'bpm',
+        icon: Activity,
+        color: '#f97316',
+        gradient: ['#f97316', '#fb923c']
+    },
+    {
+        key: 'training_load',
+        label: 'Training load',
+        unit: '',
+        icon: Zap,
+        color: '#10b981',
+        gradient: ['#10b981', '#34d399']
+    },
+    {
+        key: 'training_intensity',
+        label: 'Training intensity',
+        unit: '',
+        icon: Flame,
+        color: '#ef4444',
+        gradient: ['#ef4444', '#f87171']
+    },
+    {
+        key: 'acwr',
+        label: 'ACWR',
+        unit: '',
+        icon: Scale,
+        color: '#3b82f6',
+        gradient: ['#3b82f6', '#60a5fa']
+    },
+    {
+        key: 'epoc_total',
+        label: 'EPOC',
+        unit: 'kcal',
+        icon: Wind,
+        color: '#8b5cf6',
+        gradient: ['#8b5cf6', '#a78bfa']
+    },
+    {
+        key: 'rmssd',
+        label: 'RMSSD',
+        unit: 'ms',
+        icon: RotateCcw,
+    }
+]
+
+const ORANGE_THEME = {
+    color: '#f97316',
+    gradient: ['#f97316', '#fb923c'],
+    brandText: 'text-brand-500',
+    brandBg: 'bg-brand-500/10',
+    brandBorder: 'border-brand-500/20'
+}
+
+const GRAY_THEME = {
+    color: '#8494aaff',
+    gradient: ['#8494aaff', '#a1aebcff'],
+    brandText: 'text-slate-600 dark:text-slate-400',
+    brandBg: 'bg-slate-500/10 dark:bg-slate-400/10',
+    brandBorder: 'border-slate-500/20 dark:border-slate-400/20'
+}
+
+export default function GroupDashboard() {
+    const [teamData, setTeamData] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [zoomedMetric, setZoomedMetric] = useState(null)
+    const [zoomedSelectedAthleteId, setZoomedSelectedAthleteId] = useState("all")
+    const [sortConfigs, setSortConfigs] = useState({})
+
+    useEffect(() => {
+        const loadAllData = async () => {
+            setLoading(true)
+            const allPromises = athletes.map(async (athlete) => {
+                const data = await fetchAthleteData(athlete)
+                if (data && data.length > 0) {
+                    const latest = data[data.length - 1]
+                    return {
+                        id: athlete.id,
+                        name: athlete.name,
+                        img: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(athlete.name)}`,
+                        lastDate: latest.date ? format(latest.date, 'dd MMM yyyy') : 'N/A',
+                        ...latest
+                    }
+                }
+                return null
+            })
+
+            const results = await Promise.all(allPromises)
+            setTeamData(results.filter(r => r !== null))
+            setLoading(false)
+        }
+        loadAllData()
+    }, [])
+
+    const handleSort = (metricKey, field) => {
+        setSortConfigs(prev => {
+            const current = prev[metricKey] || { field: 'name', direction: 'asc' }
+            const newDirection = current.field === field && current.direction === 'asc' ? 'desc' : 'asc'
+            return {
+                ...prev,
+                [metricKey]: { field, direction: newDirection }
+            }
+        })
+    }
+
+    const getSortedData = (metricKey, data) => {
+        const config = sortConfigs[metricKey] || { field: 'name', direction: 'asc' }
+        return [...data].sort((a, b) => {
+            let valA = a[config.field]
+            let valB = b[config.field]
+
+            if (typeof valA === 'string') {
+                return config.direction === 'asc'
+                    ? valA.localeCompare(valB)
+                    : valB.localeCompare(valA)
+            }
+
+            return config.direction === 'asc' ? valA - valB : valB - valA
+        })
+    }
+
+    const groupAverages = useMemo(() => {
+        const averages = {}
+        METRICS_CONFIG.forEach(metric => {
+            const sum = teamData.reduce((acc, curr) => acc + (parseFloat(curr[metric.key]) || 0), 0)
+            averages[metric.key] = teamData.length > 0 ? (sum / teamData.length).toFixed(1) : 0
+        })
+        return averages
+    }, [teamData])
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+                <div className="w-16 h-16 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-muted-foreground font-black text-xs uppercase tracking-[0.3em] animate-pulse">
+                    Aggregating Team Metrics...
+                </p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="min-h-screen bg-background pt-32 pb-20">
+            <div className="container mx-auto">
+                <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                    <div>
+                        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-2">
+                            Group <span className="text-brand-500">dashboard</span>
+                        </h1>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        {/* Global header space */}
+                    </div>
+                </header>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-8 items-start">
+                    {METRICS_CONFIG.map((metric) => (
+                        <MetricCard
+                            key={metric.key}
+                            metric={metric}
+                            theme={GRAY_THEME}
+                            teamData={teamData}
+                            groupAverage={groupAverages[metric.key]}
+                            onZoom={() => setZoomedMetric({ ...metric, theme: GRAY_THEME })}
+                            sortConfig={sortConfigs[metric.key]}
+                            onSort={(field) => handleSort(metric.key, field)}
+                            sortedData={getSortedData(metric.key, teamData)}
+                        />
+                    ))}
+                </div>
+            </div>
+
+            {/* Zoom Modal */}
+            <AnimatePresence>
+                {zoomedMetric && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setZoomedMetric(null)}
+                            className="absolute inset-0 bg-background/80 backdrop-blur-md"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="relative w-full max-w-6xl bg-card border border-border rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                        >
+                            <div className="p-8 border-b border-border flex items-center justify-between bg-secondary/30">
+                                <div className="flex items-center gap-6">
+                                    <h3 className="text-3xl font-bold">{zoomedMetric.label}</h3>
+                                    <div className="relative group w-64">
+                                        <select
+                                            value={zoomedSelectedAthleteId}
+                                            onChange={(e) => setZoomedSelectedAthleteId(e.target.value)}
+                                            className="appearance-none w-full bg-background border border-input text-foreground rounded-xl px-4 py-2 pr-10 font-bold text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all cursor-pointer shadow-sm"
+                                        >
+                                            <option value="all">Select athlete</option>
+                                            {athletes.map(a => (
+                                                <option key={a.id} value={a.id}>{a.name}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none group-hover:text-brand-500 transition-colors" />
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setZoomedMetric(null)
+                                        setZoomedSelectedAthleteId("all")
+                                    }}
+                                    className="p-4 rounded-full hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-6 w-6" />
+                                </button>
+                            </div>
+                            <div className="p-8 overflow-y-auto">
+                                <div className="h-[500px] mb-12">
+                                    <MetricChart
+                                        metric={zoomedMetric}
+                                        theme={zoomedMetric.theme}
+                                        data={teamData}
+                                        groupAverage={groupAverages[zoomedMetric.key]}
+                                        selectedAthleteId={zoomedSelectedAthleteId}
+                                        isZoomed
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                                    <div className="md:col-span-2">
+                                        <MetricTable
+                                            metric={zoomedMetric}
+                                            theme={zoomedMetric.theme}
+                                            groupAverage={groupAverages[zoomedMetric.key]}
+                                            sortConfig={sortConfigs[zoomedMetric.key]}
+                                            onSort={(field) => handleSort(zoomedMetric.key, field)}
+                                            sortedData={getSortedData(zoomedMetric.key, teamData)}
+                                            selectedAthleteId={zoomedSelectedAthleteId}
+                                        />
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div className="p-8 rounded-[32px] bg-secondary/50 border border-border">
+                                            <p className="text-xl font-normal tracking-tight text-muted-foreground mb-2">Group average</p>
+                                            <h4 className="text-5xl font-bold">
+                                                {groupAverages[zoomedMetric.key]} <span className="text-xl font-bold text-muted-foreground">{zoomedMetric.unit}</span>
+                                            </h4>
+                                        </div>
+                                        <div className={`p-8 rounded-[32px] ${zoomedMetric.theme.brandBg} border ${zoomedMetric.theme.brandBorder}`}>
+                                            <p className={`text-xs font-black tracking-widest ${zoomedMetric.theme.brandText} mb-2`}>Top performer</p>
+                                            {(() => {
+                                                const top = [...teamData].sort((a, b) => b[zoomedMetric.key] - a[zoomedMetric.key])[0]
+                                                return (
+                                                    <div className="flex items-center gap-4">
+                                                        <img src={top.img} className={`h-12 w-12 rounded-full border-2`} style={{ borderColor: zoomedMetric.theme.color }} alt="" />
+                                                        <div>
+                                                            <p className="font-black text-lg">{top.name}</p>
+                                                            <p className={`font-bold`} style={{ color: zoomedMetric.theme.color }}>{parseFloat(top[zoomedMetric.key]).toFixed(1)} {zoomedMetric.unit}</p>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
+    )
+}
+
+function MetricCard({ metric, theme, teamData, groupAverage, onZoom, sortConfig, onSort, sortedData }) {
+    const [view, setView] = useState('graph')
+    const [selectedAthleteId, setSelectedAthleteId] = useState("all")
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-card border border-border rounded-[40px] shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col group overflow-hidden"
+        >
+            <div className="p-6 md:p-8 flex items-center justify-between border-b border-border/50 bg-secondary/10">
+                <div className="flex items-center gap-4">
+                    <div>
+                        <h3 className="font-bold tracking-tight text-2xl">{metric.label}</h3>
+                        <p className="text-lg font-bold text-muted-foreground">{metric.unit || 'Score'}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="bg-secondary/50 p-1 rounded-xl flex">
+                        <button
+                            onClick={() => setView('graph')}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-normal transition-all ${view === 'graph' ? `bg-white dark:bg-card shadow-sm ${theme.brandText} !font-bold` : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            Graph
+                        </button>
+                        <button
+                            onClick={() => setView('table')}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-normal transition-all ${view === 'table' ? `bg-white dark:bg-card shadow-sm ${theme.brandText} !font-bold` : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            Table
+                        </button>
+                    </div>
+                    <button
+                        onClick={onZoom}
+                        className="p-2.5 rounded-xl hover:bg-secondary text-muted-foreground hover:text-brand-500 transition-all active:scale-90"
+                    >
+                        <Maximize2 className="h-5 w-5" />
+                    </button>
+                </div>
+            </div>
+
+            <div className="p-6 md:p-8 flex-1 flex flex-col pt-4">
+                <div className="relative group mb-8">
+                    <select
+                        value={selectedAthleteId}
+                        onChange={(e) => setSelectedAthleteId(e.target.value)}
+                        className="appearance-none w-full bg-background border border-input text-foreground rounded-xl px-4 py-2.5 pr-10 font-bold text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all cursor-pointer shadow-sm"
+                    >
+                        <option value="all">Select athlete</option>
+                        {athletes.map(a => (
+                            <option key={a.id} value={a.id}>{a.name}</option>
+                        ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none group-hover:text-brand-500 transition-colors" />
+                </div>
+
+                <div className="flex items-baseline gap-3 mb-8">
+                    <span className="text-6xl font-bold">{groupAverage}</span>
+                    <span className="text-muted-foreground font-normal text-xl">Average group result</span>
+                </div>
+
+                <div className="w-full h-[300px] mt-auto">
+                    {view === 'graph' ? (
+                        <MetricChart
+                            metric={metric}
+                            theme={theme}
+                            data={teamData}
+                            groupAverage={groupAverage}
+                            selectedAthleteId={selectedAthleteId}
+                        />
+                    ) : (
+                        <MetricTable
+                            metric={metric}
+                            theme={theme}
+                            groupAverage={groupAverage}
+                            sortConfig={sortConfig}
+                            onSort={onSort}
+                            sortedData={sortedData}
+                            selectedAthleteId={selectedAthleteId}
+                        />
+                    )}
+                </div>
+            </div>
+        </motion.div>
+    )
+}
+
+function MetricChart({ metric, theme, data, groupAverage, selectedAthleteId, isZoomed = false }) {
+    if (!metric || !data || data.length === 0) return (
+        <div className="h-full flex items-center justify-center text-muted-foreground text-xs font-bold tracking-widest">
+            No data available
+        </div>
+    )
+    // Preparing data for recharts
+    const chartData = useMemo(() => {
+        return data.map(athlete => ({
+            name: athlete.name.split(' ')[0],
+            fullName: athlete.name,
+            value: parseFloat(athlete[metric.key]) || 0,
+            id: athlete.id
+        }))
+    }, [data, metric.key])
+
+    const gradId = `grad-${metric.key}-${isZoomed ? 'z' : 'c'}-${theme.color.replace('#', '')}`;
+
+    return (
+        <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: isZoomed ? 40 : 20 }}>
+                <defs>
+                    <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={theme.gradient[0]} />
+                        <stop offset="100%" stopColor={theme.gradient[1]} />
+                    </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 700 }}
+                    interval={0}
+                    angle={chartData.length > 6 ? -45 : 0}
+                    textAnchor={chartData.length > 6 ? 'end' : 'middle'}
+                />
+                <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 700 }}
+                />
+                <Tooltip
+                    cursor={{ fill: 'hsl(var(--secondary))', opacity: 0.4 }}
+                    content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                            return (
+                                <div className="bg-card border border-border px-4 py-3 rounded-2xl shadow-2xl">
+                                    <p className={`text-xs font-black uppercase mb-1`} style={{ color: theme.color }}>{payload[0].payload.fullName}</p>
+                                    <div className="space-y-1">
+                                        <p className="text-lg font-black leading-none">
+                                            {payload[0].value.toFixed(1)} <span className="text-xs font-bold text-muted-foreground">{metric.unit}</span>
+                                        </p>
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                            Group Avg: {parseFloat(groupAverage).toFixed(1)}
+                                        </p>
+                                    </div>
+                                </div>
+                            )
+                        }
+                        return null
+                    }}
+                />
+                <ReferenceLine
+                    y={parseFloat(groupAverage)}
+                    stroke="hsl(var(--foreground))"
+                    strokeDasharray="5 5"
+                    strokeWidth={2}
+                    label={{
+                        position: 'right',
+                        value: `Group Avg: ${parseFloat(groupAverage).toFixed(1)}`,
+                        fill: 'hsl(var(--foreground))',
+                        fontSize: 10,
+                        fontWeight: 900,
+                        offset: 10
+                    }}
+                />
+                <Bar
+                    dataKey="value"
+                    radius={[10, 10, 4, 4]}
+                    barSize={isZoomed ? 40 : 25}
+                    animationDuration={500}
+                >
+                    {chartData.map((entry, index) => {
+                        const isAboveAvg = entry.value > parseFloat(groupAverage);
+                        const isSelected = selectedAthleteId === "all" || selectedAthleteId === entry.id;
+
+                        return (
+                            <Cell
+                                key={`cell-${index}`}
+                                fill={isAboveAvg ? '#eb8144ff' : (isSelected ? `url(#${gradId})` : 'hsl(var(--muted))')}
+                                opacity={isSelected ? 1 : 0.3}
+                            />
+                        );
+                    })}
+                </Bar>
+            </BarChart>
+        </ResponsiveContainer>
+    )
+}
+
+function MetricTable({ metric, theme, groupAverage, sortConfig = { field: 'name', direction: 'asc' }, onSort, sortedData, selectedAthleteId }) {
+    const filteredData = selectedAthleteId === "all"
+        ? sortedData
+        : sortedData.filter(athlete => athlete.id === selectedAthleteId);
+
+    return (
+        <div className="w-full overflow-hidden border border-border rounded-2xl">
+            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <table className="w-full text-left text-sm">
+                    <thead>
+                        <tr className="bg-secondary/30 text-muted-foreground uppercase text-[10px] font-normal tracking-widest border-b border-border">
+                            <th className="px-4 py-4 cursor-pointer hover:text-foreground transition-colors" onClick={() => onSort('name')}>
+                                <div className="flex items-center gap-2">
+                                    Profile {sortConfig.field === 'name' && (sortConfig.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+                                </div>
+                            </th>
+                            <th className="px-4 py-4">{metric.label} ({metric.unit || 'score'})</th>
+                            <th className="px-4 py-4">Group Avg</th>
+                            <th className="px-4 py-4 cursor-pointer hover:text-foreground transition-colors" onClick={() => onSort(metric.key)}>
+                                <div className="flex items-center gap-2">
+                                    Value {sortConfig.field === metric.key && (sortConfig.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+                                </div>
+                            </th>
+                            <th className="px-4 py-4 text-right">Last Test Date</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                        {filteredData.map((athlete) => {
+                            const val = parseFloat(athlete[metric.key]) || 0
+                            const diff = groupAverage > 0 ? ((val - groupAverage) / groupAverage * 100).toFixed(0) : 0
+
+                            return (
+                                <tr key={athlete.id} className="hover:bg-secondary/20 transition-colors group">
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <img src={athlete.img} className="h-8 w-8 rounded-full border border-border group-hover:border-brand-300 transition-colors" alt="" />
+                                            <span className="font-normal whitespace-nowrap">{athlete.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex flex-col">
+                                            <span className="font-normal text-xs">{metric.label}</span>
+                                            <span className="text-[10px] text-muted-foreground uppercase font-normal">{metric.unit}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 font-mono font-normal text-muted-foreground">{groupAverage}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-lg font-bold" style={{ color: theme.color }}>{val.toFixed(1)}</span>
+                                            {diff !== "0" && (
+                                                <span className={`text-[10px] font-bold ${parseFloat(diff) > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                                    {parseFloat(diff) > 0 ? '+' : ''}{diff}%
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-mono text-muted-foreground text-[10px] font-normal">
+                                        {athlete.lastDate}
+                                    </td>
+                                </tr>
+                            )
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    )
+}
