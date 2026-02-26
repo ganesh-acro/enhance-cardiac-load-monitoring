@@ -1,0 +1,12 @@
+id,name,age,height,weight,sport,img,file
+AEH-001,Ajay D,22Y,185,77,400M,https://api.dicebear.com/7.x/avataaars/svg?seed=Ajay,Ajay D.csv
+AEH-002,Benish Jawahar,34Y,173,66.75,200M,https://api.dicebear.com/7.x/avataaars/svg?seed=Benish,Benish Jawahar.csv
+AEH-003,Gokul,23Y,172.8,72,"100M, 200M",https://api.dicebear.com/7.x/avataaars/svg?seed=Gokul,Gokul.csv
+AEH-004,Jayaraman,21Y,182,67.5,400M,https://api.dicebear.com/7.x/avataaars/svg?seed=Jayaraman,Jayaraman.csv
+AEH-005,Manoj kumar,21Y,178,63.8,800M,https://api.dicebear.com/7.x/avataaars/svg?seed=Manoj,Manoj Kumar S.csv
+AEH-006,Naganathan Pandi,29Y,172,63,400M,https://api.dicebear.com/7.x/avataaars/svg?seed=Naganathan,Naganathan Pandi.csv
+AEH-007,Navinn Kumar S,22Y,165,55,800M,https://api.dicebear.com/7.x/avataaars/svg?seed=Navinn,Navinn Kumar S.csv
+AEH-008,Rahul Keerthiyan,19Y,176,59,400M,https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul,Rahul Keerthiyan.csv
+AEH-009,Sarabeshwar L,22Y,168,66.5,400M,https://api.dicebear.com/7.x/avataaars/svg?seed=Sarabeshwar,Sarabheshwar L.csv
+AEH-010,Subbash S,23Y,182,76,110M,https://api.dicebear.com/7.x/avataaars/svg?seed=Subbash,Subbhash S.csv
+AEH-011,Vishaal Ramesh,24Y,170,62.1,400M,https://api.dicebear.com/7.x/avataaars/svg?seed=Vishaal,Vishaal Ramesh.csv
