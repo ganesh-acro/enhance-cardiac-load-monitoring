@@ -5,13 +5,15 @@ Covers the full Performance Analytics (Dashboard) page:
   - GET /dashboard/{id}           → all individual athlete tabs (Overview, Training, Readiness)
   - GET /dashboard/{id}/comparison → Comparison tab secondary data
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from datetime import date
 from typing import Optional
+from sqlalchemy.orm import Session
 
+from core.database import get_db
 from core.data import (
     get_athletes, get_athlete_by_id,
-    read_athlete_csv, filter_by_date_range, pf
+    read_athlete_sessions, filter_by_date_range, pf
 )
 from core.compute import (
     build_charts, prepare_summary, get_athlete_summary
@@ -25,15 +27,15 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 # ---------------------------------------------------------------------------
 
 @router.get("/overview")
-def dashboard_overview():
+def dashboard_overview(db: Session = Depends(get_db)):
     """
     Returns latest metrics for all athletes AND pre-computed team aggregates.
     Used by AnalyticsOverview (HR analytics, readiness donut, zone intensity, resting HR bar).
     """
-    athletes = get_athletes()
+    athletes = get_athletes(db)
     athletes_data = []
     for athlete in athletes:
-        rows = read_athlete_csv(athlete["file"])
+        rows = read_athlete_sessions(db, athlete["id"])
         if not rows:
             continue
         latest = rows[-1]
@@ -94,16 +96,17 @@ def athlete_dashboard(
     athlete_id: str,
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db),
 ):
     """
     Returns full chart data + summary for a single athlete.
     Feeds Overview, Training, and Readiness tabs.
     """
-    athlete = get_athlete_by_id(athlete_id)
+    athlete = get_athlete_by_id(db, athlete_id)
     if not athlete:
         raise HTTPException(status_code=404, detail="Athlete not found")
 
-    rows = read_athlete_csv(athlete["file"])
+    rows = read_athlete_sessions(db, athlete["id"])
     rows = filter_by_date_range(rows, start_date, end_date)
 
     summary = prepare_summary(rows)
@@ -139,6 +142,7 @@ def athlete_comparison(
     end_date: Optional[date] = Query(None),
     secondary_start: Optional[date] = Query(None), # secondary period range
     secondary_end: Optional[date] = Query(None),
+    db: Session = Depends(get_db),
 ):
     """
     Returns chart data for the comparison side.
@@ -147,10 +151,10 @@ def athlete_comparison(
     """
     if target_id:
         # Athlete comparison
-        secondary = get_athlete_by_id(target_id)
+        secondary = get_athlete_by_id(db, target_id)
         if not secondary:
             raise HTTPException(status_code=404, detail="Target athlete not found")
-        rows = read_athlete_csv(secondary["file"])
+        rows = read_athlete_sessions(db, secondary["id"])
         rows = filter_by_date_range(rows, start_date, end_date)
         return {
             "athlete": {"id": secondary["id"], "name": secondary["name"]},
@@ -159,10 +163,10 @@ def athlete_comparison(
         }
     elif secondary_start and secondary_end:
         # Period comparison — same athlete, different time slice
-        athlete = get_athlete_by_id(athlete_id)
+        athlete = get_athlete_by_id(db, athlete_id)
         if not athlete:
             raise HTTPException(status_code=404, detail="Athlete not found")
-        rows = read_athlete_csv(athlete["file"])
+        rows = read_athlete_sessions(db, athlete["id"])
         rows = filter_by_date_range(rows, secondary_start, secondary_end)
         return {
             "athlete": {"id": athlete["id"], "name": f"{athlete['name']} (period 2)"},

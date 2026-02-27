@@ -3,20 +3,23 @@ routers/reports.py
   GET /reports/summary  → table listing for Reports page
   GET /reports/{id}     → full session list for PDF generator
 """
-from fastapi import APIRouter, HTTPException
-from core.data import get_athletes, get_athlete_by_id, read_athlete_csv, pf
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+
+from core.database import get_db
+from core.data import get_athletes, get_athlete_by_id, read_athlete_sessions, pf
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 @router.get("/summary")
-def reports_summary():
+def reports_summary(db: Session = Depends(get_db)):
     """Returns latest metrics per athlete for the reports table."""
-    athletes = get_athletes()
+    athletes = get_athletes(db)
     results = []
 
     for athlete in athletes:
-        rows = read_athlete_csv(athlete["file"])
+        rows = read_athlete_sessions(db, athlete["id"])
         if not rows:
             continue
         latest = rows[-1]
@@ -44,16 +47,16 @@ def reports_summary():
 
 
 @router.get("/{athlete_id}")
-def report_detail(athlete_id: str):
+def report_detail(athlete_id: str, db: Session = Depends(get_db)):
     """
     Returns full session list for a single athlete.
     Used by PDF/report generator (ReportModal).
     """
-    athlete = get_athlete_by_id(athlete_id)
+    athlete = get_athlete_by_id(db, athlete_id)
     if not athlete:
         raise HTTPException(status_code=404, detail="Athlete not found")
 
-    rows = read_athlete_csv(athlete["file"])
+    rows = read_athlete_sessions(db, athlete["id"])
 
     # Return each session with all metrics for the report
     sessions = []

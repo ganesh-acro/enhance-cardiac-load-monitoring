@@ -2,25 +2,28 @@
 routers/group.py — GET /group/summary
 Serves the GroupDashboard page with all athletes' latest metrics.
 """
-from fastapi import APIRouter
-from core.data import get_athletes, read_athlete_csv, pf
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from core.database import get_db
+from core.data import get_athletes, read_athlete_sessions, pf
 
 router = APIRouter(prefix="/group", tags=["group"])
 
 
 @router.get("/summary")
-def group_summary():
+def group_summary(db: Session = Depends(get_db)):
     """
     Returns latest session metrics for all athletes AND pre-computed group averages.
     Fields match METRICS_CONFIG keys in GroupDashboard.jsx.
     """
-    athletes = get_athletes()
+    athletes = get_athletes(db)
     results = []
 
     metric_keys = ["avg_hr", "training_load", "training_intensity", "acwr", "epoc_total", "rmssd"]
 
     for athlete in athletes:
-        rows = read_athlete_csv(athlete["file"])
+        rows = read_athlete_sessions(db, athlete["id"])
         if not rows:
             continue
         latest = rows[-1]

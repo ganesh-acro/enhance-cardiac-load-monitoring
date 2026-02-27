@@ -2,23 +2,26 @@
 routers/profiles.py — GET /profiles/summary
 Serves the Profiles listing page.
 """
-from fastapi import APIRouter
-from core.data import get_athletes, read_athlete_csv, pf
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from core.database import get_db
+from core.data import get_athletes, read_athlete_sessions, pf
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 
 
 @router.get("/summary")
-def profiles_summary():
+def profiles_summary(db: Session = Depends(get_db)):
     """
     Returns latest snapshot per athlete for the Profiles page.
     Includes ACWR-based flag for colour-coding.
     """
-    athletes = get_athletes()
+    athletes = get_athletes(db)
     results = []
 
     for athlete in athletes:
-        rows = read_athlete_csv(athlete["file"])
+        rows = read_athlete_sessions(db, athlete["id"])
         if not rows:
             continue
         latest = rows[-1]
