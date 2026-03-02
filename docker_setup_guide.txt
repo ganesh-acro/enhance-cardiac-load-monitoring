@@ -1,0 +1,192 @@
+============================================================
+ENHANCE — Docker Setup Guide
+============================================================
+
+This guide will help you get the Enhance Cardiac Monitoring
+app running on your machine using Docker. No need to install
+Python, Node.js, or PostgreSQL — Docker handles everything.
+
+============================================================
+PREREQUISITES
+============================================================
+
+1. Install Docker Desktop
+   - Windows: https://docs.docker.com/desktop/install/windows-install/
+   - Mac:     https://docs.docker.com/desktop/install/mac-install/
+   - Linux:   https://docs.docker.com/desktop/install/linux/
+
+   After installing, open Docker Desktop and make sure it is
+   running (you should see the Docker whale icon in your
+   system tray / menu bar).
+
+2. Install Git
+   - https://git-scm.com/downloads
+   (Most machines already have this)
+
+3. Verify both are installed by opening a terminal and running:
+
+   docker --version
+   git --version
+
+   Both commands should print a version number.
+
+============================================================
+STEP-BY-STEP SETUP
+============================================================
+
+STEP 1: Clone the repository
+------------------------------------------------------------
+Open a terminal (Command Prompt, PowerShell, or Terminal)
+and run:
+
+   git clone <repository-url>
+   cd enhance
+
+Replace <repository-url> with the actual GitHub/GitLab URL.
+
+
+STEP 2: Create the environment file
+------------------------------------------------------------
+Create a file named ".env" in the project root folder
+(the same folder where docker-compose.yml is located).
+
+Add the following contents to the .env file:
+
+   DB_USER=enhance_user
+   DB_PASSWORD=enhance@acro
+   DB_NAME=enhance_db
+
+On Windows (Command Prompt):
+   echo DB_USER=enhance_user > .env
+   echo DB_PASSWORD=enhance@acro >> .env
+   echo DB_NAME=enhance_db >> .env
+
+On Mac/Linux:
+   cat > .env << EOF
+   DB_USER=enhance_user
+   DB_PASSWORD=enhance@acro
+   DB_NAME=enhance_db
+   EOF
+
+
+STEP 3: Start all services
+------------------------------------------------------------
+From the project root folder, run:
+
+   docker compose up --build
+
+This will:
+   - Download required images (PostgreSQL, Python, Node.js)
+   - Build the backend and frontend containers
+   - Start all 3 services (database, backend, frontend)
+
+First time will take 3-5 minutes (downloading images).
+Subsequent starts will be much faster.
+
+Wait until you see log messages from all three services
+(db, backend, frontend) and no errors.
+
+
+STEP 4: Load the data (first time only)
+------------------------------------------------------------
+Open a NEW terminal window (keep the first one running)
+and navigate to the project folder:
+
+   cd enhance
+
+Then run:
+
+   docker compose exec backend python scripts/migrate_csv.py
+
+You should see output like:
+   Athletes: 11 inserted
+   Sessions total: 2655 inserted
+   Migration complete.
+
+This only needs to be done once. The data persists across
+restarts.
+
+
+STEP 5: Open the app
+------------------------------------------------------------
+Open your browser and go to:
+
+   http://localhost:5173
+
+The app should be fully loaded with all athlete data.
+
+
+============================================================
+DAILY USAGE
+============================================================
+
+Starting the app:
+   cd enhance
+   docker compose up
+
+   (No --build needed after the first time, unless code changed)
+
+Stopping the app:
+   Press Ctrl+C in the terminal where docker compose is running
+
+   OR in a separate terminal:
+   docker compose down
+
+Note: Your data is preserved even after stopping.
+      It is stored in a Docker volume.
+
+
+============================================================
+TROUBLESHOOTING
+============================================================
+
+PROBLEM: "docker: command not found"
+   → Make sure Docker Desktop is installed and running.
+
+PROBLEM: "port 5432 already in use"
+   → You have PostgreSQL running locally. Either stop it
+     or change the port in docker-compose.yml:
+     Change "5432:5432" to "5433:5432"
+
+PROBLEM: "port 5173 already in use"
+   → Another dev server is running. Stop it or change
+     the port in docker-compose.yml:
+     Change "5173:5173" to "3000:5173"
+     Then open http://localhost:3000 instead.
+
+PROBLEM: "port 8000 already in use"
+   → A local backend is running. Stop it or change
+     the port in docker-compose.yml:
+     Change "8000:8000" to "8001:8000"
+
+PROBLEM: App loads but shows no data
+   → You forgot Step 4. Run the migration:
+     docker compose exec backend python scripts/migrate_csv.py
+
+PROBLEM: Frontend shows connection errors
+   → Make sure all 3 containers are running:
+     docker compose ps
+   → All should show "Up" status.
+
+PROBLEM: Need to completely reset everything
+   → Stop and remove all containers and data:
+     docker compose down -v
+   → Then start fresh from Step 3.
+
+
+============================================================
+QUICK REFERENCE
+============================================================
+
+Start:          docker compose up
+Start + build:  docker compose up --build
+Stop:           docker compose down
+View status:    docker compose ps
+View logs:      docker compose logs
+Reset all:      docker compose down -v
+
+Frontend URL:   http://localhost:5173
+Backend API:    http://localhost:8000
+Health check:   http://localhost:8000/health
+
+============================================================
