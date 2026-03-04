@@ -136,34 +136,34 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                     {/* Top Row: Flags & Vitals */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                         {/* Card 1: Optimal Shield */}
-                        <div className={`p-5 lg:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex flex-col md:flex-row items-center md:justify-between gap-4 ${isOptimal
+                        <div className={`p-4 lg:p-5 xl:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex items-center justify-between relative overflow-hidden ${isOptimal
                             ? 'bg-emerald-500/10 border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.2)]'
                             : 'bg-muted/20 border-border/60 grayscale opacity-60'}`}>
-                            <div className="text-center md:text-left">
-                                <p className="text-xs font-normal text-emerald-600/80 dark:text-white tracking-widest uppercase mb-1">Status</p>
-                                <p className="text-2xl lg:text-3xl xl:text-4xl font-normal text-foreground tracking-tight leading-none">
+                            <div className="relative z-10 min-w-0">
+                                <p className="text-[10px] lg:text-xs font-normal text-emerald-600/80 dark:text-white tracking-widest uppercase mb-1">Status</p>
+                                <p className="text-xl lg:text-2xl xl:text-4xl font-normal text-foreground tracking-tight leading-none truncate">
                                     {isOptimal ? 'Optimal' : 'Optimal'}
                                 </p>
                             </div>
-                            <div className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center shrink-0 ${isOptimal ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'}`}>
-                                <CheckCircle2 className="h-6 w-6 lg:h-8 lg:w-8" />
+                            <div className={`w-10 h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 rounded-full flex items-center justify-center shrink-0 relative z-10 ${isOptimal ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'}`}>
+                                <CheckCircle2 className="h-5 w-5 lg:h-6 lg:w-6 xl:h-8 xl:w-8" />
                             </div>
                         </div>
 
                         {/* Card 2: Dynamic Load Alert */}
-                        <div className={`p-5 lg:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex flex-col md:flex-row items-center md:justify-between gap-4 ${!isOptimal
+                        <div className={`p-4 lg:p-5 xl:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex items-center justify-between relative overflow-hidden ${!isOptimal
                             ? (isOver
                                 ? 'bg-red-500/10 border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]'
                                 : 'bg-amber-500/10 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.2)]')
                             : 'bg-muted/20 border-border/60 grayscale opacity-60'}`}>
-                            <div className="text-center md:text-left">
-                                <p className="text-xs font-normal tracking-widest uppercase mb-1 opacity-70 dark:text-white">Load state</p>
-                                <p className="text-2xl lg:text-3xl xl:text-4xl font-normal text-foreground tracking-tight leading-loose md:leading-none">
+                            <div className="relative z-10 min-w-0">
+                                <p className="text-[10px] lg:text-xs font-normal tracking-widest uppercase mb-1 opacity-70 dark:text-white">Load state</p>
+                                <p className="text-xl lg:text-2xl xl:text-4xl font-normal text-foreground tracking-tight leading-none truncate">
                                     {isOver ? 'Overtraining' : isUnder ? 'Undertraining' : 'Stable'}
                                 </p>
                             </div>
-                            <div className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center shrink-0 ${!isOptimal ? (isOver ? 'bg-red-500 text-white' : 'bg-amber-500 text-white') : 'bg-muted text-muted-foreground'}`}>
-                                {isOver ? <AlertCircle className="h-6 w-6 lg:h-8 lg:w-8" /> : <AlertTriangle className="h-6 w-6 lg:h-8 lg:w-8" />}
+                            <div className={`w-10 h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 rounded-full flex items-center justify-center shrink-0 relative z-10 ${!isOptimal ? (isOver ? 'bg-red-500 text-white' : 'bg-amber-500 text-white') : 'bg-muted text-muted-foreground'}`}>
+                                {isOver ? <AlertCircle className="h-5 w-5 lg:h-6 lg:w-6 xl:h-8 xl:w-8" /> : <AlertTriangle className="h-5 w-5 lg:h-6 lg:w-6 xl:h-8 xl:w-8" />}
                             </div>
                         </div>
 
