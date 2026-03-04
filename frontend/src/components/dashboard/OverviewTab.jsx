@@ -53,36 +53,31 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
 
                         <div className="relative flex flex-col gap-8">
                             {/* Name & Identity */}
-                            <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] items-start gap-4 lg:gap-8">
+                            <div className="flex flex-col gap-6">
                                 <div className="space-y-4 min-w-0">
                                     <div className="min-w-0">
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-brand-500 tracking-[0.2em] mb-2 uppercase">Athlete profile</p>
-                                            <h2 className="text-2xl lg:text-3xl xl:text-5xl font-normal text-foreground tracking-tight leading-tight break-words">
-                                                {athleteSummary.name}
-                                            </h2>
-                                        </div>
-                                        <div className="w-full border-t border-amber-500/40 mt-4 mb-2"></div>
+                                        <p className="text-sm font-semibold text-brand-500 tracking-[0.2em] mb-2 uppercase">Athlete profile</p>
+                                        <h1 className="text-3xl lg:text-4xl xl:text-5xl font-medium text-foreground tracking-tight leading-[1.1] break-words">
+                                            {athleteSummary.name}
+                                        </h1>
+                                        <div className="w-24 border-t-2 border-brand-500/30 mt-4 mb-2"></div>
                                     </div>
-                                    <div className="inline-block px-4 py-2 bg-muted rounded-full">
-                                        <p className="text-base font-black text-muted-foreground/80 tracking-widest">{athleteSummary.age} / {athleteSummary.gender}</p>
+                                    <div className="inline-block px-4 py-1.5 bg-muted/50 rounded-full border border-border/40">
+                                        <p className="text-sm lg:text-base font-black text-muted-foreground/80 tracking-widest">{athleteSummary.age} / {athleteSummary.gender}</p>
                                     </div>
                                 </div>
 
-                                {/* Metadata Info */}
-                                <div className="flex flex-col items-center gap-2 pt-8">
-                                    <div className="flex items-center gap-8">
-                                        <div className="text-center">
-                                            <p className="text-[10px] font-bold text-muted-foreground tracking-[0.2em] uppercase mb-1">Height</p>
-                                            <p className="text-xl lg:text-2xl font-black text-foreground tracking-tight">{athleteSummary.height}<span className="text-xs ml-0.5 font-bold text-muted-foreground">cm</span></p>
-                                        </div>
-                                        <div className="w-px h-10 bg-border/40"></div>
-                                        <div className="text-center">
-                                            <p className="text-[10px] font-bold text-muted-foreground tracking-[0.2em] uppercase mb-1">Weight</p>
-                                            <p className="text-xl lg:text-2xl font-black text-foreground tracking-tight">{athleteSummary.weight}<span className="text-xs ml-0.5 font-bold text-muted-foreground">kg</span></p>
-                                        </div>
+                                {/* Metadata Info - Now below name for better fit */}
+                                <div className="grid grid-cols-2 gap-4 p-4 lg:p-6 bg-muted/20 rounded-3xl border border-border/40">
+                                    <div className="flex flex-col gap-1 pr-4 border-r border-border/40">
+                                        <p className="text-[10px] font-bold text-muted-foreground tracking-[0.2em] uppercase">Height</p>
+                                        <p className="text-xl lg:text-2xl font-black text-foreground tracking-tight">{athleteSummary.height}<span className="text-xs ml-0.5 font-bold text-muted-foreground uppercase">cm</span></p>
                                     </div>
-                                    <div className="flex items-center justify-center w-full pt-1 border-t border-border/40">
+                                    <div className="flex flex-col gap-1 pl-2">
+                                        <p className="text-[10px] font-bold text-muted-foreground tracking-[0.2em] uppercase">Weight</p>
+                                        <p className="text-xl lg:text-2xl font-black text-foreground tracking-tight">{athleteSummary.weight}<span className="text-xs ml-0.5 font-bold text-muted-foreground uppercase">kg</span></p>
+                                    </div>
+                                    <div className="col-span-2 pt-2 border-t border-border/40 text-center">
                                         <p className="text-[10px] font-black text-brand-500 uppercase tracking-[0.4em]">{athleteSummary.sport}</p>
                                     </div>
                                 </div>
@@ -141,34 +136,34 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                     {/* Top Row: Flags & Vitals */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                         {/* Card 1: Optimal Shield */}
-                        <div className={`p-5 lg:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex items-center justify-between ${isOptimal
+                        <div className={`p-5 lg:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex flex-col md:flex-row items-center md:justify-between gap-4 ${isOptimal
                             ? 'bg-emerald-500/10 border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.2)]'
                             : 'bg-muted/20 border-border/60 grayscale opacity-60'}`}>
-                            <div>
-                                <p className="text-sm font-normal text-emerald-600/80 dark:text-white tracking-widest uppercase mb-2">Status</p>
-                                <p className="text-xl lg:text-2xl xl:text-4xl font-normal text-foreground tracking-tight leading-none">
+                            <div className="text-center md:text-left">
+                                <p className="text-xs font-normal text-emerald-600/80 dark:text-white tracking-widest uppercase mb-1">Status</p>
+                                <p className="text-2xl lg:text-3xl xl:text-4xl font-normal text-foreground tracking-tight leading-none">
                                     {isOptimal ? 'Optimal' : 'Optimal'}
                                 </p>
                             </div>
-                            <div className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center ${isOptimal ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'}`}>
+                            <div className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center shrink-0 ${isOptimal ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'}`}>
                                 <CheckCircle2 className="h-6 w-6 lg:h-8 lg:w-8" />
                             </div>
                         </div>
 
                         {/* Card 2: Dynamic Load Alert */}
-                        <div className={`p-5 lg:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex items-center justify-between ${!isOptimal
+                        <div className={`p-5 lg:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex flex-col md:flex-row items-center md:justify-between gap-4 ${!isOptimal
                             ? (isOver
                                 ? 'bg-red-500/10 border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]'
                                 : 'bg-amber-500/10 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.2)]')
                             : 'bg-muted/20 border-border/60 grayscale opacity-60'}`}>
-                            <div>
-                                <p className="text-sm font-normal tracking-widest uppercase mb-2 opacity-70 dark:text-white">Load state</p>
-                                <p className="text-xl lg:text-2xl xl:text-4xl font-normal text-foreground tracking-tight leading-none">
+                            <div className="text-center md:text-left">
+                                <p className="text-xs font-normal tracking-widest uppercase mb-1 opacity-70 dark:text-white">Load state</p>
+                                <p className="text-2xl lg:text-3xl xl:text-4xl font-normal text-foreground tracking-tight leading-loose md:leading-none">
                                     {isOver ? 'Overtraining' : isUnder ? 'Undertraining' : 'Stable'}
                                 </p>
                             </div>
-                            <div className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center ${!isOptimal ? (isOver ? 'bg-red-500 text-white' : 'bg-amber-500 text-white') : 'bg-muted text-muted-foreground'}`}>
-                                {isOver ? <AlertCircle className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
+                            <div className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center shrink-0 ${!isOptimal ? (isOver ? 'bg-red-500 text-white' : 'bg-amber-500 text-white') : 'bg-muted text-muted-foreground'}`}>
+                                {isOver ? <AlertCircle className="h-6 w-6 lg:h-8 lg:w-8" /> : <AlertTriangle className="h-6 w-6 lg:h-8 lg:w-8" />}
                             </div>
                         </div>
 
