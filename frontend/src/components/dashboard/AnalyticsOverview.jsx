@@ -307,10 +307,10 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                 </div>
 
                 {/* Visual Analytics Grid - Asymmetric Layout (12-column) */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 
                     {/* 1. Heart Rate Plot - Spans 8 columns */}
-                    <div className="md:col-span-8 p-8 rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[450px]">
+                    <div className="lg:col-span-8 p-5 lg:p-8 rounded-3xl lg:rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[300px] lg:min-h-[450px]">
                         <div className="flex items-center justify-between mb-8">
                             <div>
                                 <h4 className="text-2xl font-normal text-foreground mb-1">
@@ -324,7 +324,7 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                     </div>
 
                     {/* 2. Readiness Distribution Donut - Spans 4 columns */}
-                    <div className="md:col-span-4 p-8 rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[450px]">
+                    <div className="lg:col-span-4 p-5 lg:p-8 rounded-3xl lg:rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[300px] lg:min-h-[450px]">
                         <h4 className="text-2xl font-normal text-foreground mb-4">
                             Readiness distribution
                         </h4>
@@ -334,7 +334,7 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                     </div>
 
                     {/* 3. Zone Distribution - Spans 5 columns */}
-                    <div className="md:col-span-5 p-8 rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[500px]">
+                    <div className="lg:col-span-5 p-5 lg:p-8 rounded-3xl lg:rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[350px] lg:min-h-[500px]">
                         <h4 className="text-2xl font-normal text-foreground mb-8">
                             Zone intensity
                         </h4>
@@ -366,7 +366,7 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                     </div>
 
                     {/* 4. Resting HR Variance - Spans 7 columns */}
-                    <div className="md:col-span-7 p-8 rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[500px]">
+                    <div className="lg:col-span-7 p-5 lg:p-8 rounded-3xl lg:rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[350px] lg:min-h-[500px]">
                         <div className="flex items-center justify-between mb-8">
                             <div>
                                 <h4 className="text-2xl font-normal text-foreground mb-1">

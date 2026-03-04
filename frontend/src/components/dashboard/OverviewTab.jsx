@@ -43,22 +43,22 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
     return (
         <div className="space-y-8 animate-in fade-in duration-1000 mt-8">
 
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
                 {/* LEFT COLUMN: SIDEBAR - Spans 4 cols (Wider for Load Chart) */}
-                <div className="xl:col-span-4 flex flex-col gap-6">
+                <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4 lg:gap-6">
                     {/* 1. Athlete Profile Card */}
-                    <div className="p-8 rounded-[40px] bg-card border border-border shadow-xl relative overflow-hidden group">
+                    <div className="p-5 lg:p-8 rounded-3xl lg:rounded-[40px] bg-card border border-border shadow-xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-[80px] -mr-32 -mt-32 transition-all group-hover:bg-brand-500/20"></div>
 
                         <div className="relative flex flex-col gap-8">
                             {/* Name & Identity */}
-                            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-start gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-start gap-4 lg:gap-8">
                                 <div className="space-y-4 min-w-0">
                                     <div className="w-fit">
                                         <div className="min-w-0">
                                             <p className="text-sm font-semibold text-brand-500 tracking-[0.2em] mb-2 uppercase">Athlete profile</p>
-                                            <h2 className="text-5xl font-normal text-foreground tracking-tight leading-tight">
+                                            <h2 className="text-3xl lg:text-5xl font-normal text-foreground tracking-tight leading-tight">
                                                 {athleteSummary.name}
                                             </h2>
                                         </div>
@@ -74,12 +74,12 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                                     <div className="flex items-center gap-8">
                                         <div className="text-center">
                                             <p className="text-[10px] font-bold text-muted-foreground tracking-[0.2em] uppercase mb-1">Height</p>
-                                            <p className="text-2xl font-black text-foreground tracking-tight">{athleteSummary.height}<span className="text-xs ml-0.5 font-bold text-muted-foreground">cm</span></p>
+                                            <p className="text-xl lg:text-2xl font-black text-foreground tracking-tight">{athleteSummary.height}<span className="text-xs ml-0.5 font-bold text-muted-foreground">cm</span></p>
                                         </div>
                                         <div className="w-px h-10 bg-border/40"></div>
                                         <div className="text-center">
                                             <p className="text-[10px] font-bold text-muted-foreground tracking-[0.2em] uppercase mb-1">Weight</p>
-                                            <p className="text-2xl font-black text-foreground tracking-tight">{athleteSummary.weight}<span className="text-xs ml-0.5 font-bold text-muted-foreground">kg</span></p>
+                                            <p className="text-xl lg:text-2xl font-black text-foreground tracking-tight">{athleteSummary.weight}<span className="text-xs ml-0.5 font-bold text-muted-foreground">kg</span></p>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-center w-full pt-1 border-t border-border/40">
@@ -89,9 +89,9 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                             </div>
 
                             {/* Session Taken Stat */}
-                            <div className="p-6 bg-muted/30 rounded-3xl border border-border/50">
+                            <div className="p-4 lg:p-6 bg-muted/30 rounded-2xl lg:rounded-3xl border border-border/50">
                                 <p className="text-xs font-semibold text-muted-foreground tracking-[0.2em] mb-2 uppercase">Total sessions</p>
-                                <p className="text-5xl font-normal text-foreground">{athleteSummary.totalSessions}</p>
+                                <p className="text-3xl lg:text-5xl font-normal text-foreground">{athleteSummary.totalSessions}</p>
                             </div>
 
                             {/* Training & Readiness */}
@@ -102,7 +102,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                                     </div>
                                     <div>
                                         <p className="text-xs font-semibold text-brand-500 tracking-[0.2em] uppercase">Training</p>
-                                        <p className="text-2xl font-normal text-foreground">{athleteSummary.trainingSessions}</p>
+                                        <p className="text-xl lg:text-2xl font-normal text-foreground">{athleteSummary.trainingSessions}</p>
                                     </div>
                                 </div>
 
@@ -112,7 +112,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                                     </div>
                                     <div>
                                         <p className="text-xs font-semibold text-emerald-500 tracking-[0.2em] uppercase">Readiness</p>
-                                        <p className="text-2xl font-normal text-foreground">{athleteSummary.readinessSessions}</p>
+                                        <p className="text-xl lg:text-2xl font-normal text-foreground">{athleteSummary.readinessSessions}</p>
                                     </div>
                                 </div>
                             </div>
@@ -127,7 +127,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                     </div>
 
                     {/* 2. Load & HRV Chart (Sidebar) */}
-                    <div className="p-6 rounded-[40px] bg-card border border-border/60 shadow-lg flex-1">
+                    <div className="p-4 lg:p-6 rounded-3xl lg:rounded-[40px] bg-card border border-border/60 shadow-lg flex-1">
                         <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                             Load & HRV
                         </h5>
@@ -136,54 +136,54 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                 </div>
 
                 {/* RIGHT COLUMN: GRAPHS & FLAGS - Spans 8 cols */}
-                <div className="xl:col-span-8 space-y-8">
+                <div className="lg:col-span-7 xl:col-span-8 space-y-6 lg:space-y-8">
 
                     {/* Top Row: Flags & Vitals */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                         {/* Card 1: Optimal Shield */}
-                        <div className={`p-8 rounded-[32px] border transition-all duration-700 flex items-center justify-between ${isOptimal
+                        <div className={`p-5 lg:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex items-center justify-between ${isOptimal
                             ? 'bg-emerald-500/10 border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.2)]'
                             : 'bg-muted/20 border-border/60 grayscale opacity-60'}`}>
                             <div>
                                 <p className="text-sm font-normal text-emerald-600/80 dark:text-white tracking-widest uppercase mb-2">Status</p>
-                                <p className="text-4xl font-normal text-foreground tracking-tight leading-none">
+                                <p className="text-2xl lg:text-4xl font-normal text-foreground tracking-tight leading-none">
                                     {isOptimal ? 'Optimal' : 'Optimal'}
                                 </p>
                             </div>
-                            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${isOptimal ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'}`}>
-                                <CheckCircle2 className="h-8 w-8" />
+                            <div className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center ${isOptimal ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'}`}>
+                                <CheckCircle2 className="h-6 w-6 lg:h-8 lg:w-8" />
                             </div>
                         </div>
 
                         {/* Card 2: Dynamic Load Alert */}
-                        <div className={`p-8 rounded-[32px] border transition-all duration-700 flex items-center justify-between ${!isOptimal
+                        <div className={`p-5 lg:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex items-center justify-between ${!isOptimal
                             ? (isOver
                                 ? 'bg-red-500/10 border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]'
                                 : 'bg-amber-500/10 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.2)]')
                             : 'bg-muted/20 border-border/60 grayscale opacity-60'}`}>
                             <div>
                                 <p className="text-sm font-normal tracking-widest uppercase mb-2 opacity-70 dark:text-white">Load state</p>
-                                <p className="text-4xl font-normal text-foreground tracking-tight leading-none">
+                                <p className="text-2xl lg:text-4xl font-normal text-foreground tracking-tight leading-none">
                                     {isOver ? 'Overtraining' : isUnder ? 'Undertraining' : 'Stable'}
                                 </p>
                             </div>
-                            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${!isOptimal ? (isOver ? 'bg-red-500 text-white' : 'bg-amber-500 text-white') : 'bg-muted text-muted-foreground'}`}>
+                            <div className={`w-12 h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center ${!isOptimal ? (isOver ? 'bg-red-500 text-white' : 'bg-amber-500 text-white') : 'bg-muted text-muted-foreground'}`}>
                                 {isOver ? <AlertCircle className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
                             </div>
                         </div>
 
                         {/* Card 3: Latest Vitals (New Location) */}
-                        <div className="p-8 rounded-[32px] bg-card border border-border/60 shadow-lg flex flex-col justify-center">
+                        <div className="sm:col-span-2 lg:col-span-1 p-5 lg:p-8 rounded-2xl lg:rounded-[32px] bg-card border border-border/60 shadow-lg flex flex-col justify-center">
                             <div className="flex items-center justify-around gap-4 h-full">
                                 {/* Avg HR */}
                                 <div className="text-center">
-                                    <p className="text-4xl font-normal text-foreground tracking-tighter">{latestAvgHr}</p>
+                                    <p className="text-2xl lg:text-4xl font-normal text-foreground tracking-tighter">{latestAvgHr}</p>
                                     <p className="text-xs font-normal text-muted-foreground dark:text-white uppercase tracking-wider mt-1">Average HR</p>
                                 </div>
                                 <div className="w-px h-12 bg-border/60"></div>
                                 {/* RMSSD */}
                                 <div className="text-center">
-                                    <p className="text-4xl font-normal text-foreground tracking-tighter">{latestRmssd}</p>
+                                    <p className="text-2xl lg:text-4xl font-normal text-foreground tracking-tighter">{latestRmssd}</p>
                                     <p className="text-xs font-normal text-muted-foreground dark:text-white uppercase tracking-wider mt-1">RMSSD (HRV)</p>
                                 </div>
                             </div>
@@ -191,9 +191,9 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                     </div>
 
                     {/* Bottom Row: Monthly Charts Grid (Mixed) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
                         {/* 1. Zone Split (Wide) */}
-                        <div className="lg:col-span-2 p-8 rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
+                        <div className="lg:col-span-2 xl:col-span-2 p-5 lg:p-8 rounded-3xl lg:rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
                             <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
                                 Zone distribution
                             </h5>
@@ -201,7 +201,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                         </div>
 
                         {/* 2. HR Range (Compact) */}
-                        <div className="lg:col-span-1 p-8 rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
+                        <div className="lg:col-span-2 xl:col-span-1 p-5 lg:p-8 rounded-3xl lg:rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
                             <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
                                 Heart rate stats
                             </h5>
@@ -209,7 +209,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                         </div>
 
                         {/* 3. ACWR Trend (Full Width) */}
-                        <div className="lg:col-span-3 p-8 rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
+                        <div className="lg:col-span-2 xl:col-span-3 p-5 lg:p-8 rounded-3xl lg:rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
                             <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
                                 ACWR trend
                             </h5>
@@ -217,7 +217,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                         </div>
 
                         {/* 4. Movement Data (Full Width) */}
-                        <div className="lg:col-span-3 p-8 rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
+                        <div className="lg:col-span-2 xl:col-span-3 p-5 lg:p-8 rounded-3xl lg:rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
                             <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
                                 Movement intensity & load
                             </h5>

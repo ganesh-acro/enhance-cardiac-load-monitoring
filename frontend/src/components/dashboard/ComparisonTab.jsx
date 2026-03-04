@@ -78,8 +78,8 @@ export const ComparisonTab = ({
     return (
         <div className="space-y-8 animate-in fade-in duration-700 pb-12">
             {/* Control Panel */}
-            <div className="p-8 rounded-3xl border border-border bg-card shadow-sm sticky top-24 z-30 backdrop-blur-md bg-opacity-95">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="p-5 lg:p-8 rounded-3xl border border-border bg-card shadow-sm sticky top-24 z-30 backdrop-blur-md bg-opacity-95">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 lg:gap-8">
                     <div className="flex items-center gap-6 w-full md:w-auto">
                         <div className="p-4 rounded-xl bg-brand-500/10 text-brand-500">
                             <Users className="h-8 w-8" />

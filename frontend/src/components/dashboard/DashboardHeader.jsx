@@ -22,7 +22,7 @@ export const DashboardHeader = ({
                             <button
                                 key={tab}
                                 onClick={() => onTabChange(tab.toLowerCase().replace(' ', ''))}
-                                className={`px-6 py-2.5 rounded-lg text-base font-bold transition-all duration-300 ${activeTab === tab.toLowerCase().replace(' ', '')
+                                className={`px-3 py-2 md:px-6 md:py-2.5 rounded-lg text-sm md:text-base font-bold transition-all duration-300 ${activeTab === tab.toLowerCase().replace(' ', '')
                                     ? "bg-background text-foreground shadow-sm"
                                     : "text-muted-foreground hover:text-foreground"
                                     }`}
