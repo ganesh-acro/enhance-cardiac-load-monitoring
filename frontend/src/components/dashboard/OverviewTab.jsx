@@ -53,12 +53,12 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
 
                         <div className="relative flex flex-col gap-8">
                             {/* Name & Identity */}
-                            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-start gap-4 lg:gap-8">
+                            <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] items-start gap-4 lg:gap-8">
                                 <div className="space-y-4 min-w-0">
-                                    <div className="w-fit">
+                                    <div className="min-w-0">
                                         <div className="min-w-0">
                                             <p className="text-sm font-semibold text-brand-500 tracking-[0.2em] mb-2 uppercase">Athlete profile</p>
-                                            <h2 className="text-3xl lg:text-5xl font-normal text-foreground tracking-tight leading-tight">
+                                            <h2 className="text-2xl lg:text-3xl xl:text-5xl font-normal text-foreground tracking-tight leading-tight break-words">
                                                 {athleteSummary.name}
                                             </h2>
                                         </div>
@@ -146,7 +146,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                             : 'bg-muted/20 border-border/60 grayscale opacity-60'}`}>
                             <div>
                                 <p className="text-sm font-normal text-emerald-600/80 dark:text-white tracking-widest uppercase mb-2">Status</p>
-                                <p className="text-2xl lg:text-4xl font-normal text-foreground tracking-tight leading-none">
+                                <p className="text-xl lg:text-2xl xl:text-4xl font-normal text-foreground tracking-tight leading-none">
                                     {isOptimal ? 'Optimal' : 'Optimal'}
                                 </p>
                             </div>
@@ -163,7 +163,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                             : 'bg-muted/20 border-border/60 grayscale opacity-60'}`}>
                             <div>
                                 <p className="text-sm font-normal tracking-widest uppercase mb-2 opacity-70 dark:text-white">Load state</p>
-                                <p className="text-2xl lg:text-4xl font-normal text-foreground tracking-tight leading-none">
+                                <p className="text-xl lg:text-2xl xl:text-4xl font-normal text-foreground tracking-tight leading-none">
                                     {isOver ? 'Overtraining' : isUnder ? 'Undertraining' : 'Stable'}
                                 </p>
                             </div>
