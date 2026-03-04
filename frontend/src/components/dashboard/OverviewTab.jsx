@@ -157,13 +157,13 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                                 : 'bg-amber-500/10 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.2)]')
                             : 'bg-muted/20 border-border/60 grayscale opacity-60'}`}>
                             <div className="relative z-10 min-w-0">
-                                <p className="text-[10px] lg:text-xs font-normal tracking-widest uppercase mb-1 opacity-70 dark:text-white">Load state</p>
+                                <p className="text-[10px] lg:text-xs font-normal tracking-widest uppercase mb-1 opacity-70 dark:text-white">Training Load</p>
                                 <p className="text-xl lg:text-2xl xl:text-4xl font-normal text-foreground tracking-tight leading-none truncate">
-                                    {isOver ? 'Overtraining' : isUnder ? 'Undertraining' : 'Stable'}
+                                    {isOver ? 'Over' : isUnder ? 'Under' : 'Stable'}
                                 </p>
                             </div>
-                            <div className={`w-10 h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 rounded-full flex items-center justify-center shrink-0 relative z-10 ${!isOptimal ? (isOver ? 'bg-red-500 text-white' : 'bg-amber-500 text-white') : 'bg-muted text-muted-foreground'}`}>
-                                {isOver ? <AlertCircle className="h-5 w-5 lg:h-6 lg:w-6 xl:h-8 xl:w-8" /> : <AlertTriangle className="h-5 w-5 lg:h-6 lg:w-6 xl:h-8 xl:w-8" />}
+                            <div className={`w-8 h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 rounded-full flex items-center justify-center shrink-0 relative z-10 ${!isOptimal ? (isOver ? 'bg-red-500 text-white' : 'bg-amber-500 text-white') : 'bg-muted text-muted-foreground'}`}>
+                                {isOver ? <AlertCircle className="h-4 w-4 lg:h-5 lg:w-5 xl:h-6 xl:h-6" /> : <AlertTriangle className="h-4 w-4 lg:h-5 lg:w-5 xl:h-6 xl:h-6" />}
                             </div>
                         </div>
 
