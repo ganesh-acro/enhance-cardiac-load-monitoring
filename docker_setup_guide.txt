@@ -96,7 +96,7 @@ and navigate to the project folder:
 
 Then run:
 
-   docker compose exec backend python scripts/migrate_csv.py
+   docker compose exec backend python -m scripts.migrate_csv
 
 You should see output like:
    Athletes: 11 inserted

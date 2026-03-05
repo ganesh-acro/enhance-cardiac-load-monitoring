@@ -26,6 +26,7 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      DATA_DIR: /data
     ports:
       - "8000:8000"
     depends_on:
