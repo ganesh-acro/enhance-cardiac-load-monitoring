@@ -3,7 +3,7 @@
  * This replaces all direct CSV fetching and all JS data transformations.
  */
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const apiFetch = async (path) => {
     const res = await fetch(`${API_URL}${path}`);
