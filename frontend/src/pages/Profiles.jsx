@@ -214,7 +214,7 @@ export default function Profiles() {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-5">
-                                                    <span className="text-base font-black text-foreground">{athlete.trainingLoad}</span>
+                                                    <span className="text-base font-black text-foreground">{athlete.training_load}</span>
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center gap-2">

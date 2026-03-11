@@ -56,29 +56,7 @@ def _session_to_dict(s: Session) -> Dict:
 # Athlete queries
 # ---------------------------------------------------------------------------
 
-def get_athletes(db: DbSession) -> List[Dict]:
-    """Return all athletes as list of dicts."""
-    athletes = db.query(Athlete).order_by(Athlete.id).all()
-    return [
-        {
-            "id": a.id,
-            "name": a.name,
-            "age": a.age,
-            "height": a.height,
-            "weight": a.weight,
-            "sport": a.sport,
-            "gender": a.gender,
-            "img": a.img,
-        }
-        for a in athletes
-    ]
-
-
-def get_athlete_by_id(db: DbSession, athlete_id: str) -> Optional[Dict]:
-    """Find one athlete by id. Returns dict or None."""
-    a = db.query(Athlete).filter(Athlete.id == athlete_id).first()
-    if not a:
-        return None
+def _athlete_to_dict(a: Athlete) -> Dict:
     return {
         "id": a.id,
         "name": a.name,
@@ -89,6 +67,24 @@ def get_athlete_by_id(db: DbSession, athlete_id: str) -> Optional[Dict]:
         "gender": a.gender,
         "img": a.img,
     }
+
+
+def get_athletes(db: DbSession, allowed_ids: Optional[List[str]] = None) -> List[Dict]:
+    """Return athletes as list of dicts. If allowed_ids is given, filter to only those."""
+    query = db.query(Athlete)
+    if allowed_ids is not None:
+        query = query.filter(Athlete.id.in_(allowed_ids))
+    return [_athlete_to_dict(a) for a in query.order_by(Athlete.id).all()]
+
+
+def get_athlete_by_id(db: DbSession, athlete_id: str, allowed_ids: Optional[List[str]] = None) -> Optional[Dict]:
+    """Find one athlete by id. If allowed_ids is given, enforce access check."""
+    if allowed_ids is not None and athlete_id not in allowed_ids:
+        return None
+    a = db.query(Athlete).filter(Athlete.id == athlete_id).first()
+    if not a:
+        return None
+    return _athlete_to_dict(a)
 
 
 # ---------------------------------------------------------------------------

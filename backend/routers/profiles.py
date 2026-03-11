@@ -2,23 +2,27 @@
 routers/profiles.py — GET /profiles/summary
 Serves the Profiles listing page.
 """
+from typing import Optional, List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.data import get_athletes, read_athlete_sessions, pf
-from core.security.dependencies import get_current_user
+from core.security.dependencies import get_allowed_athlete_ids
 
-router = APIRouter(prefix="/profiles", tags=["profiles"], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="/profiles", tags=["profiles"])
 
 
 @router.get("/summary")
-def profiles_summary(db: Session = Depends(get_db)):
+def profiles_summary(
+    db: Session = Depends(get_db),
+    allowed_ids: Optional[List[str]] = Depends(get_allowed_athlete_ids),
+):
     """
     Returns latest snapshot per athlete for the Profiles page.
     Includes ACWR-based flag for colour-coding.
     """
-    athletes = get_athletes(db)
+    athletes = get_athletes(db, allowed_ids)
     results = []
 
     for athlete in athletes:

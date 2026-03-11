@@ -51,3 +51,33 @@ def get_current_user(
         )
 
     return user
+
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    """Restrict access to admin users only."""
+    if user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required.",
+        )
+    return user
+
+
+def require_coach_or_above(user: User = Depends(get_current_user)) -> User:
+    """Restrict access to coach or admin users."""
+    if user.role not in ("admin", "coach"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Coach access required.",
+        )
+    return user
+
+
+def get_allowed_athlete_ids(user: User = Depends(require_coach_or_above)):
+    """
+    Returns list of athlete IDs the user can access, or None (meaning all).
+    Admins get None (unrestricted). Coaches get their assigned athlete IDs.
+    """
+    if user.role == "admin":
+        return None
+    return [a.id for a in user.assigned_athletes]

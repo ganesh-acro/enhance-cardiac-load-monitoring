@@ -7,7 +7,7 @@ Covers the full Performance Analytics (Dashboard) page:
 """
 from fastapi import APIRouter, HTTPException, Query, Depends
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.orm import Session
 
 from core.database import get_db
@@ -18,9 +18,9 @@ from core.data import (
 from core.compute import (
     build_charts, prepare_summary, get_athlete_summary
 )
-from core.security.dependencies import get_current_user
+from core.security.dependencies import get_allowed_athlete_ids
 
-router = APIRouter(prefix="/dashboard", tags=["dashboard"], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
 # ---------------------------------------------------------------------------
@@ -28,12 +28,15 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"], dependencies=[Depend
 # ---------------------------------------------------------------------------
 
 @router.get("/overview")
-def dashboard_overview(db: Session = Depends(get_db)):
+def dashboard_overview(
+    db: Session = Depends(get_db),
+    allowed_ids: Optional[List[str]] = Depends(get_allowed_athlete_ids),
+):
     """
     Returns latest metrics for all athletes AND pre-computed team aggregates.
     Used by AnalyticsOverview (HR analytics, readiness donut, zone intensity, resting HR bar).
     """
-    athletes = get_athletes(db)
+    athletes = get_athletes(db, allowed_ids)
     athletes_data = []
     for athlete in athletes:
         rows = read_athlete_sessions(db, athlete["id"])
@@ -98,12 +101,13 @@ def athlete_dashboard(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
+    allowed_ids: Optional[List[str]] = Depends(get_allowed_athlete_ids),
 ):
     """
     Returns full chart data + summary for a single athlete.
     Feeds Overview, Training, and Readiness tabs.
     """
-    athlete = get_athlete_by_id(db, athlete_id)
+    athlete = get_athlete_by_id(db, athlete_id, allowed_ids)
     if not athlete:
         raise HTTPException(status_code=404, detail="Athlete not found")
 
@@ -144,6 +148,7 @@ def athlete_comparison(
     secondary_start: Optional[date] = Query(None), # secondary period range
     secondary_end: Optional[date] = Query(None),
     db: Session = Depends(get_db),
+    allowed_ids: Optional[List[str]] = Depends(get_allowed_athlete_ids),
 ):
     """
     Returns chart data for the comparison side.
@@ -152,7 +157,7 @@ def athlete_comparison(
     """
     if target_id:
         # Athlete comparison
-        secondary = get_athlete_by_id(db, target_id)
+        secondary = get_athlete_by_id(db, target_id, allowed_ids)
         if not secondary:
             raise HTTPException(status_code=404, detail="Target athlete not found")
         rows = read_athlete_sessions(db, secondary["id"])
@@ -164,7 +169,7 @@ def athlete_comparison(
         }
     elif secondary_start and secondary_end:
         # Period comparison — same athlete, different time slice
-        athlete = get_athlete_by_id(db, athlete_id)
+        athlete = get_athlete_by_id(db, athlete_id, allowed_ids)
         if not athlete:
             raise HTTPException(status_code=404, detail="Athlete not found")
         rows = read_athlete_sessions(db, athlete["id"])

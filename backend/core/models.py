@@ -1,10 +1,19 @@
 from datetime import date, datetime
 from sqlalchemy import (
     Column, String, Integer, Float, BigInteger, Date, DateTime,
-    ForeignKey, UniqueConstraint, Index, Boolean
+    ForeignKey, UniqueConstraint, Index, Boolean, Table
 )
 from sqlalchemy.orm import relationship
 from core.database import Base
+
+
+# Junction table: which coaches manage which athletes
+coach_athletes = Table(
+    "coach_athletes",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column("athlete_id", String, ForeignKey("athletes.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class User(Base):
@@ -17,6 +26,8 @@ class User(Base):
     role = Column(String, nullable=False, default="coach")   # admin | coach | athlete
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    assigned_athletes = relationship("Athlete", secondary=coach_athletes, lazy="selectin")
 
     __table_args__ = (
         Index("idx_users_email", "email"),

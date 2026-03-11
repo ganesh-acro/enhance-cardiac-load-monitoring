@@ -55,13 +55,13 @@ export default function Login() {
                     {/* Glassmorphic Form Container */}
                     <div className="bg-card/40 dark:bg-card/20 backdrop-blur-3xl border border-white/20 dark:border-white/5 rounded-[40px] p-12 shadow-2xl shadow-black/5 ring-1 ring-black/5">
                         <div className="mb-10">
-                            <h2 className="text-3xl font-black text-foreground mb-1">Welcome back</h2>
+                            <h2 className="text-4xl font-black text-foreground mb-1">Welcome back</h2>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-5">
                             {/* Email Input */}
                             <div className="space-y-3">
-                                <label className="text-[11px] font-black tracking-widest text-muted-foreground ml-1">Email address</label>
+                                <label className="text-sm font-black tracking-widest text-muted-foreground ml-1">Email address</label>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
                                         <Mail className="h-6 w-6 text-muted-foreground group-focus-within:text-brand-500 transition-colors" />
@@ -71,8 +71,7 @@ export default function Login() {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="block w-full pl-16 pr-6 py-5 bg-background/50 border border-border/50 rounded-2xl text-base font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all placeholder:text-muted-foreground/50"
-                                        placeholder=""
+                                        className="block w-full pl-16 pr-6 py-5 bg-background/50 border border-border/50 rounded-2xl text-lg font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
                                     />
                                 </div>
                             </div>
@@ -80,8 +79,8 @@ export default function Login() {
                             {/* Password Input */}
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center ml-1">
-                                    <label className="text-[11px] font-black tracking-widest text-muted-foreground">Password</label>
-                                    <a href="#" className="text-[11px] font-black tracking-widest text-brand-500 hover:text-brand-600 transition-colors">Forgot?</a>
+                                    <label className="text-sm font-black tracking-widest text-muted-foreground">Password</label>
+                                    <a href="#" className="text-sm font-black tracking-widest text-brand-500 hover:text-brand-600 transition-colors">Forgot?</a>
                                 </div>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
@@ -92,8 +91,7 @@ export default function Login() {
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="block w-full pl-16 pr-6 py-5 bg-background/50 border border-border/50 rounded-2xl text-base font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all placeholder:text-muted-foreground/50"
-                                        placeholder=""
+                                        className="block w-full pl-16 pr-6 py-5 bg-background/50 border border-border/50 rounded-2xl text-lg font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
                                     />
                                 </div>
                             </div>
@@ -108,7 +106,7 @@ export default function Login() {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="w-full flex items-center justify-center gap-3 group relative overflow-hidden bg-foreground py-5 rounded-2xl font-black text-base text-background shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:hover:scale-100"
+                                className="w-full flex items-center justify-center gap-3 group relative overflow-hidden bg-foreground py-5 rounded-2xl font-black text-lg text-background shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:hover:scale-100"
                             >
                                 <span className="relative z-10 flex items-center gap-2">
                                     {isSubmitting ? 'Logging in...' : 'Log in to Portal'}
@@ -121,7 +119,7 @@ export default function Login() {
 
                         {/* Footer Link */}
                         <div className="mt-10 text-center">
-                            <p className="text-sm font-bold text-muted-foreground tracking-wider">
+                            <p className="text-base font-bold text-muted-foreground tracking-wider">
                                 New to Enhance?{" "}
                                 <button
                                     onClick={() => setShowRegister(true)}
@@ -221,14 +219,14 @@ function RegisterModal({ register, onClose }) {
                 ) : (
                     <>
                         <div className="mb-8">
-                            <h3 className="text-2xl font-black text-foreground mb-1">Create Account</h3>
-                            <p className="text-sm text-muted-foreground font-bold">Join the Enhance platform</p>
+                            <h3 className="text-3xl font-black text-foreground mb-1">Create Account</h3>
+                            <p className="text-base text-muted-foreground font-bold">Join the Enhance platform</p>
                         </div>
 
                         <form onSubmit={handleRegister} className="space-y-4">
                             {/* Name */}
                             <div className="space-y-2">
-                                <label className="text-[11px] font-black tracking-widest text-muted-foreground ml-1">Full name</label>
+                                <label className="text-sm font-black tracking-widest text-muted-foreground ml-1">Full name</label>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                                         <User className="h-5 w-5 text-muted-foreground group-focus-within:text-brand-500 transition-colors" />
@@ -238,15 +236,14 @@ function RegisterModal({ register, onClose }) {
                                         required
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
-                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
-                                        placeholder="John Doe"
+                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-base font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
                                     />
                                 </div>
                             </div>
 
                             {/* Email */}
                             <div className="space-y-2">
-                                <label className="text-[11px] font-black tracking-widest text-muted-foreground ml-1">Email address</label>
+                                <label className="text-sm font-black tracking-widest text-muted-foreground ml-1">Email address</label>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                                         <Mail className="h-5 w-5 text-muted-foreground group-focus-within:text-brand-500 transition-colors" />
@@ -256,15 +253,14 @@ function RegisterModal({ register, onClose }) {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
-                                        placeholder="you@example.com"
+                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-base font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
                                     />
                                 </div>
                             </div>
 
                             {/* Password */}
                             <div className="space-y-2">
-                                <label className="text-[11px] font-black tracking-widest text-muted-foreground ml-1">Password</label>
+                                <label className="text-sm font-black tracking-widest text-muted-foreground ml-1">Password</label>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                                         <Lock className="h-5 w-5 text-muted-foreground group-focus-within:text-brand-500 transition-colors" />
@@ -274,15 +270,14 @@ function RegisterModal({ register, onClose }) {
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
-                                        placeholder="Min. 6 characters"
+                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-base font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
                                     />
                                 </div>
                             </div>
 
                             {/* Confirm Password */}
                             <div className="space-y-2">
-                                <label className="text-[11px] font-black tracking-widest text-muted-foreground ml-1">Confirm password</label>
+                                <label className="text-sm font-black tracking-widest text-muted-foreground ml-1">Confirm password</label>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                                         <Lock className="h-5 w-5 text-muted-foreground group-focus-within:text-brand-500 transition-colors" />
@@ -292,8 +287,7 @@ function RegisterModal({ register, onClose }) {
                                         required
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
-                                        placeholder="Re-enter password"
+                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-base font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
                                     />
                                 </div>
                             </div>
@@ -307,7 +301,7 @@ function RegisterModal({ register, onClose }) {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="w-full flex items-center justify-center gap-2 group relative overflow-hidden bg-foreground py-4 rounded-2xl font-black text-sm text-background shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:hover:scale-100 mt-2"
+                                className="w-full flex items-center justify-center gap-2 group relative overflow-hidden bg-foreground py-4 rounded-2xl font-black text-base text-background shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:hover:scale-100 mt-2"
                             >
                                 <span className="relative z-10">
                                     {isSubmitting ? 'Creating account...' : 'Create Account'}
@@ -317,7 +311,7 @@ function RegisterModal({ register, onClose }) {
                         </form>
 
                         <div className="mt-6 text-center">
-                            <p className="text-sm font-bold text-muted-foreground">
+                            <p className="text-base font-bold text-muted-foreground">
                                 Already have an account?{" "}
                                 <button
                                     onClick={onClose}

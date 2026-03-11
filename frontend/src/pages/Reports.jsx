@@ -6,7 +6,7 @@ import { ReportModal } from '../components/reports/ReportModal';
 export default function Reports() {
     const [searchTerm, setSearchTerm] = useState('');
     const [teamData, setTeamData] = useState([]);
-    const [athletesList, setAthletesList] = useState([]);
+
     const [loading, setLoading] = useState(true);
     const [selectedAthlete, setSelectedAthlete] = useState(null);
     const [athleteData, setAthleteData] = useState({});
@@ -108,7 +108,7 @@ export default function Reports() {
                                 {filteredAthletes.length > 0 ? (
                                     filteredAthletes.map((athlete) => {
                                         const flag = getFlag(athlete.acwr);
-                                        const staticInfo = athletesList.find(a => a.id === athlete.id);
+
 
                                         return (
                                             <tr key={athlete.id} className="group hover:bg-secondary/20 transition-all">
@@ -124,7 +124,7 @@ export default function Reports() {
                                                     {athlete.id}
                                                 </td>
                                                 <td className="px-6 py-5">
-                                                    <span className="text-base font-medium text-foreground">{staticInfo?.sport || 'N/A'}</span>
+                                                    <span className="text-base font-medium text-foreground">{athlete.sport || 'N/A'}</span>
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <span className="text-lg font-bold text-foreground">{(athlete.avg_hr || 0).toFixed(1)} <small className="text-xs text-muted-foreground opacity-60">BPM</small></span>

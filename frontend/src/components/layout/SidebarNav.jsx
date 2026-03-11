@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom"
-import { Users, Activity, BarChart3, FileText, Home } from "lucide-react"
+import { Users, Activity, BarChart3, FileText, Home, ShieldCheck } from "lucide-react"
+import { useAuth } from "../../context/auth-context"
 
 // Custom Icons
 import analyticsIcon from "../../assets/icons/analytics-icon.png"
@@ -8,13 +9,15 @@ import dashboardIcon from "../../assets/icons/dashboard-icon.png"
 export function SidebarNav() {
     const navigate = useNavigate()
     const location = useLocation()
+    const { user } = useAuth()
 
     const navItems = [
         { icon: Home, route: "/", label: "Home" },
         { icon: Users, route: "/profiles", label: "Profiles" },
         { icon: dashboardIcon, route: "/sessions", label: "Group dashboard" },
         { icon: analyticsIcon, route: "/dashboard", label: "Performance analytics" },
-        { icon: FileText, route: "/reports", label: "Reports" }
+        { icon: FileText, route: "/reports", label: "Reports" },
+        ...(user?.role === "admin" ? [{ icon: ShieldCheck, route: "/users", label: "User Management" }] : []),
     ]
 
     return (

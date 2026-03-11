@@ -30,9 +30,8 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/profiles" element={<Profiles />} />
               <Route path="/athletes" element={<Navigate to="/profiles" replace />} />
-              <Route path="/users" element={<Users title="User Management" />} />
+              <Route path="/users" element={<Users />} />
               <Route path="/sessions" element={<GroupDashboard />} />
-              <Route path="/analytics" element={<Users title="Analytics" />} />
               <Route path="/reports" element={<Reports />} />
             </Route>
           </Route>

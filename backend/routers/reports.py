@@ -3,20 +3,24 @@ routers/reports.py
   GET /reports/summary  → table listing for Reports page
   GET /reports/{id}     → full session list for PDF generator
 """
+from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.data import get_athletes, get_athlete_by_id, read_athlete_sessions, pf
-from core.security.dependencies import get_current_user
+from core.security.dependencies import get_allowed_athlete_ids
 
-router = APIRouter(prefix="/reports", tags=["reports"], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 @router.get("/summary")
-def reports_summary(db: Session = Depends(get_db)):
+def reports_summary(
+    db: Session = Depends(get_db),
+    allowed_ids: Optional[List[str]] = Depends(get_allowed_athlete_ids),
+):
     """Returns latest metrics per athlete for the reports table."""
-    athletes = get_athletes(db)
+    athletes = get_athletes(db, allowed_ids)
     results = []
 
     for athlete in athletes:
@@ -48,12 +52,16 @@ def reports_summary(db: Session = Depends(get_db)):
 
 
 @router.get("/{athlete_id}")
-def report_detail(athlete_id: str, db: Session = Depends(get_db)):
+def report_detail(
+    athlete_id: str,
+    db: Session = Depends(get_db),
+    allowed_ids: Optional[List[str]] = Depends(get_allowed_athlete_ids),
+):
     """
     Returns full session list for a single athlete.
     Used by PDF/report generator (ReportModal).
     """
-    athlete = get_athlete_by_id(db, athlete_id)
+    athlete = get_athlete_by_id(db, athlete_id, allowed_ids)
     if not athlete:
         raise HTTPException(status_code=404, detail="Athlete not found")
 

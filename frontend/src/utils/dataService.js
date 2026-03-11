@@ -5,22 +5,41 @@
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-const apiFetch = async (path) => {
+const authHeaders = () => {
     const token = localStorage.getItem("enhance_token");
     const headers = { "Content-Type": "application/json" };
     if (token) headers["Authorization"] = `Bearer ${token}`;
+    return headers;
+};
 
-    const res = await fetch(`${API_URL}${path}`, { headers });
-
+const handleAuth401 = (res) => {
     if (res.status === 401) {
-        // Token expired or invalid — clear session and redirect to login
         localStorage.removeItem("enhance_token");
         localStorage.removeItem("enhance_user");
         window.location.href = "/login";
-        return;
+        return true;
     }
+    return false;
+};
 
+const apiFetch = async (path) => {
+    const res = await fetch(`${API_URL}${path}`, { headers: authHeaders() });
+    if (handleAuth401(res)) return;
     if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
+    return res.json();
+};
+
+const apiMutate = async (path, method, body) => {
+    const res = await fetch(`${API_URL}${path}`, {
+        method,
+        headers: authHeaders(),
+        body: body ? JSON.stringify(body) : undefined,
+    });
+    if (handleAuth401(res)) return;
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `API error ${res.status}`);
+    }
     return res.json();
 };
 
@@ -83,3 +102,21 @@ export const fetchReportsSummary = () => apiFetch('/reports/summary');
 
 /** Full session list for a single athlete (for PDF generation). */
 export const fetchReportDetail = (athleteId) => apiFetch(`/reports/${athleteId}`);
+
+// ── Admin — User management ─────────────────────────────────────────────────
+
+/** List all users (admin only). */
+export const fetchUsers = () => apiFetch('/auth/users');
+
+/** Update a user's role or active status (admin only). */
+export const updateUser = (userId, data) => apiMutate(`/auth/users/${userId}`, 'PATCH', data);
+
+/** Delete a user (admin only). */
+export const deleteUser = (userId) => apiMutate(`/auth/users/${userId}`, 'DELETE');
+
+/** Get assigned athlete IDs for a user (admin only). */
+export const getAssignedAthletes = (userId) => apiFetch(`/auth/users/${userId}/athletes`);
+
+/** Set assigned athletes for a user (admin only). */
+export const setAssignedAthletes = (userId, athleteIds) =>
+    apiMutate(`/auth/users/${userId}/athletes`, 'PUT', { athlete_ids: athleteIds });
