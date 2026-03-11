@@ -6,7 +6,20 @@
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const apiFetch = async (path) => {
-    const res = await fetch(`${API_URL}${path}`);
+    const token = localStorage.getItem("enhance_token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_URL}${path}`, { headers });
+
+    if (res.status === 401) {
+        // Token expired or invalid — clear session and redirect to login
+        localStorage.removeItem("enhance_token");
+        localStorage.removeItem("enhance_user");
+        window.location.href = "/login";
+        return;
+    }
+
     if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
     return res.json();
 };

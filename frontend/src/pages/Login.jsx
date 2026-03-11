@@ -2,15 +2,16 @@ import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/auth-context";
 import { useTheme } from "../components/theme-provider";
-import { Lock, Mail, ArrowRight, Activity } from "lucide-react";
+import { Lock, Mail, ArrowRight, User, X } from "lucide-react";
 
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showRegister, setShowRegister] = useState(false);
 
-    const { login, user } = useAuth();
+    const { login, register, user } = useAuth();
     const { resolvedTheme } = useTheme();
     const navigate = useNavigate();
 
@@ -24,16 +25,13 @@ export default function Login() {
         setError("");
         setIsSubmitting(true);
 
-        // Artificial delay for premium feel
-        setTimeout(() => {
-            const success = login(email, password);
-            if (success) {
-                navigate("/");
-            } else {
-                setError("Invalid credentials. Please try again.");
-                setIsSubmitting(false);
-            }
-        }, 800);
+        const success = await login(email, password);
+        if (success) {
+            navigate("/");
+        } else {
+            setError("Invalid credentials. Please try again.");
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -113,7 +111,7 @@ export default function Login() {
                                 className="w-full flex items-center justify-center gap-3 group relative overflow-hidden bg-foreground py-5 rounded-2xl font-black text-base text-background shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:hover:scale-100"
                             >
                                 <span className="relative z-10 flex items-center gap-2">
-                                    {isSubmitting ? 'Secure login...' : 'Sign in to portal'}
+                                    {isSubmitting ? 'Logging in...' : 'Log in to Portal'}
                                     {!isSubmitting && <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />}
                                 </span>
                                 {/* Hover Glow */}
@@ -124,7 +122,13 @@ export default function Login() {
                         {/* Footer Link */}
                         <div className="mt-10 text-center">
                             <p className="text-sm font-bold text-muted-foreground tracking-wider">
-                                New organization? <a href="#" className="text-brand-500 ml-1 hover:underline">Apply for entry</a>
+                                New to Enhance?{" "}
+                                <button
+                                    onClick={() => setShowRegister(true)}
+                                    className="text-brand-500 ml-1 hover:underline font-black cursor-pointer bg-transparent border-none"
+                                >
+                                    Sign Up
+                                </button>
                             </p>
                         </div>
                     </div>
@@ -134,6 +138,197 @@ export default function Login() {
             {/* Bottom Credits */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 opacity-40">
                 <span className="text-[10px] font-black tracking-widest text-muted-foreground italic">Powered by Enhance vision</span>
+            </div>
+
+            {/* Registration Modal */}
+            {showRegister && (
+                <RegisterModal
+                    register={register}
+                    onClose={() => setShowRegister(false)}
+                />
+            )}
+        </div>
+    );
+}
+
+
+function RegisterModal({ register, onClose }) {
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleRegister = async (e) => {
+        e.preventDefault();
+        setError("");
+
+        if (password !== confirmPassword) {
+            setError("Passwords do not match.");
+            return;
+        }
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters.");
+            return;
+        }
+
+        setIsSubmitting(true);
+        const result = await register(name, email, password);
+        if (result.ok) {
+            setSuccess(true);
+        } else {
+            setError(result.detail);
+        }
+        setIsSubmitting(false);
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Backdrop */}
+            <div
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+                onClick={onClose}
+            />
+
+            {/* Modal Card */}
+            <div className="relative z-10 w-full max-w-[480px] mx-6 bg-card/90 dark:bg-card/80 backdrop-blur-3xl border border-white/20 dark:border-white/5 rounded-[32px] p-10 shadow-2xl shadow-black/10 ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-300">
+                {/* Close button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-6 right-6 p-2 rounded-full hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+                >
+                    <X className="h-5 w-5" />
+                </button>
+
+                {success ? (
+                    <div className="text-center py-6">
+                        <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-green-500/10 flex items-center justify-center">
+                            <svg className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <h3 className="text-2xl font-black text-foreground mb-2">Account Created</h3>
+                        <p className="text-sm text-muted-foreground font-bold mb-8">You can now log in with your credentials.</p>
+                        <button
+                            onClick={onClose}
+                            className="px-8 py-3.5 bg-foreground text-background rounded-2xl font-black text-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
+                        >
+                            Back to Login
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <div className="mb-8">
+                            <h3 className="text-2xl font-black text-foreground mb-1">Create Account</h3>
+                            <p className="text-sm text-muted-foreground font-bold">Join the Enhance platform</p>
+                        </div>
+
+                        <form onSubmit={handleRegister} className="space-y-4">
+                            {/* Name */}
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black tracking-widest text-muted-foreground ml-1">Full name</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                        <User className="h-5 w-5 text-muted-foreground group-focus-within:text-brand-500 transition-colors" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
+                                        placeholder="John Doe"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Email */}
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black tracking-widest text-muted-foreground ml-1">Email address</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                        <Mail className="h-5 w-5 text-muted-foreground group-focus-within:text-brand-500 transition-colors" />
+                                    </div>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
+                                        placeholder="you@example.com"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Password */}
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black tracking-widest text-muted-foreground ml-1">Password</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                        <Lock className="h-5 w-5 text-muted-foreground group-focus-within:text-brand-500 transition-colors" />
+                                    </div>
+                                    <input
+                                        type="password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
+                                        placeholder="Min. 6 characters"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Confirm Password */}
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black tracking-widest text-muted-foreground ml-1">Confirm password</label>
+                                <div className="relative group">
+                                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                        <Lock className="h-5 w-5 text-muted-foreground group-focus-within:text-brand-500 transition-colors" />
+                                    </div>
+                                    <input
+                                        type="password"
+                                        required
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="block w-full pl-14 pr-5 py-4 bg-background/50 border border-border/50 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
+                                        placeholder="Re-enter password"
+                                    />
+                                </div>
+                            </div>
+
+                            {error && (
+                                <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold animate-in fade-in slide-in-from-top-2">
+                                    {error}
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full flex items-center justify-center gap-2 group relative overflow-hidden bg-foreground py-4 rounded-2xl font-black text-sm text-background shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:hover:scale-100 mt-2"
+                            >
+                                <span className="relative z-10">
+                                    {isSubmitting ? 'Creating account...' : 'Create Account'}
+                                </span>
+                                <div className="absolute inset-0 bg-gradient-to-r from-brand-400 to-brand-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            </button>
+                        </form>
+
+                        <div className="mt-6 text-center">
+                            <p className="text-sm font-bold text-muted-foreground">
+                                Already have an account?{" "}
+                                <button
+                                    onClick={onClose}
+                                    className="text-brand-500 ml-1 hover:underline font-black cursor-pointer bg-transparent border-none"
+                                >
+                                    Log In
+                                </button>
+                            </p>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

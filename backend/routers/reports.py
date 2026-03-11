@@ -8,8 +8,9 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.data import get_athletes, get_athlete_by_id, read_athlete_sessions, pf
+from core.security.dependencies import get_current_user
 
-router = APIRouter(prefix="/reports", tags=["reports"])
+router = APIRouter(prefix="/reports", tags=["reports"], dependencies=[Depends(get_current_user)])
 
 
 @router.get("/summary")

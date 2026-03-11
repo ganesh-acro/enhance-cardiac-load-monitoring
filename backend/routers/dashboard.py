@@ -18,8 +18,9 @@ from core.data import (
 from core.compute import (
     build_charts, prepare_summary, get_athlete_summary
 )
+from core.security.dependencies import get_current_user
 
-router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+router = APIRouter(prefix="/dashboard", tags=["dashboard"], dependencies=[Depends(get_current_user)])
 
 
 # ---------------------------------------------------------------------------

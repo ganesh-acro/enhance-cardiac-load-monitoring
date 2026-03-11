@@ -1,10 +1,13 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 const AuthContext = createContext({
     user: null,
-    login: () => { },
+    login: async () => false,
+    register: async () => ({ ok: false }),
     logout: () => { },
-    isLoading: true
+    isLoading: true,
 });
 
 export function AuthProvider({ children }) {
@@ -12,32 +15,58 @@ export function AuthProvider({ children }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Check for existing session
+        // Restore session from stored token on page load
+        const token = localStorage.getItem("enhance_token");
         const savedUser = localStorage.getItem("enhance_user");
-        if (savedUser) {
+        if (token && savedUser) {
             setUser(JSON.parse(savedUser));
         }
         setIsLoading(false);
     }, []);
 
-    const login = (email, password) => {
-        // Official credentials
-        if (email === "acroenhance@gmail.com" && password === "Acroenhance@123") {
-            const userData = { email, name: "AcroEnhance Admin" };
-            setUser(userData);
-            localStorage.setItem("enhance_user", JSON.stringify(userData));
-            return true;
+    const login = async (email, password) => {
+        const res = await fetch(`${API_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+        });
+
+        if (!res.ok) return false;
+
+        const { access_token } = await res.json();
+        // Decode the JWT payload to extract user metadata (no signature check needed client-side)
+        const payload = JSON.parse(atob(access_token.split(".")[1]));
+        const userData = { email: payload.email, role: payload.role };
+
+        localStorage.setItem("enhance_token", access_token);
+        localStorage.setItem("enhance_user", JSON.stringify(userData));
+        setUser(userData);
+        return true;
+    };
+
+    const register = async (name, email, password) => {
+        try {
+            const res = await fetch(`${API_URL}/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, password }),
+            });
+            if (res.ok) return { ok: true };
+            const data = await res.json();
+            return { ok: false, detail: data.detail || "Registration failed." };
+        } catch {
+            return { ok: false, detail: "Network error. Please try again." };
         }
-        return false;
     };
 
     const logout = () => {
-        setUser(null);
+        localStorage.removeItem("enhance_token");
         localStorage.removeItem("enhance_user");
+        setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

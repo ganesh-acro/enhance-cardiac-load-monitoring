@@ -1,10 +1,26 @@
 from datetime import date, datetime
 from sqlalchemy import (
     Column, String, Integer, Float, BigInteger, Date, DateTime,
-    ForeignKey, UniqueConstraint, Index
+    ForeignKey, UniqueConstraint, Index, Boolean
 )
 from sqlalchemy.orm import relationship
 from core.database import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique=True)
+    password_hash = Column(String, nullable=False)
+    role = Column(String, nullable=False, default="coach")   # admin | coach | athlete
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index("idx_users_email", "email"),
+    )
 
 
 class Athlete(Base):

@@ -27,6 +27,8 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DATA_DIR: /data
+      SECRET_KEY: ${SECRET_KEY}
+      TOKEN_EXPIRATION_MINUTES: ${TOKEN_EXPIRATION_MINUTES:-60}
     ports:
       - "8000:8000"
     depends_on:
@@ -38,6 +40,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    environment:
+      VITE_API_TARGET: http://backend:8000
     ports:
       - "5173:5173"
     depends_on:

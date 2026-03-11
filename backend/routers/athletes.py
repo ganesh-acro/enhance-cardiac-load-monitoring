@@ -7,8 +7,9 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.data import get_athletes
+from core.security.dependencies import get_current_user
 
-router = APIRouter(prefix="/athletes", tags=["athletes"])
+router = APIRouter(prefix="/athletes", tags=["athletes"], dependencies=[Depends(get_current_user)])
 
 
 @router.get("")

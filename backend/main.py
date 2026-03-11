@@ -7,8 +7,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routers import athletes, dashboard, group, profiles, reports
+from api import auth
 from core.database import engine, Base
-from core.models import Athlete, Session  # noqa: F401 — registers models on Base
+from core.models import Athlete, Session, User  # noqa: F401 — registers models on Base
 
 app = FastAPI(title="Enhance Cardiac Monitoring API", version="2.0")
 
@@ -27,6 +28,7 @@ app.add_middleware(
 )
 
 # Register all routers
+app.include_router(auth.router)
 app.include_router(athletes.router)
 app.include_router(dashboard.router)
 app.include_router(group.router)
