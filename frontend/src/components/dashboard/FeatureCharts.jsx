@@ -125,6 +125,7 @@ export const HeartRateChart = ({ data }) => {
             nameTextStyle: getAxisStyle(isDark).nameTextStyle,
             axisLabel: getAxisStyle(isDark).axisLabel,
             splitLine: getAxisStyle(isDark).splitLine,
+            splitNumber: 5,
         },
         series
     };
@@ -157,6 +158,7 @@ export const TrainingLoadTrendChart = ({ data }) => {
                 splitLine: { show: false },
                 nameTextStyle: getAxisStyle(isDark).nameTextStyle,
                 axisLabel: getAxisStyle(isDark).axisLabel,
+                splitNumber: 5,
             },
             {
                 type: 'value',
@@ -165,6 +167,7 @@ export const TrainingLoadTrendChart = ({ data }) => {
                 splitLine: { show: false },
                 nameTextStyle: getAxisStyle(isDark).nameTextStyle,
                 axisLabel: getAxisStyle(isDark).axisLabel,
+                splitNumber: 5,
             }
         ],
         series: [
@@ -172,7 +175,7 @@ export const TrainingLoadTrendChart = ({ data }) => {
                 name: 'Training load',
                 type: 'bar',
                 data: data.map(d => d.training_load),
-                itemStyle: getBarItemStyle(BRAND_ORANGE),
+                itemStyle: getBarItemStyle('#10b981'),
             },
             {
                 name: 'Training intensity',
@@ -180,7 +183,7 @@ export const TrainingLoadTrendChart = ({ data }) => {
                 yAxisIndex: 1,
                 smooth: true,
                 data: data.map(d => d.training_intensity),
-                itemStyle: { color: SECONDARY_BLUE },
+                itemStyle: { color: '#f97316' },
                 lineStyle: { width: 3 }
             }
         ]
@@ -214,6 +217,7 @@ export const HRVMultiLineChart = ({ data }) => {
             nameTextStyle: getAxisStyle(isDark).nameTextStyle,
             axisLabel: getAxisStyle(isDark).axisLabel,
             splitLine: getAxisStyle(isDark).splitLine,
+            splitNumber: 5,
         },
         series: [
             { name: 'SDNN', type: 'line', smooth: true, data: data.map(d => d.sdnn), itemStyle: { color: '#8b5cf6' } },
@@ -249,13 +253,14 @@ export const OxygenDebtChart = ({ data }) => {
             nameTextStyle: getAxisStyle(isDark).nameTextStyle,
             axisLabel: getAxisStyle(isDark).axisLabel,
             splitLine: getAxisStyle(isDark).splitLine,
+            splitNumber: 5,
         },
         series: [
             {
                 name: 'Total EPOC',
                 type: 'bar',
                 data: data.map(d => d.epoc_total || 0),
-                itemStyle: getBarItemStyle(BRAND_ORANGE),
+                itemStyle: getBarItemStyle('#8b5cf6'),
                 barMaxWidth: 30
             },
             {
@@ -299,12 +304,13 @@ export const EnergyChart = ({ data }) => {
             nameTextStyle: getAxisStyle(isDark).nameTextStyle,
             axisLabel: getAxisStyle(isDark).axisLabel,
             splitLine: getAxisStyle(isDark).splitLine,
+            splitNumber: 5,
         },
         series: [{
             name: 'Energy',
             type: 'line',
             data: data.map(d => d.ee_men),
-            ...getLineSeriesStyle(BRAND_ORANGE, true),
+            ...getLineSeriesStyle('#f43f5e', true),
             showSymbol: false,
         }]
     };
@@ -337,6 +343,7 @@ export const MovementTrendChart = ({ data }) => {
                 splitLine: { show: false },
                 nameTextStyle: getAxisStyle(isDark).nameTextStyle,
                 axisLabel: getAxisStyle(isDark).axisLabel,
+                splitNumber: 5,
             },
             {
                 type: 'value',
@@ -345,6 +352,7 @@ export const MovementTrendChart = ({ data }) => {
                 splitLine: { show: false },
                 nameTextStyle: getAxisStyle(isDark).nameTextStyle,
                 axisLabel: getAxisStyle(isDark).axisLabel,
+                splitNumber: 5,
             }
         ],
         series: [
@@ -352,7 +360,7 @@ export const MovementTrendChart = ({ data }) => {
                 name: 'Movement load',
                 type: 'bar',
                 data: data.map(d => d.movement_load),
-                itemStyle: getBarItemStyle(BRAND_ORANGE),
+                itemStyle: getBarItemStyle('#06b6d4'),
             },
             {
                 name: 'Movement intensity',
@@ -360,7 +368,7 @@ export const MovementTrendChart = ({ data }) => {
                 yAxisIndex: 1,
                 smooth: true,
                 data: data.map(d => d.movement_load_intensity),
-                itemStyle: { color: SECONDARY_BLUE },
+                itemStyle: { color: '#1f77b4' },
                 lineStyle: { width: 3 }
             }
         ]
@@ -408,13 +416,14 @@ export const OxygenConsumptionChart = ({ data }) => {
             nameTextStyle: axisStyle.nameTextStyle,
             axisLabel: axisStyle.axisLabel,
             splitLine: axisStyle.splitLine,
+            splitNumber: 5,
         },
         series: [
             {
                 name: 'Measured VO2',
                 type: 'bar',
                 data: data.map(d => d.vo2 || 0),
-                itemStyle: getBarItemStyle(BRAND_ORANGE),
+                itemStyle: getBarItemStyle('#f59e0b'),
                 barMaxWidth: 30
             },
             {
@@ -423,7 +432,7 @@ export const OxygenConsumptionChart = ({ data }) => {
                 data: data.map(d => d.vo2_max || 0),
                 symbol: 'circle',
                 symbolSize: 8,
-                itemStyle: { color: SECONDARY_BLUE },
+                itemStyle: { color: '#1f77b4' },
                 lineStyle: { width: 3, type: 'solid' }
             },
             {
@@ -499,6 +508,7 @@ export const ZoneDistributionChart = ({ data }) => {
             nameTextStyle: axisStyle.nameTextStyle,
             axisLabel: axisStyle.axisLabel,
             splitLine: axisStyle.splitLine,
+            splitNumber: 5,
         },
         series
     };
@@ -532,6 +542,7 @@ export const RecoveryBeatsChart = ({ data }) => {
             nameTextStyle: axisStyle.nameTextStyle,
             axisLabel: axisStyle.axisLabel,
             splitLine: axisStyle.splitLine,
+            splitNumber: 5,
         },
         series: [{
             name: 'Recovery',
@@ -575,6 +586,7 @@ export const RMSSDChart = ({ data }) => {
             nameTextStyle: axisStyle.nameTextStyle,
             axisLabel: axisStyle.axisLabel,
             splitLine: axisStyle.splitLine,
+            splitNumber: 5,
         },
         series: [{
             name: 'RMSSD',
@@ -655,7 +667,8 @@ export const ACWRChartCombined = ({ data }) => {
             max: yLimit,
             splitLine: axisStyle.splitLine,
             axisLabel: axisStyle.axisLabel,
-            nameTextStyle: axisStyle.nameTextStyle
+            nameTextStyle: axisStyle.nameTextStyle,
+            splitNumber: 5,
         },
         series: [
             {
@@ -788,7 +801,8 @@ export const MonthlyLoadCombinedChart = ({ data }) => {
                 min: 0,
                 axisLabel: axisStyle.axisLabel,
                 axisLine: axisStyle.axisLine,
-                splitLine: { show: false }
+                splitLine: { show: false },
+                splitNumber: 5,
             },
             {
                 type: 'value',
@@ -797,7 +811,8 @@ export const MonthlyLoadCombinedChart = ({ data }) => {
                 min: 0,
                 axisLabel: { ...axisStyle.axisLabel, formatter: '{value} ms' },
                 axisLine: axisStyle.axisLine,
-                splitLine: axisStyle.splitLine
+                splitLine: axisStyle.splitLine,
+                splitNumber: 5,
             }
         ],
         series: [
@@ -899,7 +914,8 @@ export const WeeklyZoneStackChart = ({ data }) => {
             name: 'Minutes',
             nameTextStyle: axisStyle.nameTextStyle,
             axisLabel: axisStyle.axisLabel,
-            splitLine: axisStyle.splitLine
+            splitLine: axisStyle.splitLine,
+            splitNumber: 5,
         },
         series
     };
@@ -977,7 +993,8 @@ export const MonthlyZoneStackChart = ({ data }) => {
             name: 'Minutes',
             nameTextStyle: axisStyle.nameTextStyle,
             axisLabel: axisStyle.axisLabel,
-            splitLine: axisStyle.splitLine
+            splitLine: axisStyle.splitLine,
+            splitNumber: 5,
         },
         series
     };
@@ -1036,7 +1053,8 @@ export const MonthlyHRAvgRangeChart = ({ data }) => {
             min: (v) => Math.floor(v.min - 5),
             nameTextStyle: axisStyle.nameTextStyle,
             axisLabel: axisStyle.axisLabel,
-            splitLine: axisStyle.splitLine
+            splitLine: axisStyle.splitLine,
+            splitNumber: 5,
         },
         series: [
             {
@@ -1130,7 +1148,8 @@ export const MonthlyACWRChart = ({ data }) => {
             min: 0,
             max: yLimit,
             splitLine: axisStyle.splitLine,
-            axisLabel: axisStyle.axisLabel
+            axisLabel: axisStyle.axisLabel,
+            splitNumber: 5,
         },
         series: [
             {
@@ -1221,7 +1240,8 @@ export const MonthlyMovementComboChart = ({ data }) => {
                 splitLine: { show: false },
                 nameTextStyle: axisStyle.nameTextStyle,
                 axisLabel: axisStyle.axisLabel,
-                axisLine: axisStyle.axisLine
+                axisLine: axisStyle.axisLine,
+                splitNumber: 5,
             },
             {
                 type: 'value',
@@ -1229,7 +1249,8 @@ export const MonthlyMovementComboChart = ({ data }) => {
                 position: 'right',
                 nameTextStyle: axisStyle.nameTextStyle,
                 axisLabel: axisStyle.axisLabel,
-                axisLine: axisStyle.axisLine
+                axisLine: axisStyle.axisLine,
+                splitNumber: 5,
             }
         ],
         series: [

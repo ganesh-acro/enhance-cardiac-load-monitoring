@@ -191,14 +191,14 @@ export default function Profiles() {
                                                         <div className="w-12 h-12 rounded-2xl bg-brand-500/10 flex items-center justify-center text-brand-500 text-lg font-black border border-brand-500/20 group-hover:bg-brand-500 group-hover:text-white transition-all duration-300">
                                                             {athlete.name?.charAt(0)}
                                                         </div>
-                                                        <p className="font-black text-foreground group-hover:text-brand-500 transition-colors uppercase tracking-tight text-lg">{athlete.name}</p>
+                                                        <p className="font-bold text-foreground group-hover:text-brand-500 transition-colors tracking-tight text-lg">{athlete.name}</p>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-5 font-mono text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                                                <td className="px-6 py-5 font-mono text-sm font-bold text-muted-foreground uppercase tracking-widest">
                                                     {athlete.id}
                                                 </td>
                                                 <td className="px-6 py-5">
-                                                    <span className="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-black uppercase tracking-wider bg-secondary/50 text-muted-foreground">
+                                                    <span className="text-base font-medium text-foreground">
                                                         {staticInfo?.sport || 'Athlete'}
                                                     </span>
                                                 </td>
@@ -210,16 +210,16 @@ export default function Profiles() {
                                                                 style={{ width: `${athlete.readiness}%` }}
                                                             ></div>
                                                         </div>
-                                                        <span className="text-base font-black text-foreground">{athlete.readiness}%</span>
+                                                        <span className="text-lg font-bold text-foreground">{athlete.readiness}%</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-5">
-                                                    <span className="text-base font-black text-foreground">{athlete.training_load}</span>
+                                                    <span className="text-lg font-bold text-foreground">{athlete.training_load}</span>
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center gap-2">
                                                         <TrendingUp className={`h-4 w-4 ${parseFloat(athlete.acwr) > 1.3 ? 'text-red-500' : 'text-emerald-500'}`} />
-                                                        <span className="text-base font-black text-foreground">{athlete.acwr.toFixed(2)}</span>
+                                                        <span className="text-lg font-bold text-foreground">{athlete.acwr.toFixed(2)}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-5">

@@ -49,6 +49,7 @@ const HeartRateAnalyticsChart = ({ teamData, avgTeamHR }) => {
             axisLine: axisStyle.axisLine,
             axisLabel: axisStyle.axisLabel,
             splitLine: axisStyle.splitLine,
+            splitNumber: 5,
         },
         series: [
             {
@@ -160,6 +161,7 @@ const RestingHRChart = ({ teamData, avgRestHR }) => {
             axisLine: axisStyle.axisLine,
             axisLabel: axisStyle.axisLabel,
             splitLine: axisStyle.splitLine,
+            splitNumber: 5,
         },
         series: [
             {

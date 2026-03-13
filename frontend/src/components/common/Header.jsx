@@ -2,13 +2,15 @@ import { useState, useRef, useEffect } from "react"
 import { UserCircle, LogOut, ChevronDown, Info, Phone, Sun, Moon, Settings, User } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../../context/auth-context"
+import { useTheme } from "../theme-provider"
 
 export function Header() {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
     const [isMoreOpen, setIsMoreOpen] = useState(false)
     const [isProfileOpen, setIsProfileOpen] = useState(false)
-    const [theme, setTheme] = useState(document.documentElement.classList.contains('dark') ? 'dark' : 'light')
+    const { resolvedTheme, setTheme } = useTheme()
+    const theme = resolvedTheme
 
     const moreRef = useRef(null)
     const profileRef = useRef(null)
@@ -33,31 +35,21 @@ export function Header() {
     };
 
     const toggleTheme = () => {
-        const newTheme = theme === 'light' ? 'dark' : 'light'
-        setTheme(newTheme)
-        if (newTheme === 'dark') {
-            document.documentElement.classList.add('dark')
-        } else {
-            document.documentElement.classList.remove('dark')
-        }
+        setTheme(theme === 'light' ? 'dark' : 'light')
     }
 
     return (
-        <header className="absolute top-0 left-0 z-50 w-full pt-12 px-12 flex items-center justify-between font-sans pointer-events-none">
-            {/* Left: Branding - relative wrapper so it aligns in flex but overflows */}
-            <div className="relative flex items-center h-full pointer-events-auto">
-                <div
-                    className="cursor-pointer"
-                    onClick={() => navigate("/")}
-                >
-                    <img
-                        src={theme === 'dark' ? '/logo dark.png' : '/logo bright.png'}
-                        alt="Enhance Health"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 h-80 w-auto object-contain max-w-none"
-                    />
-                    {/* Placeholder to give some width to the relative container if needed, or just left-0 */}
-                    <div className="w-96" />
-                </div>
+        <header className="absolute top-0 left-0 z-50 w-full pt-6 pb-4 px-6 md:px-10 flex items-center justify-between font-sans pointer-events-none">
+            {/* Left: Branding */}
+            <div
+                className="flex items-center pointer-events-auto cursor-pointer ml-12"
+                onClick={() => navigate("/")}
+            >
+                <img
+                    src={theme === 'dark' ? '/logo dark.png' : '/logo bright.png'}
+                    alt="Enhance"
+                    className="h-16 w-auto object-contain"
+                />
             </div>
 
             {/* Right: Actions */}

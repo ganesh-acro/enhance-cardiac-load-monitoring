@@ -123,14 +123,14 @@ export default function Users() {
                     </div>
                 ) : (
                     <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl overflow-hidden shadow-xl">
-                        <table className="w-full text-sm">
+                        <table className="w-full">
                             <thead>
-                                <tr className="border-b border-border/50 text-muted-foreground">
-                                    <th className="text-left font-black text-[11px] tracking-widest uppercase px-6 py-4">User</th>
-                                    <th className="text-left font-black text-[11px] tracking-widest uppercase px-6 py-4">Role</th>
-                                    <th className="text-center font-black text-[11px] tracking-widest uppercase px-6 py-4">Status</th>
-                                    <th className="text-left font-black text-[11px] tracking-widest uppercase px-6 py-4">Joined</th>
-                                    <th className="text-center font-black text-[11px] tracking-widest uppercase px-6 py-4">Actions</th>
+                                <tr className="border-b border-border/50 bg-secondary/30 text-muted-foreground uppercase text-xs font-black tracking-[0.2em]">
+                                    <th className="text-left px-8 py-6">User</th>
+                                    <th className="text-left px-6 py-6">Role</th>
+                                    <th className="text-center px-6 py-6">Status</th>
+                                    <th className="text-left px-6 py-6">Joined</th>
+                                    <th className="text-center px-8 py-6">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -139,30 +139,30 @@ export default function Users() {
                                     const isCurrentUser = u.email === currentUser.email;
                                     const isCoach = u.role === "coach";
                                     return (
-                                        <tr key={u.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
+                                        <tr key={u.id} className="border-b border-border/30 hover:bg-secondary/20 transition-colors group">
                                             {/* User info */}
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-full bg-muted/50 flex items-center justify-center">
-                                                        <RoleIcon className="h-4 w-4 text-muted-foreground" />
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center border border-border/50">
+                                                        <RoleIcon className="h-5 w-5 text-muted-foreground" />
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-foreground">
+                                                        <p className="font-black text-foreground text-base">
                                                             {u.name}
-                                                            {isCurrentUser && <span className="text-[10px] text-muted-foreground ml-2">(you)</span>}
+                                                            {isCurrentUser && <span className="text-xs text-muted-foreground ml-2">(you)</span>}
                                                         </p>
-                                                        <p className="text-xs text-muted-foreground">{u.email}</p>
+                                                        <p className="text-sm text-muted-foreground">{u.email}</p>
                                                     </div>
                                                 </div>
                                             </td>
 
                                             {/* Role dropdown */}
-                                            <td className="px-6 py-4">
+                                            <td className="px-6 py-5">
                                                 <select
                                                     value={u.role}
                                                     onChange={(e) => handleRoleChange(u.id, e.target.value)}
                                                     disabled={isCurrentUser}
-                                                    className={`text-xs font-black px-3 py-1.5 rounded-lg border cursor-pointer bg-transparent outline-none transition-all ${roleBadge[u.role]} ${isCurrentUser ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                    className={`text-sm font-black px-3 py-1.5 rounded-lg border cursor-pointer bg-transparent outline-none transition-all ${roleBadge[u.role]} ${isCurrentUser ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 >
                                                     {ROLES.map((r) => (
                                                         <option key={r} value={r}>{r}</option>
@@ -171,11 +171,11 @@ export default function Users() {
                                             </td>
 
                                             {/* Active toggle */}
-                                            <td className="px-6 py-4 text-center">
+                                            <td className="px-6 py-5 text-center">
                                                 <button
                                                     onClick={() => handleToggleActive(u.id, u.is_active)}
                                                     disabled={isCurrentUser}
-                                                    className={`inline-flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-lg border transition-all ${u.is_active
+                                                    className={`inline-flex items-center gap-1.5 text-sm font-black px-3 py-1.5 rounded-xl border transition-all ${u.is_active
                                                             ? "bg-green-500/10 text-green-500 border-green-500/20"
                                                             : "bg-red-500/10 text-red-500 border-red-500/20"
                                                         } ${isCurrentUser ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:scale-105"}`}
@@ -186,12 +186,12 @@ export default function Users() {
                                             </td>
 
                                             {/* Joined date */}
-                                            <td className="px-6 py-4 text-xs text-muted-foreground font-bold">
+                                            <td className="px-6 py-5 text-sm text-muted-foreground font-bold">
                                                 {formatDate(u.created_at)}
                                             </td>
 
                                             {/* Actions */}
-                                            <td className="px-6 py-4 text-center">
+                                            <td className="px-8 py-5 text-center">
                                                 <div className="flex items-center justify-center gap-1">
                                                     {/* Assign Athletes — only for coaches */}
                                                     {isCoach && (
@@ -200,24 +200,24 @@ export default function Users() {
                                                             className="p-2 rounded-lg hover:bg-brand-500/10 text-muted-foreground hover:text-brand-500 transition-all"
                                                             title="Assign athletes"
                                                         >
-                                                            <UsersIcon className="h-4 w-4" />
+                                                            <UsersIcon className="h-5 w-5" />
                                                         </button>
                                                     )}
 
                                                     {/* Delete */}
                                                     {isCurrentUser ? (
-                                                        <span className="text-[10px] text-muted-foreground px-2">{!isCoach ? "\u2014" : ""}</span>
+                                                        <span className="text-xs text-muted-foreground px-2">{!isCoach ? "\u2014" : ""}</span>
                                                     ) : confirmDelete === u.id ? (
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-3">
                                                             <button
                                                                 onClick={() => handleDelete(u.id)}
-                                                                className="text-[11px] font-black text-red-500 hover:underline"
+                                                                className="text-sm font-black text-red-500 hover:underline"
                                                             >
                                                                 Confirm
                                                             </button>
                                                             <button
                                                                 onClick={() => setConfirmDelete(null)}
-                                                                className="text-[11px] font-black text-muted-foreground hover:underline"
+                                                                className="text-sm font-black text-muted-foreground hover:underline"
                                                             >
                                                                 Cancel
                                                             </button>
@@ -227,7 +227,7 @@ export default function Users() {
                                                             onClick={() => setConfirmDelete(u.id)}
                                                             className="p-2 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-all"
                                                         >
-                                                            <Trash2 className="h-4 w-4" />
+                                                            <Trash2 className="h-5 w-5" />
                                                         </button>
                                                     )}
                                                 </div>

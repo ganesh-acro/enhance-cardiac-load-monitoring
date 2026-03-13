@@ -100,39 +100,39 @@ export default function Home() {
                     </div>
 
                     {/* Main Footer Content */}
-                    <div className="bg-white dark:bg-card/50 backdrop-blur-xl border-t border-border py-20 px-10">
+                    <div className="bg-white dark:bg-card/50 backdrop-blur-xl border-t border-border py-16 px-10">
                         <div className="container mx-auto">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 items-start text-center md:text-left">
                                 {/* Left: Branding & Contact */}
-                                <div className="space-y-6 flex flex-col items-center md:items-start">
+                                <div className="flex flex-col items-center md:items-start gap-6">
                                     <img
                                         src={resolvedTheme === 'dark' ? '/logo dark.png' : '/logo bright.png'}
                                         alt="Enhance Health"
-                                        className="h-64 w-auto object-contain max-w-none"
+                                        className="h-14 w-auto object-contain"
                                     />
-                                    <div className="space-y-3 pt-6 font-semibold text-foreground/80 font-sans">
+                                    <div className="space-y-2 text-sm font-medium text-foreground/70">
                                         <p>+91 98413 53952</p>
                                         <p>acroenhance@gmail.com</p>
                                     </div>
                                 </div>
 
                                 {/* Center: Address */}
-                                <div className="flex flex-col items-center justify-center space-y-4">
-                                    <h3 className="text-lg font-bold">Our Location</h3>
-                                    <p className="text-foreground/70 text-center leading-relaxed font-medium">
+                                <div className="flex flex-col items-center space-y-3">
+                                    <h3 className="text-base font-bold text-foreground">Our Location</h3>
+                                    <p className="text-sm text-foreground/60 text-center leading-relaxed font-medium">
                                         ESB 309, IIT Madras,<br />
                                         Chennai-600036, India.
                                     </p>
                                 </div>
 
-                                {/* Right: Links */}
-
+                                {/* Right: placeholder for future links */}
+                                <div />
                             </div>
 
                             {/* Copyright */}
-                            <div className="mt-16 pt-8 border-t border-border/50 text-center">
-                                <p className="text-sm text-muted-foreground font-black tracking-[0.2em]">
-                                    @ 2026 by Enhance
+                            <div className="mt-12 pt-6 border-t border-border/50 text-center">
+                                <p className="text-xs text-muted-foreground font-bold tracking-[0.2em]">
+                                    &copy; 2026 Enhance
                                 </p>
                             </div>
                         </div>

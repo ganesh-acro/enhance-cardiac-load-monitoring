@@ -85,6 +85,17 @@
   }
 }
 
+/* Soften heavy font weights globally — Outfit renders very bold at 800/900 */
+.font-black {
+  font-weight: 700 !important;
+}
+.font-extrabold {
+  font-weight: 600 !important;
+}
+.font-bold {
+  font-weight: 600 !important;
+}
+
 .brand-orange-filter {
   filter: invert(58%) sepia(82%) saturate(2253%) hue-rotate(344deg) brightness(101%) contrast(98%);
 }

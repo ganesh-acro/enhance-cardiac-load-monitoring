@@ -17,17 +17,13 @@ import {
     Users as UsersIcon,
     X
 } from "lucide-react"
+import ReactECharts from 'echarts-for-react'
+import * as echarts from 'echarts'
+import { useTheme } from "../components/theme-provider"
 import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ReferenceLine,
-    ResponsiveContainer,
-    Cell
-} from "recharts"
+    FONT_FAMILY,
+    getTooltipStyle, getAxisStyle, getGridStyle
+} from "../utils/chartStyles"
 import { fetchGroupSummary } from "../utils/dataService"
 import { format } from "date-fns"
 
@@ -392,13 +388,23 @@ function MetricCard({ metric, theme, teamData, groupAverage, onZoom, sortConfig,
     )
 }
 
+function useChartTheme() {
+    const { resolvedTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
+    useEffect(() => { setMounted(true) }, [])
+    if (!mounted) return false
+    return resolvedTheme === 'dark'
+}
+
 function MetricChart({ metric, theme, data, groupAverage, selectedAthleteId, isZoomed = false }) {
+    const isDark = useChartTheme()
+
     if (!metric || !data || data.length === 0) return (
         <div className="h-full flex items-center justify-center text-muted-foreground text-xs font-bold tracking-widest">
             No data available
         </div>
     )
-    // Preparing data for recharts
+
     const chartData = useMemo(() => {
         return data.map(athlete => ({
             name: athlete.name.split(' ')[0],
@@ -408,88 +414,97 @@ function MetricChart({ metric, theme, data, groupAverage, selectedAthleteId, isZ
         }))
     }, [data, metric.key])
 
-    const gradId = `grad-${metric.key}-${isZoomed ? 'z' : 'c'}-${theme.color.replace('#', '')}`;
+    const avg = parseFloat(groupAverage)
+    const axisStyle = getAxisStyle(isDark)
+
+    const barData = chartData.map(entry => {
+        const isAboveAvg = entry.value > avg
+        const isSelected = selectedAthleteId === "all" || selectedAthleteId === entry.id
+        return {
+            value: entry.value,
+            itemStyle: {
+                color: isSelected
+                    ? (isAboveAvg
+                        ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#eb8144' },
+                            { offset: 1, color: '#f5a670' },
+                        ])
+                        : new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: theme.gradient[0] },
+                            { offset: 1, color: theme.gradient[1] },
+                        ]))
+                    : (isDark ? '#334155' : '#e2e8f0'),
+                opacity: isSelected ? 1 : 0.3,
+                borderRadius: [8, 8, 2, 2],
+            }
+        }
+    })
+
+    const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+            ...getTooltipStyle(isDark),
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' },
+            formatter: (params) => {
+                const idx = params[0].dataIndex
+                const entry = chartData[idx]
+                return `<div style="font-family:${FONT_FAMILY}">
+                    <div style="font-weight:700;color:${theme.color};margin-bottom:4px">${entry.fullName}</div>
+                    <div style="font-size:16px;font-weight:700">${entry.value.toFixed(1)} <span style="font-size:12px;opacity:0.6">${metric.unit}</span></div>
+                    <div style="font-size:11px;opacity:0.5;margin-top:2px">Group Avg: ${avg.toFixed(1)}</div>
+                </div>`
+            }
+        },
+        grid: getGridStyle({ top: 20, bottom: isZoomed ? '15%' : '10%' }),
+        xAxis: {
+            type: 'category',
+            data: chartData.map(d => d.name),
+            ...axisStyle,
+            axisLabel: {
+                ...axisStyle.axisLabel,
+                rotate: chartData.length > 6 ? 45 : 0,
+            },
+        },
+        yAxis: {
+            type: 'value',
+            ...axisStyle,
+        },
+        series: [
+            {
+                type: 'bar',
+                data: barData,
+                barMaxWidth: isZoomed ? 40 : 25,
+                animationDuration: 500,
+                markLine: {
+                    silent: true,
+                    symbol: 'none',
+                    lineStyle: {
+                        color: isDark ? '#cbd5e1' : '#333333',
+                        type: 'dashed',
+                        width: 2,
+                    },
+                    label: {
+                        position: 'end',
+                        formatter: `Avg: ${avg.toFixed(1)}`,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        fontFamily: FONT_FAMILY,
+                        color: isDark ? '#cbd5e1' : '#333333',
+                    },
+                    data: [{ yAxis: avg }],
+                },
+            },
+        ],
+    }
 
     return (
-        <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: isZoomed ? 40 : 20 }}>
-                <defs>
-                    <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={theme.gradient[0]} />
-                        <stop offset="100%" stopColor={theme.gradient[1]} />
-                    </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 700 }}
-                    interval={0}
-                    angle={chartData.length > 6 ? -45 : 0}
-                    textAnchor={chartData.length > 6 ? 'end' : 'middle'}
-                />
-                <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 700 }}
-                />
-                <Tooltip
-                    cursor={{ fill: 'hsl(var(--secondary))', opacity: 0.4 }}
-                    content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                            return (
-                                <div className="bg-card border border-border px-4 py-3 rounded-2xl shadow-2xl">
-                                    <p className={`text-xs font-black uppercase mb-1`} style={{ color: theme.color }}>{payload[0].payload.fullName}</p>
-                                    <div className="space-y-1">
-                                        <p className="text-lg font-black leading-none">
-                                            {payload[0].value.toFixed(1)} <span className="text-xs font-bold text-muted-foreground">{metric.unit}</span>
-                                        </p>
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                                            Group Avg: {parseFloat(groupAverage).toFixed(1)}
-                                        </p>
-                                    </div>
-                                </div>
-                            )
-                        }
-                        return null
-                    }}
-                />
-                <ReferenceLine
-                    y={parseFloat(groupAverage)}
-                    stroke="hsl(var(--foreground))"
-                    strokeDasharray="5 5"
-                    strokeWidth={2}
-                    label={{
-                        position: 'right',
-                        value: `Group Avg: ${parseFloat(groupAverage).toFixed(1)}`,
-                        fill: 'hsl(var(--foreground))',
-                        fontSize: 10,
-                        fontWeight: 900,
-                        offset: 10
-                    }}
-                />
-                <Bar
-                    dataKey="value"
-                    radius={[10, 10, 4, 4]}
-                    barSize={isZoomed ? 40 : 25}
-                    animationDuration={500}
-                >
-                    {chartData.map((entry, index) => {
-                        const isAboveAvg = entry.value > parseFloat(groupAverage);
-                        const isSelected = selectedAthleteId === "all" || selectedAthleteId === entry.id;
-
-                        return (
-                            <Cell
-                                key={`cell-${index}`}
-                                fill={isAboveAvg ? '#eb8144ff' : (isSelected ? `url(#${gradId})` : 'hsl(var(--muted))')}
-                                opacity={isSelected ? 1 : 0.3}
-                            />
-                        );
-                    })}
-                </Bar>
-            </BarChart>
-        </ResponsiveContainer>
+        <ReactECharts
+            key={`${metric.key}-${isDark}`}
+            option={option}
+            notMerge={true}
+            style={{ height: '100%', width: '100%' }}
+        />
     )
 }
 

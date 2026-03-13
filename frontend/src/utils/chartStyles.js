@@ -30,11 +30,15 @@ export const getTooltipStyle = (isDark, extra = {}) => ({
 // ─── Axis ────────────────────────────────────────────────────────────────────
 export const getAxisStyle = (isDark) => ({
     axisLine: {
-        lineStyle: { color: isDark ? '#475569' : '#888888' },
+        lineStyle: { color: isDark ? 'rgba(71,85,105,0.4)' : 'rgba(0,0,0,0.1)' },
     },
     splitLine: {
-        lineStyle: { color: isDark ? '#1e293b' : '#e5e5e5' },
+        lineStyle: {
+            color: isDark ? 'rgba(51,65,85,0.3)' : 'rgba(0,0,0,0.07)',
+            type: 'dashed',
+        },
     },
+    splitNumber: 5,
     axisLabel: {
         fontSize: 13,
         fontWeight: 500,
