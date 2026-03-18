@@ -1,16 +1,52 @@
-# React + Vite
+# Enhance — Cardiac Load Monitoring Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A sports-science dashboard for monitoring athlete cardiac and training metrics, built for coaches and administrators at Enhance Health.
 
-Currently, two official plugins are available:
+## Project Evolution
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Phase 1 — Frontend (React + Vite)
+Started as a pure frontend application with React and Vite. Athlete data was loaded directly from CSV files on the client side. The UI included individual athlete dashboards with training load, readiness, and feature charts using Recharts.
 
-## React Compiler
+### Phase 2 — Backend (FastAPI + PostgreSQL)
+Migrated to a full-stack architecture. A FastAPI backend was introduced to serve data through REST APIs, with PostgreSQL as the database. CSV data was migrated into the database via a custom script (`backend/scripts/migrate_csv.py`). The frontend was updated to fetch all data through API calls proxied via Vite's dev server. Docker support was added for containerised deployment.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Phase 3 — Authentication & Security
+Implemented a complete auth system with production hardening:
 
-## Expanding the ESLint configuration
+- **JWT access tokens** (HS256, 15-min expiry) + **opaque refresh tokens** (7-day expiry, DB-backed)
+- **Refresh token rotation** — old token revoked on each refresh, preventing reuse
+- **Role-based access control** — admin, coach, and athlete roles with scoped data access
+- **User management** — admin CRUD for users, coach-athlete assignment, password resets
+- **Rate limiting** — 5 login attempts/min per IP via slowapi
+- **CORS restriction** — allowlisted origins only (no wildcard)
+- **SECRET_KEY validation** — rejects placeholder keys and enforces minimum length on startup
+- **Silent token refresh** — frontend intercepts 401s and transparently refreshes tokens with singleton promise deduplication
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | React, Vite, Tailwind CSS, Recharts, Lucide icons |
+| Backend | FastAPI, SQLAlchemy, Pydantic, python-jose, passlib (bcrypt) |
+| Database | PostgreSQL |
+| Auth | JWT + refresh token rotation, slowapi rate limiting |
+| Deployment | Docker, docker-compose |
+
+## Getting Started
+
+### Backend
+```bash
+cd backend
+pip install -r requirements.txt
+# Set environment variables (see .env.example)
+uvicorn main:app --reload
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend dev server runs on `http://localhost:5173` and proxies `/api` requests to the backend at `http://localhost:8000`.
