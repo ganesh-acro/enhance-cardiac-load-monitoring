@@ -12,30 +12,73 @@ const authHeaders = () => {
     return headers;
 };
 
-const handleAuth401 = (res) => {
-    if (res.status === 401) {
-        localStorage.removeItem("enhance_token");
-        localStorage.removeItem("enhance_user");
-        window.location.href = "/login";
-        return true;
-    }
-    return false;
-};
+// ── Refresh token interceptor ───────────────────────────────────────────────
+
+let refreshPromise = null;
+
+async function tryRefresh() {
+    const refreshToken = localStorage.getItem("enhance_refresh_token");
+    if (!refreshToken) return false;
+
+    // Deduplicate: if a refresh is already in flight, await the same promise
+    if (refreshPromise) return refreshPromise;
+
+    refreshPromise = (async () => {
+        try {
+            const res = await fetch(`${API_URL}/auth/refresh`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refresh_token: refreshToken }),
+            });
+            if (!res.ok) return false;
+            const data = await res.json();
+            localStorage.setItem("enhance_token", data.access_token);
+            localStorage.setItem("enhance_refresh_token", data.refresh_token);
+            return true;
+        } catch {
+            return false;
+        } finally {
+            refreshPromise = null;
+        }
+    })();
+
+    return refreshPromise;
+}
+
+function hardLogout() {
+    localStorage.removeItem("enhance_token");
+    localStorage.removeItem("enhance_refresh_token");
+    localStorage.removeItem("enhance_user");
+    window.location.href = "/login";
+}
 
 const apiFetch = async (path) => {
-    const res = await fetch(`${API_URL}${path}`, { headers: authHeaders() });
-    if (handleAuth401(res)) return;
+    let res = await fetch(`${API_URL}${path}`, { headers: authHeaders() });
+    if (res.status === 401) {
+        const refreshed = await tryRefresh();
+        if (refreshed) {
+            res = await fetch(`${API_URL}${path}`, { headers: authHeaders() });
+        }
+        if (res.status === 401) { hardLogout(); return; }
+    }
     if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
     return res.json();
 };
 
 const apiMutate = async (path, method, body) => {
-    const res = await fetch(`${API_URL}${path}`, {
+    const opts = {
         method,
         headers: authHeaders(),
         body: body ? JSON.stringify(body) : undefined,
-    });
-    if (handleAuth401(res)) return;
+    };
+    let res = await fetch(`${API_URL}${path}`, opts);
+    if (res.status === 401) {
+        const refreshed = await tryRefresh();
+        if (refreshed) {
+            res = await fetch(`${API_URL}${path}`, { ...opts, headers: authHeaders() });
+        }
+        if (res.status === 401) { hardLogout(); return; }
+    }
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail || `API error ${res.status}`);
@@ -108,11 +151,18 @@ export const fetchReportDetail = (athleteId) => apiFetch(`/reports/${athleteId}`
 /** List all users (admin only). */
 export const fetchUsers = () => apiFetch('/auth/users');
 
+/** Create a new user (admin only). */
+export const createUser = (data) => apiMutate('/auth/users', 'POST', data);
+
 /** Update a user's role or active status (admin only). */
 export const updateUser = (userId, data) => apiMutate(`/auth/users/${userId}`, 'PATCH', data);
 
 /** Delete a user (admin only). */
 export const deleteUser = (userId) => apiMutate(`/auth/users/${userId}`, 'DELETE');
+
+/** Reset a user's password (admin only). */
+export const resetUserPassword = (userId, newPassword) =>
+    apiMutate(`/auth/users/${userId}/password`, 'PATCH', { new_password: newPassword });
 
 /** Get assigned athlete IDs for a user (admin only). */
 export const getAssignedAthletes = (userId) => apiFetch(`/auth/users/${userId}/athletes`);

@@ -1,6 +1,7 @@
-import React from 'react';
-import { HeartRateChart, HRVMultiLineChart, RecoveryBeatsChart, ACWRChartCombined } from './FeatureCharts';
-import { Heart, Activity, RefreshCw } from 'lucide-react';
+import {
+    HeartRateChart, HRVMultiLineChart, RecoveryBeatsChart,
+    ACWRChartCombined, RestingHRChart, HRRecoveryChart
+} from './FeatureCharts';
 
 export const ReadinessTab = ({ primaryChartData }) => {
 
@@ -23,7 +24,23 @@ export const ReadinessTab = ({ primaryChartData }) => {
                     )}
                 </div>
 
-                {/* 2. Heart Rate */}
+                {/* 2. Resting HR & HR Std */}
+                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                    <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
+                        Resting heart rate
+                    </h5>
+                    {primaryChartData.resting_hr && primaryChartData.resting_hr.length > 0 ? (
+                        <RestingHRChart
+                            data={primaryChartData.resting_hr}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                            No resting HR data found for this period.
+                        </div>
+                    )}
+                </div>
+
+                {/* 3. Heart Rate (all sessions) */}
                 <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Heart rate
@@ -33,7 +50,7 @@ export const ReadinessTab = ({ primaryChartData }) => {
                     />
                 </div>
 
-                {/* 2. HRV Trend */}
+                {/* 4. HRV Trend */}
                 <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         HRV trends
@@ -43,7 +60,23 @@ export const ReadinessTab = ({ primaryChartData }) => {
                     />
                 </div>
 
-                {/* 3. Recovery Beats */}
+                {/* 5. HR Recovery 60s */}
+                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                    <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
+                        HR recovery (60s)
+                    </h5>
+                    {primaryChartData.hr_recovery && primaryChartData.hr_recovery.length > 0 ? (
+                        <HRRecoveryChart
+                            data={primaryChartData.hr_recovery}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                            No HR recovery data found for this period.
+                        </div>
+                    )}
+                </div>
+
+                {/* 6. Recovery Beats */}
                 <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Recovery beats

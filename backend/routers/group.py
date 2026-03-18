@@ -1,6 +1,7 @@
 """
 routers/group.py — GET /group/summary
-Serves the GroupDashboard page with all athletes' latest metrics.
+Serves the GroupDashboard page with all athletes' latest metrics,
+split by session type (Training vs Readiness).
 """
 from typing import Optional, List
 from fastapi import APIRouter, Depends
@@ -12,6 +13,53 @@ from core.security.dependencies import get_allowed_athlete_ids
 
 router = APIRouter(prefix="/group", tags=["group"])
 
+TRAINING_METRIC_KEYS = [
+    "training_load", "training_intensity", "movement_load",
+    "vo2", "ee_men", "epoc_total",
+]
+
+READINESS_METRIC_KEYS = [
+    "acwr", "avg_hr", "rmssd", "recovery_beats", "rest_hr",
+]
+
+
+def _latest_by_type(rows, session_type_check):
+    """Return the latest row matching a session-type predicate, or None."""
+    matched = [r for r in rows if session_type_check(r)]
+    return matched[-1] if matched else None
+
+
+def _build_athlete_entry(athlete, latest, metric_keys):
+    """Build a single athlete dict from their latest session of a given type."""
+    if not latest:
+        return None
+    try:
+        last_date = latest["date"].strftime("%d %b %Y")
+        session_date = latest["date"].strftime("%b %d, %Y")
+    except Exception:
+        last_date = session_date = "N/A"
+
+    entry = {
+        "id": athlete["id"],
+        "name": athlete["name"],
+        "img": athlete.get("img") or f"https://api.dicebear.com/7.x/avataaars/svg?seed={athlete['name']}",
+        "sport": athlete.get("sport", "N/A"),
+        "sessionDate": session_date,
+        "lastDate": last_date,
+    }
+    for key in metric_keys:
+        entry[key] = pf(latest.get(key))
+    return entry
+
+
+def _group_averages(results, metric_keys):
+    """Pre-compute group averages for a list of athlete entries."""
+    n = len(results) or 1
+    return {
+        key: round(sum(a[key] for a in results) / n, 1)
+        for key in metric_keys
+    }
+
 
 @router.get("/summary")
 def group_summary(
@@ -19,58 +67,41 @@ def group_summary(
     allowed_ids: Optional[List[str]] = Depends(get_allowed_athlete_ids),
 ):
     """
-    Returns latest session metrics for all athletes AND pre-computed group averages.
-    Fields match METRICS_CONFIG keys in GroupDashboard.jsx.
+    Returns latest Training and Readiness session metrics per athlete,
+    with pre-computed group averages for each category.
     """
     athletes = get_athletes(db, allowed_ids)
-    results = []
-
-    metric_keys = ["avg_hr", "training_load", "training_intensity", "acwr", "epoc_total", "rmssd"]
+    training_results = []
+    readiness_results = []
 
     for athlete in athletes:
         rows = read_athlete_sessions(db, athlete["id"])
         if not rows:
             continue
-        latest = rows[-1]
-        try:
-            last_date = latest["date"].strftime("%d %b %Y")
-            session_date = latest["date"].strftime("%b %d, %Y")
-        except Exception:
-            last_date = session_date = "N/A"
 
-        results.append({
-            "id": athlete["id"],
-            "name": athlete["name"],
-            "img": athlete.get("img") or f"https://api.dicebear.com/7.x/avataaars/svg?seed={athlete['name']}",
-            "sport": athlete.get("sport", "N/A"),
-            "sessionDate": session_date,
-            "lastDate": last_date,
-            "avg_hr": pf(latest.get("avg_hr")),
-            "training_load": pf(latest.get("training_load")),
-            "training_intensity": pf(latest.get("training_intensity")),
-            "acwr": pf(latest.get("acwr")),
-            "epoc_total": pf(latest.get("epoc_total")),
-            "rmssd": pf(latest.get("rmssd")),
-            "rest_hr": pf(latest.get("rest_hr")),
-            "acute_load": pf(latest.get("acute_load")),
-            "zones": {
-                "z0": pf(latest.get("zone_0_pct")),
-                "z1": pf(latest.get("zone_1_pct")),
-                "z2": pf(latest.get("zone_2_pct")),
-                "z3": pf(latest.get("zone_3_pct")),
-                "z4": pf(latest.get("zone_4_pct")),
-                "z5": pf(latest.get("zone_5_pct")),
-            },
-        })
+        # Latest Training session
+        latest_training = _latest_by_type(
+            rows, lambda r: r.get("session_type") == "Training"
+        )
+        t_entry = _build_athlete_entry(athlete, latest_training, TRAINING_METRIC_KEYS)
+        if t_entry:
+            training_results.append(t_entry)
 
-    # Pre-compute group averages so GroupDashboard.jsx does zero math
-    n = len(results) or 1
-    group_averages = {
-        key: round(sum(a[key] for a in results) / n, 1)
-        for key in metric_keys
-    }
+        # Latest Readiness session
+        latest_readiness = _latest_by_type(
+            rows, lambda r: r.get("session_type") in ("Readiness", "Light Activity")
+        )
+        r_entry = _build_athlete_entry(athlete, latest_readiness, READINESS_METRIC_KEYS)
+        if r_entry:
+            readiness_results.append(r_entry)
 
     return {
-        "athletes": results,
-        "groupAverages": group_averages,
+        "training": {
+            "athletes": training_results,
+            "groupAverages": _group_averages(training_results, TRAINING_METRIC_KEYS),
+        },
+        "readiness": {
+            "athletes": readiness_results,
+            "groupAverages": _group_averages(readiness_results, READINESS_METRIC_KEYS),
+        },
     }

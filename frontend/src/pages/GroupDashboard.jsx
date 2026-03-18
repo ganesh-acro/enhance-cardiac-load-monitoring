@@ -8,13 +8,12 @@ import {
     Wind,
     RotateCcw,
     Maximize2,
-    Search,
     ChevronDown,
-    ArrowUpDown,
     ArrowUp,
     ArrowDown,
-    User,
-    Users as UsersIcon,
+    Heart,
+    Footprints,
+    Battery,
     X
 } from "lucide-react"
 import ReactECharts from 'echarts-for-react'
@@ -25,64 +24,23 @@ import {
     getTooltipStyle, getAxisStyle, getGridStyle
 } from "../utils/chartStyles"
 import { fetchGroupSummary } from "../utils/dataService"
-import { format } from "date-fns"
 
-const METRICS_CONFIG = [
-    {
-        key: 'avg_hr',
-        label: 'Avg HR',
-        unit: 'bpm',
-        icon: Activity,
-        color: '#f97316',
-        gradient: ['#f97316', '#fb923c']
-    },
-    {
-        key: 'training_load',
-        label: 'Training load',
-        unit: '',
-        icon: Zap,
-        color: '#10b981',
-        gradient: ['#10b981', '#34d399']
-    },
-    {
-        key: 'training_intensity',
-        label: 'Training intensity',
-        unit: '',
-        icon: Flame,
-        color: '#ef4444',
-        gradient: ['#ef4444', '#f87171']
-    },
-    {
-        key: 'acwr',
-        label: 'ACWR',
-        unit: '',
-        icon: Scale,
-        color: '#3b82f6',
-        gradient: ['#3b82f6', '#60a5fa']
-    },
-    {
-        key: 'epoc_total',
-        label: 'EPOC',
-        unit: 'kcal',
-        icon: Wind,
-        color: '#8b5cf6',
-        gradient: ['#8b5cf6', '#a78bfa']
-    },
-    {
-        key: 'rmssd',
-        label: 'RMSSD',
-        unit: 'ms',
-        icon: RotateCcw,
-    }
+const TRAINING_METRICS = [
+    { key: 'training_load', label: 'Training Load', unit: '', icon: Zap, color: '#10b981', gradient: ['#10b981', '#34d399'] },
+    { key: 'training_intensity', label: 'Training Intensity', unit: '', icon: Flame, color: '#ef4444', gradient: ['#ef4444', '#f87171'] },
+    { key: 'movement_load', label: 'Movement Load', unit: '', icon: Footprints, color: '#8b5cf6', gradient: ['#8b5cf6', '#a78bfa'] },
+    { key: 'vo2', label: 'VO2', unit: 'ml/kg/min', icon: Wind, color: '#3b82f6', gradient: ['#3b82f6', '#60a5fa'] },
+    { key: 'ee_men', label: 'Energy Expenditure', unit: 'kcal', icon: Flame, color: '#f97316', gradient: ['#f97316', '#fb923c'] },
+    { key: 'epoc_total', label: 'EPOC', unit: 'kcal', icon: Battery, color: '#06b6d4', gradient: ['#06b6d4', '#22d3ee'] },
 ]
 
-const ORANGE_THEME = {
-    color: '#f97316',
-    gradient: ['#f97316', '#fb923c'],
-    brandText: 'text-brand-500',
-    brandBg: 'bg-brand-500/10',
-    brandBorder: 'border-brand-500/20'
-}
+const READINESS_METRICS = [
+    { key: 'acwr', label: 'ACWR', unit: '', icon: Scale, color: '#3b82f6', gradient: ['#3b82f6', '#60a5fa'] },
+    { key: 'avg_hr', label: 'Avg HR', unit: 'bpm', icon: Activity, color: '#f97316', gradient: ['#f97316', '#fb923c'] },
+    { key: 'rmssd', label: 'RMSSD', unit: 'ms', icon: RotateCcw, color: '#10b981', gradient: ['#10b981', '#34d399'] },
+    { key: 'recovery_beats', label: 'Recovery Beats', unit: 'bpm', icon: Heart, color: '#ef4444', gradient: ['#ef4444', '#f87171'] },
+    { key: 'rest_hr', label: 'Resting HR', unit: 'bpm', icon: Heart, color: '#8b5cf6', gradient: ['#8b5cf6', '#a78bfa'] },
+]
 
 const GRAY_THEME = {
     color: '#8494aaff',
@@ -93,9 +51,9 @@ const GRAY_THEME = {
 }
 
 export default function GroupDashboard() {
-    const [teamData, setTeamData] = useState([])
-    const [athletesList, setAthletesList] = useState([])
-    const [groupAveragesFromServer, setGroupAveragesFromServer] = useState({})
+    const [activeTab, setActiveTab] = useState('training')
+    const [trainingData, setTrainingData] = useState({ athletes: [], groupAverages: {} })
+    const [readinessData, setReadinessData] = useState({ athletes: [], groupAverages: {} })
     const [loading, setLoading] = useState(true)
     const [zoomedMetric, setZoomedMetric] = useState(null)
     const [zoomedSelectedAthleteId, setZoomedSelectedAthleteId] = useState("all")
@@ -105,26 +63,27 @@ export default function GroupDashboard() {
         const loadAllData = async () => {
             setLoading(true)
             try {
-                const { athletes, groupAverages: serverGroupAvg } = await fetchGroupSummary();
-                setTeamData(athletes)
-                setAthletesList(athletes)  // for dropdowns in zoomed view
-                setGroupAveragesFromServer(serverGroupAvg || {})
+                const { training, readiness } = await fetchGroupSummary()
+                setTrainingData(training)
+                setReadinessData(readiness)
             } catch (err) {
-                console.error("Error loading group dashboard data:", err);
+                console.error("Error loading group dashboard data:", err)
             }
             setLoading(false)
         }
         loadAllData()
     }, [])
 
+    const currentData = activeTab === 'training' ? trainingData : readinessData
+    const currentMetrics = activeTab === 'training' ? TRAINING_METRICS : READINESS_METRICS
+    const teamData = currentData.athletes
+    const groupAverages = currentData.groupAverages
+
     const handleSort = (metricKey, field) => {
         setSortConfigs(prev => {
             const current = prev[metricKey] || { field: 'name', direction: 'asc' }
             const newDirection = current.field === field && current.direction === 'asc' ? 'desc' : 'asc'
-            return {
-                ...prev,
-                [metricKey]: { field, direction: newDirection }
-            }
+            return { ...prev, [metricKey]: { field, direction: newDirection } }
         })
     }
 
@@ -133,28 +92,12 @@ export default function GroupDashboard() {
         return [...data].sort((a, b) => {
             let valA = a[config.field]
             let valB = b[config.field]
-
             if (typeof valA === 'string') {
-                return config.direction === 'asc'
-                    ? valA.localeCompare(valB)
-                    : valB.localeCompare(valA)
+                return config.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
             }
-
             return config.direction === 'asc' ? valA - valB : valB - valA
         })
     }
-
-    // Group averages come pre-computed from the backend — no reduce() needed here
-    const groupAverages = useMemo(() => {
-        // Fall back to client-side if server didn't send them (safety net)
-        if (Object.keys(groupAveragesFromServer).length > 0) return groupAveragesFromServer;
-        const averages = {}
-        METRICS_CONFIG.forEach(metric => {
-            const sum = teamData.reduce((acc, curr) => acc + (parseFloat(curr[metric.key]) || 0), 0)
-            averages[metric.key] = teamData.length > 0 ? (sum / teamData.length).toFixed(1) : 0
-        })
-        return averages
-    }, [teamData, groupAveragesFromServer])
 
     if (loading) {
         return (
@@ -177,13 +120,32 @@ export default function GroupDashboard() {
                         </h1>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        {/* Global header space */}
+                    <div className="flex items-center">
+                        <div className="bg-secondary/50 p-1.5 rounded-2xl flex">
+                            <button
+                                onClick={() => setActiveTab('training')}
+                                className={`px-6 py-2.5 rounded-xl text-base font-bold transition-all ${activeTab === 'training'
+                                    ? 'bg-white dark:bg-card shadow-sm text-brand-500'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                            >
+                                Training
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('readiness')}
+                                className={`px-6 py-2.5 rounded-xl text-base font-bold transition-all ${activeTab === 'readiness'
+                                    ? 'bg-white dark:bg-card shadow-sm text-brand-500'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                            >
+                                Readiness
+                            </button>
+                        </div>
                     </div>
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 gap-8 items-start">
-                    {METRICS_CONFIG.map((metric) => (
+                    {currentMetrics.map((metric) => (
                         <MetricCard
                             key={metric.key}
                             metric={metric}
@@ -194,7 +156,7 @@ export default function GroupDashboard() {
                             sortConfig={sortConfigs[metric.key]}
                             onSort={(field) => handleSort(metric.key, field)}
                             sortedData={getSortedData(metric.key, teamData)}
-                            athletesList={athletesList}
+                            athletesList={teamData}
                         />
                     ))}
                 </div>
@@ -227,7 +189,7 @@ export default function GroupDashboard() {
                                             className="appearance-none w-full bg-background border border-input text-foreground rounded-xl px-4 py-2 pr-10 font-bold text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all cursor-pointer shadow-sm"
                                         >
                                             <option value="all">Select athlete</option>
-                                            {athletesList.map(a => (
+                                            {teamData.map(a => (
                                                 <option key={a.id} value={a.id}>{a.name}</option>
                                             ))}
                                         </select>
@@ -278,12 +240,13 @@ export default function GroupDashboard() {
                                             <p className={`text-xs font-black tracking-widest ${zoomedMetric.theme.brandText} mb-2`}>Top performer</p>
                                             {(() => {
                                                 const top = [...teamData].sort((a, b) => b[zoomedMetric.key] - a[zoomedMetric.key])[0]
+                                                if (!top) return <p className="text-muted-foreground text-sm">No data</p>
                                                 return (
                                                     <div className="flex items-center gap-4">
-                                                        <img src={top.img} className={`h-12 w-12 rounded-full border-2`} style={{ borderColor: zoomedMetric.theme.color }} alt="" />
+                                                        <img src={top.img} className="h-12 w-12 rounded-full border-2" style={{ borderColor: zoomedMetric.theme.color }} alt="" />
                                                         <div>
                                                             <p className="font-black text-lg">{top.name}</p>
-                                                            <p className={`font-bold`} style={{ color: zoomedMetric.theme.color }}>{parseFloat(top[zoomedMetric.key]).toFixed(1)} {zoomedMetric.unit}</p>
+                                                            <p className="font-bold" style={{ color: zoomedMetric.theme.color }}>{parseFloat(top[zoomedMetric.key]).toFixed(1)} {zoomedMetric.unit}</p>
                                                         </div>
                                                     </div>
                                                 )

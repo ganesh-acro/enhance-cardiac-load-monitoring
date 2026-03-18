@@ -1278,7 +1278,217 @@ export const MonthlyMovementComboChart = ({ data }) => {
     );
 };
 
-// 20. Simple Gauge Chart (No Needle)
+// 20. Training Effect Chart (Aerobic & Anaerobic)
+export const TrainingEffectChart = ({ data }) => {
+    const isDark = useChartTheme();
+    if (!data || data.length === 0) return null;
+    const dates = data.map(d => d.date);
+
+    const option = {
+        ...getCommonOptions('Training Effect', isDark),
+        tooltip: {
+            ...getTooltipStyle(isDark),
+            trigger: 'axis',
+            formatter: (params) => {
+                const idx = params[0].dataIndex;
+                const d = data[idx];
+                let tooltip = `<div class="font-bold mb-1" style="font-family: Inter, sans-serif;">${params[0].name}</div>`;
+                tooltip += `<div style="margin-bottom: 4px;"><span style="color: ${BRAND_ORANGE}; font-weight: bold;">Aerobic:</span> ${d.aerobic_te_value} — ${d.aerobic_te_comment || 'N/A'}</div>`;
+                tooltip += `<div><span style="color: ${SECONDARY_BLUE}; font-weight: bold;">Anaerobic:</span> ${d.anaerobic_te_value} — ${d.anaerobic_te_comment || 'N/A'}</div>`;
+                return tooltip;
+            }
+        },
+        xAxis: {
+            type: 'category',
+            data: dates,
+            ...getAxisStyle(isDark),
+        },
+        yAxis: {
+            type: 'value',
+            name: 'TE Value',
+            min: 0,
+            max: 5.5,
+            nameTextStyle: getAxisStyle(isDark).nameTextStyle,
+            axisLabel: getAxisStyle(isDark).axisLabel,
+            splitLine: getAxisStyle(isDark).splitLine,
+            splitNumber: 5,
+        },
+        series: [
+            {
+                name: 'Aerobic TE',
+                type: 'bar',
+                data: data.map(d => d.aerobic_te_value || 0),
+                itemStyle: getBarItemStyle(BRAND_ORANGE),
+                barMaxWidth: 30,
+                barGap: '10%'
+            },
+            {
+                name: 'Anaerobic TE',
+                type: 'bar',
+                data: data.map(d => d.anaerobic_te_value || 0),
+                itemStyle: getBarItemStyle(SECONDARY_BLUE),
+                barMaxWidth: 30
+            }
+        ]
+    };
+    return (
+        <div className="w-full h-full">
+            <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Training Effect</h5>
+            <ReactECharts option={option} style={{ height: '400px', width: '100%' }} />
+        </div>
+    );
+};
+
+// 21. Exercise Duration Chart
+export const ExerciseDurationChart = ({ data }) => {
+    const isDark = useChartTheme();
+    if (!data || data.length === 0) return null;
+    const dates = data.map(d => d.date);
+
+    const option = {
+        ...getCommonOptions('Exercise duration', isDark),
+        tooltip: { ...getTooltipStyle(isDark) },
+        xAxis: {
+            type: 'category',
+            data: dates,
+            ...getAxisStyle(isDark),
+        },
+        yAxis: {
+            type: 'value',
+            name: 'Minutes',
+            nameTextStyle: getAxisStyle(isDark).nameTextStyle,
+            axisLabel: getAxisStyle(isDark).axisLabel,
+            splitLine: getAxisStyle(isDark).splitLine,
+            splitNumber: 5,
+        },
+        series: [
+            {
+                name: 'Duration',
+                type: 'bar',
+                data: data.map(d => d.exercise_duration || 0),
+                itemStyle: getBarItemStyle('#8b5cf6'),
+                barMaxWidth: 30
+            }
+        ]
+    };
+    return (
+        <div className="w-full h-full">
+            <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Exercise Duration</h5>
+            <ReactECharts option={option} style={{ height: '400px', width: '100%' }} />
+        </div>
+    );
+};
+
+// 22. Resting HR & HR Std Chart (Readiness)
+export const RestingHRChart = ({ data }) => {
+    const isDark = useChartTheme();
+    if (!data || data.length === 0) return null;
+    const dates = data.map(d => d.date);
+
+    const option = {
+        ...getCommonOptions('Resting HR', isDark),
+        tooltip: { ...getTooltipStyle(isDark) },
+        xAxis: {
+            type: 'category',
+            data: dates,
+            boundaryGap: false,
+            ...getAxisStyle(isDark),
+        },
+        yAxis: [
+            {
+                type: 'value',
+                name: 'BPM',
+                min: (v) => Math.floor(v.min - 5),
+                nameTextStyle: getAxisStyle(isDark).nameTextStyle,
+                axisLabel: getAxisStyle(isDark).axisLabel,
+                splitLine: getAxisStyle(isDark).splitLine,
+                splitNumber: 5,
+            },
+            {
+                type: 'value',
+                name: 'HR Std',
+                position: 'right',
+                splitLine: { show: false },
+                nameTextStyle: getAxisStyle(isDark).nameTextStyle,
+                axisLabel: getAxisStyle(isDark).axisLabel,
+                splitNumber: 5,
+            }
+        ],
+        series: [
+            {
+                name: 'Resting HR',
+                type: 'line',
+                data: data.map(d => d.rest_hr || 0),
+                ...getLineSeriesStyle('#ef4444', true),
+                symbol: 'circle',
+                symbolSize: 6,
+                smooth: true,
+            },
+            {
+                name: 'HR Std',
+                type: 'line',
+                yAxisIndex: 1,
+                data: data.map(d => d.hr_std || 0),
+                itemStyle: { color: '#8b5cf6' },
+                symbol: 'circle',
+                symbolSize: 5,
+                smooth: true,
+                lineStyle: { width: 2, type: 'dashed' }
+            }
+        ]
+    };
+    return (
+        <div className="w-full h-full">
+            <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Resting Heart Rate</h5>
+            <ReactECharts option={option} style={{ height: '400px', width: '100%' }} />
+        </div>
+    );
+};
+
+// 23. HR Recovery 60s Chart (Readiness)
+export const HRRecoveryChart = ({ data }) => {
+    const isDark = useChartTheme();
+    if (!data || data.length === 0) return null;
+    const dates = data.map(d => d.date);
+
+    const option = {
+        ...getCommonOptions('HR Recovery (60s)', isDark),
+        tooltip: { ...getTooltipStyle(isDark) },
+        xAxis: {
+            type: 'category',
+            data: dates,
+            boundaryGap: false,
+            ...getAxisStyle(isDark),
+        },
+        yAxis: {
+            type: 'value',
+            name: 'BPM drop',
+            nameTextStyle: getAxisStyle(isDark).nameTextStyle,
+            axisLabel: getAxisStyle(isDark).axisLabel,
+            splitLine: getAxisStyle(isDark).splitLine,
+            splitNumber: 5,
+        },
+        series: [
+            {
+                name: 'HR Recovery 60s',
+                type: 'line',
+                data: data.map(d => d.hr_recovery_60s || 0),
+                ...getLineSeriesStyle('#10b981', true),
+                symbol: 'circle',
+                symbolSize: 6,
+                smooth: true,
+            }
+        ]
+    };
+    return (
+        <div className="w-full h-full">
+            <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>HR Recovery (60s)</h5>
+            <ReactECharts option={option} style={{ height: '400px', width: '100%' }} />
+        </div>
+    );
+};
+
+// 24. Simple Gauge Chart (No Needle)
 export const SimpleGaugeChart = ({ value, min, max, label, color, unit }) => {
     const isDark = useChartTheme();
 

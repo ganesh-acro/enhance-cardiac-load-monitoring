@@ -11,6 +11,20 @@ from .data import pf
 # Format helpers
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Session-type filters
+# ---------------------------------------------------------------------------
+
+def _training_rows(rows: List[Dict]) -> List[Dict]:
+    """Return only Training sessions."""
+    return [r for r in rows if r.get("session_type") == "Training"]
+
+
+def _readiness_rows(rows: List[Dict]) -> List[Dict]:
+    """Return only Readiness sessions."""
+    return [r for r in rows if r.get("session_type") in ("Readiness", "Light Activity")]
+
+
 def fmt_date(d: date) -> str:
     """'Mar 07' — matches JS format(date, 'MMM dd')"""
     return d.strftime("%b %d")
@@ -198,7 +212,75 @@ def prepare_recovery(rows: List[Dict]) -> List[Dict]:
 
 
 # ---------------------------------------------------------------------------
-# 10. ACWR
+# 10. Training Effect (Training-only)
+# ---------------------------------------------------------------------------
+
+def prepare_training_effect(rows: List[Dict]) -> List[Dict]:
+    """Aerobic & Anaerobic Training Effect values per training session."""
+    return [
+        {
+            "date": fmt_date(r["date"]),
+            "fullDate": r["date"].isoformat(),
+            "aerobic_te_value": pf(r.get("aerobic_te_value")),
+            "aerobic_te_comment": r.get("aerobic_te_comment") or "",
+            "anaerobic_te_value": pf(r.get("anaerobic_te_value")),
+            "anaerobic_te_comment": r.get("anaerobic_te_comment") or "",
+        }
+        for r in rows
+    ]
+
+
+# ---------------------------------------------------------------------------
+# 11. Exercise Duration (Training-only)
+# ---------------------------------------------------------------------------
+
+def prepare_exercise_duration(rows: List[Dict]) -> List[Dict]:
+    """Exercise duration per training session."""
+    return [
+        {
+            "date": fmt_date(r["date"]),
+            "fullDate": r["date"].isoformat(),
+            "exercise_duration": pf(r.get("exercise_duration")),
+        }
+        for r in rows
+    ]
+
+
+# ---------------------------------------------------------------------------
+# 12. Resting HR & HR Std (Readiness-only)
+# ---------------------------------------------------------------------------
+
+def prepare_resting_hr(rows: List[Dict]) -> List[Dict]:
+    """Resting HR and HR variability (std) from readiness sessions."""
+    return [
+        {
+            "date": fmt_date(r["date"]),
+            "fullDate": r["date"].isoformat(),
+            "rest_hr": pf(r.get("rest_hr")),
+            "hr_std": pf(r.get("hr_std")),
+        }
+        for r in rows
+    ]
+
+
+# ---------------------------------------------------------------------------
+# 13. HR Recovery 60s (Readiness-only)
+# ---------------------------------------------------------------------------
+
+def prepare_hr_recovery(rows: List[Dict]) -> List[Dict]:
+    """HR recovery at 60 seconds from readiness sessions."""
+    return [
+        {
+            "date": fmt_date(r["date"]),
+            "fullDate": r["date"].isoformat(),
+            "hr_recovery_60s": pf(r.get("hr_recovery_60s")),
+        }
+        for r in rows
+    ]
+
+
+# ---------------------------------------------------------------------------
+# 14. ACWR
 # ---------------------------------------------------------------------------
 
 def prepare_acwr(rows: List[Dict]) -> List[Dict]:
@@ -475,18 +557,28 @@ def get_athlete_summary(rows: List[Dict], meta: Dict) -> Dict:
 
 def build_charts(rows: List[Dict]) -> Dict:
     """Build the complete chart-ready payload for all dashboard tabs."""
+    training = _training_rows(rows)
+    readiness = _readiness_rows(rows)
+
     return {
+        # Training-only metrics
+        "training": prepare_training(training),
+        "oxygen_debt": prepare_oxygen_debt(training),
+        "energy": prepare_energy(training),
+        "movement": prepare_movement(training),
+        "oxygen_consumption": prepare_oxygen_consumption(training),
+        "zones": prepare_zones(training),
+        "weekly": prepare_weekly(training),
+        "training_effect": prepare_training_effect(training),
+        "exercise_duration": prepare_exercise_duration(training),
+        # Readiness-only metrics
+        "hrv": prepare_hrv(readiness),
+        "recovery": prepare_recovery(readiness),
+        "resting_hr": prepare_resting_hr(readiness),
+        "hr_recovery": prepare_hr_recovery(readiness),
+        # Both session types
         "hr": prepare_hr(rows),
-        "training": prepare_training(rows),
-        "hrv": prepare_hrv(rows),
-        "oxygen_debt": prepare_oxygen_debt(rows),
-        "energy": prepare_energy(rows),
-        "movement": prepare_movement(rows),
-        "oxygen_consumption": prepare_oxygen_consumption(rows),
-        "zones": prepare_zones(rows),
-        "recovery": prepare_recovery(rows),
         "acwr": prepare_acwr(rows),
         "trainingTrends": prepare_trends(rows),
         "monthly": prepare_monthly(rows),
-        "weekly": prepare_weekly(rows),
     }

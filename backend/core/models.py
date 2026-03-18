@@ -34,6 +34,24 @@ class User(Base):
     )
 
 
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    token = Column(String(128), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    revoked = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+
+    __table_args__ = (
+        Index("idx_refresh_tokens_token", "token"),
+        Index("idx_refresh_tokens_user", "user_id"),
+    )
+
+
 class Athlete(Base):
     __tablename__ = "athletes"
 
@@ -69,11 +87,14 @@ class Session(Base):
     min_hr = Column(Float)
     max_hr = Column(Float)
     rest_hr = Column(Float)
+    hr_std = Column(Float)
     avg_hr_pct = Column(Float)
     min_hr_pct = Column(Float)
     max_hr_pct = Column(Float)
+    hr_recovery_60s = Column(Float)
 
-    # Load & intensity
+    # Exercise & Load
+    exercise_duration = Column(Float)
     training_load = Column(Float)
     training_intensity = Column(Float)
 
@@ -85,6 +106,12 @@ class Session(Base):
     # EPOC
     epoc_total = Column(Float)
     epoc_peak = Column(Float)
+
+    # Training Effect
+    aerobic_te_value = Column(Float)
+    aerobic_te_comment = Column(String)
+    anaerobic_te_value = Column(Float)
+    anaerobic_te_comment = Column(String)
 
     # Energy & VO2
     ee_men = Column(Float)

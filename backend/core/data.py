@@ -28,11 +28,15 @@ def pf(val, default: float = 0.0) -> float:
 
 # Columns that map directly from Session model to row dict
 _SESSION_FIELDS = [
-    "avg_hr", "min_hr", "max_hr", "rest_hr",
+    "avg_hr", "min_hr", "max_hr", "rest_hr", "hr_std",
     "avg_hr_pct", "min_hr_pct", "max_hr_pct",
+    "hr_recovery_60s",
+    "exercise_duration",
     "training_load", "training_intensity",
     "sdnn", "rmssd", "pnn50",
     "epoc_total", "epoc_peak",
+    "aerobic_te_value", "aerobic_te_comment",
+    "anaerobic_te_value", "anaerobic_te_comment",
     "ee_men", "vo2", "vo2_max",
     "movement_load", "movement_load_intensity",
     "session_type", "session_hour", "session_quality", "recovery_beats",

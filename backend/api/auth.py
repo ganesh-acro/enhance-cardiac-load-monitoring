@@ -1,18 +1,24 @@
 """
 api/auth.py — Authentication and user-management endpoints.
-Handles login, registration, and admin CRUD on users.
+Handles login, token refresh, logout, and admin CRUD on users.
 """
+from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as DBSession
 
 from core.database import get_db
-from core.models import User, Athlete
+from core.models import User, Athlete, RefreshToken
 from core.security.password import hash_password, verify_password
-from core.security.jwt import create_access_token
-from core.security.dependencies import require_admin
+from core.security.jwt import (
+    create_access_token,
+    generate_refresh_token,
+    refresh_token_expiry,
+)
+from core.security.dependencies import require_admin, get_current_user
+from core.limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -24,15 +30,21 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class RegisterRequest(BaseModel):
+class CreateUserRequest(BaseModel):
     name: str
     email: EmailStr
     password: str
+    role: str = "coach"
 
 
 class TokenResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
 
 
 class UserResponse(BaseModel):
@@ -52,6 +64,10 @@ class UpdateUserRequest(BaseModel):
     is_active: Optional[bool] = None
 
 
+class ResetPasswordRequest(BaseModel):
+    new_password: str
+
+
 class AssignAthletesRequest(BaseModel):
     athlete_ids: list[str]
 
@@ -59,11 +75,13 @@ class AssignAthletesRequest(BaseModel):
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.post("/login", response_model=TokenResponse)
-def login(body: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login(request: Request, body: LoginRequest, db: DBSession = Depends(get_db)):
     """
-    Authenticate a user and return a signed JWT access token.
+    Authenticate a user and return access + refresh tokens.
     Returns 401 for any credential failure — intentionally vague to
     prevent user enumeration.
+    Rate-limited to 5 attempts per minute per IP.
     """
     user = db.query(User).filter(User.email == body.email).first()
 
@@ -80,21 +98,82 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
             detail="Account is disabled.",
         )
 
-    token = create_access_token({
+    access = create_access_token({
         "sub": str(user.id),
         "email": user.email,
         "role": user.role,
     })
 
-    return TokenResponse(access_token=token)
+    raw_refresh = generate_refresh_token()
+    db.add(RefreshToken(
+        token=raw_refresh,
+        user_id=user.id,
+        expires_at=refresh_token_expiry(),
+    ))
+    db.commit()
+
+    return TokenResponse(access_token=access, refresh_token=raw_refresh)
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
-def register(body: RegisterRequest, db: Session = Depends(get_db)):
+@router.post("/refresh", response_model=TokenResponse)
+def refresh(body: RefreshRequest, db: DBSession = Depends(get_db)):
     """
-    Register a new user account.
-    New accounts default to the 'coach' role.
+    Exchange a valid refresh token for a new access + refresh token pair.
+    The old refresh token is revoked (token rotation).
     """
+    stored = db.query(RefreshToken).filter(
+        RefreshToken.token == body.refresh_token,
+        RefreshToken.revoked == False,
+    ).first()
+
+    if not stored or stored.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token.")
+
+    user = db.query(User).filter(User.id == stored.user_id, User.is_active == True).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found or inactive.")
+
+    # Revoke old refresh token
+    stored.revoked = True
+
+    # Issue new pair
+    access = create_access_token({
+        "sub": str(user.id),
+        "email": user.email,
+        "role": user.role,
+    })
+    new_refresh = generate_refresh_token()
+    db.add(RefreshToken(
+        token=new_refresh,
+        user_id=user.id,
+        expires_at=refresh_token_expiry(),
+    ))
+    db.commit()
+
+    return TokenResponse(access_token=access, refresh_token=new_refresh)
+
+
+@router.post("/logout")
+def logout(db: DBSession = Depends(get_db), user: User = Depends(get_current_user)):
+    """Revoke all refresh tokens for the current user."""
+    db.query(RefreshToken).filter(
+        RefreshToken.user_id == user.id,
+        RefreshToken.revoked == False,
+    ).update({"revoked": True})
+    db.commit()
+    return {"detail": "Logged out."}
+
+
+@router.post("/users", status_code=status.HTTP_201_CREATED)
+def create_user(
+    body: CreateUserRequest,
+    db: DBSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Create a new user. Admin only."""
+    if body.role not in ("admin", "coach", "athlete"):
+        raise HTTPException(status_code=400, detail="Invalid role.")
+
     existing = db.query(User).filter(User.email == body.email).first()
     if existing:
         raise HTTPException(
@@ -106,19 +185,19 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
         name=body.name,
         email=body.email,
         password_hash=hash_password(body.password),
-        role="coach",
+        role=body.role,
     )
     db.add(user)
     db.commit()
 
-    return {"detail": "Account created successfully."}
+    return {"detail": f"User '{body.name}' created with role '{body.role}'."}
 
 
 # ── Admin User Management ─────────────────────────────────────────────────────
 
 @router.get("/users", response_model=list[UserResponse])
 def list_users(
-    db: Session = Depends(get_db),
+    db: DBSession = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
     """List all users. Admin only."""
@@ -140,7 +219,7 @@ def list_users(
 def update_user(
     user_id: int,
     body: UpdateUserRequest,
-    db: Session = Depends(get_db),
+    db: DBSession = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
     """Update a user's role or active status. Admin only."""
@@ -162,10 +241,30 @@ def update_user(
     return {"detail": "User updated."}
 
 
+@router.patch("/users/{user_id}/password")
+def reset_user_password(
+    user_id: int,
+    body: ResetPasswordRequest,
+    db: DBSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Reset a user's password. Admin only."""
+    if len(body.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    user.password_hash = hash_password(body.new_password)
+    db.commit()
+    return {"detail": "Password reset successfully."}
+
+
 @router.delete("/users/{user_id}", status_code=status.HTTP_200_OK)
 def delete_user(
     user_id: int,
-    db: Session = Depends(get_db),
+    db: DBSession = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
     """Delete a user. Admin only. Cannot delete yourself."""
@@ -186,7 +285,7 @@ def delete_user(
 @router.get("/users/{user_id}/athletes")
 def get_assigned_athletes(
     user_id: int,
-    db: Session = Depends(get_db),
+    db: DBSession = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
     """Get athlete IDs assigned to a user. Admin only."""
@@ -200,7 +299,7 @@ def get_assigned_athletes(
 def set_assigned_athletes(
     user_id: int,
     body: AssignAthletesRequest,
-    db: Session = Depends(get_db),
+    db: DBSession = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
     """Replace athlete assignments for a user. Admin only."""

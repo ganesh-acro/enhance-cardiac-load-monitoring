@@ -5,7 +5,8 @@ import {
     MovementTrendChart,
     OxygenConsumptionChart,
     WeeklyZoneStackChart,
-    ACWRChartCombined
+    TrainingEffectChart,
+    ExerciseDurationChart
 } from './FeatureCharts';
 
 export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
@@ -37,7 +38,39 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                     )}
                 </div>
 
-                {/* 2. Oxygen Debt */}
+                {/* 2. Training Effect (Aerobic & Anaerobic) */}
+                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                    <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
+                        Training effect
+                    </h5>
+                    {primaryChartData.training_effect && primaryChartData.training_effect.length > 0 ? (
+                        <TrainingEffectChart
+                            data={primaryChartData.training_effect}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                            No training effect data found for this period.
+                        </div>
+                    )}
+                </div>
+
+                {/* 3. Exercise Duration */}
+                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                    <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
+                        Exercise duration
+                    </h5>
+                    {primaryChartData.exercise_duration && primaryChartData.exercise_duration.length > 0 ? (
+                        <ExerciseDurationChart
+                            data={primaryChartData.exercise_duration}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                            No exercise duration data found for this period.
+                        </div>
+                    )}
+                </div>
+
+                {/* 4. Oxygen Debt */}
                 <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         EPOC (Oxygen debt)
@@ -53,7 +86,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                     )}
                 </div>
 
-                {/* 4. Energy Expenditure */}
+                {/* 5. Energy Expenditure */}
                 <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Energy expenditure (kcal)
@@ -69,7 +102,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                     )}
                 </div>
 
-                {/* 5. Movement Trend */}
+                {/* 6. Movement Trend */}
                 <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Movement load
@@ -85,7 +118,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                     )}
                 </div>
 
-                {/* 6. Oxygen Consumption */}
+                {/* 7. Oxygen Consumption */}
                 <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         VO2 max estimate
@@ -101,7 +134,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                     )}
                 </div>
 
-                {/* 7. Weekly Zone Distribution */}
+                {/* 8. Weekly Zone Distribution */}
                 <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Zone distribution
