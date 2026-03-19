@@ -12,7 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from routers import athletes, dashboard, group, profiles, reports
 from api import auth
 from core.database import engine, Base
-from core.models import Athlete, Session, User, RefreshToken  # noqa: F401 — registers models on Base
+from core.models import Athlete, Session, User, RefreshToken, LoginHistory  # noqa: F401 — registers models on Base
 from core.limiter import limiter
 
 app = FastAPI(title="Enhance Cardiac Monitoring API", version="2.0")

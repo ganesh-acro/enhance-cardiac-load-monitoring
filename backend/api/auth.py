@@ -10,7 +10,7 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session as DBSession
 
 from core.database import get_db
-from core.models import User, Athlete, RefreshToken
+from core.models import User, Athlete, RefreshToken, LoginHistory
 from core.security.password import hash_password, verify_password
 from core.security.jwt import (
     create_access_token,
@@ -110,6 +110,13 @@ def login(request: Request, body: LoginRequest, db: DBSession = Depends(get_db))
         user_id=user.id,
         expires_at=refresh_token_expiry(),
     ))
+
+    # Record login event
+    db.add(LoginHistory(
+        user_id=user.id,
+        ip_address=request.client.host if request.client else "unknown",
+        user_agent=request.headers.get("user-agent", "unknown"),
+    ))
     db.commit()
 
     return TokenResponse(access_token=access, refresh_token=raw_refresh)
@@ -162,6 +169,88 @@ def logout(db: DBSession = Depends(get_db), user: User = Depends(get_current_use
     ).update({"revoked": True})
     db.commit()
     return {"detail": "Logged out."}
+
+
+@router.get("/me")
+def get_profile(db: DBSession = Depends(get_db), user: User = Depends(get_current_user)):
+    """Return the current user's profile info."""
+    # Admin sees all athletes; coaches see only assigned ones
+    if user.role == "admin":
+        athletes_list = [
+            {"id": a.id, "name": a.name}
+            for a in db.query(Athlete).order_by(Athlete.name).all()
+        ]
+    else:
+        athletes_list = [
+            {
+                "id": a.id,
+                "name": a.name,
+                "sport": a.sport,
+                "age": a.age,
+                "height": a.height,
+                "weight": a.weight,
+                "gender": a.gender,
+            }
+            for a in user.assigned_athletes
+        ]
+
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "assigned_athletes": athletes_list,
+    }
+
+
+@router.get("/me/login-history")
+def get_login_history(
+    db: DBSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Return the current user's login history, most recent first."""
+    entries = (
+        db.query(LoginHistory)
+        .filter(LoginHistory.user_id == user.id)
+        .order_by(LoginHistory.logged_in_at.desc())
+        .limit(50)
+        .all()
+    )
+    return [
+        {
+            "id": e.id,
+            "ip_address": e.ip_address,
+            "user_agent": e.user_agent,
+            "logged_in_at": e.logged_in_at.isoformat() if e.logged_in_at else None,
+        }
+        for e in entries
+    ]
+
+
+@router.delete("/me/login-history")
+def clear_login_history(
+    db: DBSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Delete all login history for the current user."""
+    db.query(LoginHistory).filter(LoginHistory.user_id == user.id).delete()
+    db.commit()
+    return {"detail": "Login history cleared."}
+
+
+@router.patch("/me/password")
+def change_own_password(
+    body: ResetPasswordRequest,
+    db: DBSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Change the current user's password."""
+    if len(body.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+    user.password_hash = hash_password(body.new_password)
+    db.commit()
+    return {"detail": "Password changed successfully."}
 
 
 @router.post("/users", status_code=status.HTTP_201_CREATED)

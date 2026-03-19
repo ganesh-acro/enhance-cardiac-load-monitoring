@@ -119,14 +119,14 @@ export function Header() {
                         {isProfileOpen && (
                             <div className="absolute right-0 mt-2 w-48 rounded-xl border border-border bg-card/90 p-1 shadow-xl backdrop-blur-xl animate-in fade-in zoom-in duration-200 z-50">
                                 <button
-                                    onClick={() => { /* navigate("/profile"); */ setIsProfileOpen(false); }}
+                                    onClick={() => { navigate("/profile"); setIsProfileOpen(false); }}
                                     className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-foreground/70 hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
                                 >
                                     <User className="h-4 w-4" />
                                     Profile
                                 </button>
                                 <button
-                                    onClick={() => { /* navigate("/settings"); */ setIsProfileOpen(false); }}
+                                    onClick={() => { setIsProfileOpen(false); }}
                                     className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-foreground/70 hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
                                 >
                                     <Settings className="h-4 w-4" />

@@ -18,7 +18,7 @@ Implemented a complete auth system with production hardening:
 - **Role-based access control** — admin, coach, and athlete roles with scoped data access
 - **User management** — admin CRUD for users, coach-athlete assignment, password resets
 - **Rate limiting** — 5 login attempts/min per IP via slowapi
-- **CORS restriction** — allowlisted origins only (no wildcard)
+- **CORS restriction** — allowlisted origins only (no wildcard)  
 - **SECRET_KEY validation** — rejects placeholder keys and enforces minimum length on startup
 - **Silent token refresh** — frontend intercepts 401s and transparently refreshes tokens with singleton promise deduplication
 

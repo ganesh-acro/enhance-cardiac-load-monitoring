@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
 import { useTheme } from '../theme-provider';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subMonths } from 'date-fns';
+import { ZoomIn } from 'lucide-react';
 import {
     BRAND_ORANGE, SECONDARY_BLUE, FONT_FAMILY,
     getTooltipStyle, getAxisStyle, getLegendStyle, getGridStyle,
@@ -14,8 +15,33 @@ import {
 
 // (Themes removed - using chartStyles.js)
 
+// Calculate the zoom start percentage to show the last 2 months of data.
+// `data` can be an array of date strings OR an array of objects with fullDate/date fields.
+function getDefaultZoomStart(data) {
+    if (!data || data.length <= 1) return 0;
+
+    // Extract ISO dates: prefer fullDate field, fall back to weekKey/rawDate, then the string itself
+    const isoDates = data.map(d => {
+        if (typeof d === 'string') return d;
+        return d.fullDate || d.weekKey || d.rawDate || d.date || '';
+    });
+
+    // Find the last valid ISO-style date (YYYY-MM-DD or YYYY-MM)
+    let lastIso = '';
+    for (let i = isoDates.length - 1; i >= 0; i--) {
+        if (/^\d{4}-\d{2}/.test(isoDates[i])) { lastIso = isoDates[i]; break; }
+    }
+    if (!lastIso) return 0; // can't determine dates, show all
+
+    const cutoff = subMonths(new Date(lastIso), 2).toISOString().split('T')[0];
+    let startIdx = isoDates.findIndex(d => /^\d{4}-\d{2}/.test(d) && d >= cutoff);
+    if (startIdx < 0) startIdx = 0;
+    return Math.floor((startIdx / data.length) * 100);
+}
+
 // Common Chart Options
-const getCommonOptions = (title, isDark) => {
+const getCommonOptions = (title, isDark, data) => {
+    const zoomStart = data ? getDefaultZoomStart(data) : 0;
     return {
         backgroundColor: 'transparent',
         tooltip: {
@@ -24,11 +50,12 @@ const getCommonOptions = (title, isDark) => {
         },
         grid: getGridStyle({ top: 30 }),
         dataZoom: [
-            { type: 'inside', start: 0, end: 100 },
             {
                 type: 'slider',
                 bottom: '2%',
                 height: 20,
+                start: zoomStart,
+                end: 100,
                 borderColor: 'transparent',
                 backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
                 fillerColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,122,0,0.1)',
@@ -47,8 +74,8 @@ const getCommonOptions = (title, isDark) => {
         },
         toolbox: {
             feature: {
+                restore: { title: 'Reset' },
                 saveAsImage: { title: 'Save' },
-                restore: { title: 'Reset' }
             },
             right: 10,
             top: 0
@@ -63,6 +90,40 @@ function useChartTheme() {
     if (!mounted) return false;
     return resolvedTheme === 'dark';
 }
+
+// Wrapper: adds a scroll-zoom toggle button to any chart.
+// Scroll zoom is OFF by default — click the button to activate, click again to deactivate.
+const ZoomableChart = ({ option, style, ...props }) => {
+    const [zoomActive, setZoomActive] = useState(false);
+
+    const enhancedOption = useMemo(() => {
+        if (!zoomActive) return option;
+        return {
+            ...option,
+            dataZoom: [
+                ...(option.dataZoom || []),
+                { type: 'inside', zoomOnMouseWheel: true, moveOnMouseMove: true, moveOnMouseWheel: false },
+            ],
+        };
+    }, [option, zoomActive]);
+
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setZoomActive(prev => !prev)}
+                title={zoomActive ? 'Disable scroll zoom' : 'Enable scroll zoom'}
+                className={`absolute top-0 right-0 z-10 p-1.5 rounded-lg border transition-all ${
+                    zoomActive
+                        ? 'bg-brand-500 text-white border-brand-500 shadow-md shadow-brand-500/30'
+                        : 'bg-card text-muted-foreground border-border hover:text-foreground hover:border-foreground/30'
+                }`}
+            >
+                <ZoomIn className="h-3.5 w-3.5" />
+            </button>
+            <ReactECharts option={enhancedOption} style={style} {...props} />
+        </div>
+    );
+};
 
 // 1. Heart Rate (Avg, Min, Max Lines)
 export const HeartRateChart = ({ data }) => {
@@ -102,7 +163,7 @@ export const HeartRateChart = ({ data }) => {
     ];
 
     const option = {
-        ...getCommonOptions('Heart rate', isDark),
+        ...getCommonOptions('Heart rate', isDark, data),
         tooltip: {
             ...getTooltipStyle(isDark),
             axisPointer: { type: 'line' }
@@ -132,7 +193,7 @@ export const HeartRateChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Heart Rate Variance</h5>
-            <ReactECharts option={option} style={{ height: '400px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
         </div>
     );
 };
@@ -144,7 +205,7 @@ export const TrainingLoadTrendChart = ({ data }) => {
     const dates = data.map(d => d.date);
 
     const option = {
-        ...getCommonOptions('Training load trend', isDark),
+        ...getCommonOptions('Training load trend', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
         xAxis: {
             type: 'category',
@@ -191,7 +252,7 @@ export const TrainingLoadTrendChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Training Load Trend</h5>
-            <ReactECharts option={option} style={{ height: '400px' }} />
+            <ZoomableChart option={option} style={{ height: '400px' }} />
         </div>
     );
 };
@@ -203,7 +264,7 @@ export const HRVMultiLineChart = ({ data }) => {
     const dates = data.map(d => d.date);
 
     const option = {
-        ...getCommonOptions('HRV trend', isDark),
+        ...getCommonOptions('HRV trend', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
         xAxis: {
             type: 'category',
@@ -228,7 +289,7 @@ export const HRVMultiLineChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>HRV Trend</h5>
-            <ReactECharts option={option} style={{ height: '400px' }} />
+            <ZoomableChart option={option} style={{ height: '400px' }} />
         </div>
     );
 };
@@ -240,7 +301,7 @@ export const OxygenDebtChart = ({ data }) => {
     const dates = data.map(d => d.date);
 
     const option = {
-        ...getCommonOptions('Oxygen Debt (EPOC)', isDark),
+        ...getCommonOptions('Oxygen Debt (EPOC)', isDark, data),
         tooltip: { ...getTooltipStyle(isDark), axisPointer: { type: 'cross' } },
         xAxis: {
             type: 'category',
@@ -278,7 +339,7 @@ export const OxygenDebtChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Oxygen Debt (EPOC)</h5>
-            <ReactECharts option={option} style={{ height: '400px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
         </div>
     );
 };
@@ -290,7 +351,7 @@ export const EnergyChart = ({ data }) => {
     const dates = data.map(d => d.date);
 
     const option = {
-        ...getCommonOptions('Energy expenditure', isDark),
+        ...getCommonOptions('Energy expenditure', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
         xAxis: {
             type: 'category',
@@ -317,7 +378,7 @@ export const EnergyChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Energy Expenditure</h5>
-            <ReactECharts option={option} style={{ height: '400px' }} />
+            <ZoomableChart option={option} style={{ height: '400px' }} />
         </div>
     );
 };
@@ -329,7 +390,7 @@ export const MovementTrendChart = ({ data }) => {
     const dates = data.map(d => d.date);
 
     const option = {
-        ...getCommonOptions('Movement trend', isDark),
+        ...getCommonOptions('Movement trend', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
         xAxis: {
             type: 'category',
@@ -376,7 +437,7 @@ export const MovementTrendChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Movement Trend</h5>
-            <ReactECharts option={option} style={{ height: '400px' }} />
+            <ZoomableChart option={option} style={{ height: '400px' }} />
         </div>
     );
 };
@@ -393,7 +454,7 @@ export const OxygenConsumptionChart = ({ data }) => {
 
     const axisStyle = getAxisStyle(isDark);
     const option = {
-        ...getCommonOptions('Oxygen consumption (VO2)', isDark),
+        ...getCommonOptions('Oxygen consumption (VO2)', isDark, data),
         tooltip: {
             ...getTooltipStyle(isDark),
             axisPointer: { type: 'cross' }
@@ -467,7 +528,7 @@ export const OxygenConsumptionChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Oxygen Consumption (VO2)</h5>
-            <ReactECharts option={option} style={{ height: '400px' }} />
+            <ZoomableChart option={option} style={{ height: '400px' }} />
         </div>
     );
 };
@@ -489,7 +550,7 @@ export const ZoneDistributionChart = ({ data }) => {
 
     const axisStyle = getAxisStyle(isDark);
     const option = {
-        ...getCommonOptions('Heart rate zone distribution', isDark),
+        ...getCommonOptions('Heart rate zone distribution', isDark, data),
         tooltip: {
             ...getTooltipStyle(isDark),
             axisPointer: { type: 'shadow' }
@@ -515,7 +576,7 @@ export const ZoneDistributionChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Heart Rate Zone Distribution</h5>
-            <ReactECharts option={option} style={{ height: '400px' }} />
+            <ZoomableChart option={option} style={{ height: '400px' }} />
         </div>
     );
 };
@@ -528,7 +589,7 @@ export const RecoveryBeatsChart = ({ data }) => {
 
     const axisStyle = getAxisStyle(isDark);
     const option = {
-        ...getCommonOptions('Recovery beats', isDark),
+        ...getCommonOptions('Recovery beats', isDark, data),
         tooltip: getTooltipStyle(isDark),
         xAxis: {
             type: 'category',
@@ -559,7 +620,7 @@ export const RecoveryBeatsChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Recovery Beats</h5>
-            <ReactECharts option={option} style={{ height: '400px' }} />
+            <ZoomableChart option={option} style={{ height: '400px' }} />
         </div>
     );
 };
@@ -572,7 +633,7 @@ export const RMSSDChart = ({ data }) => {
 
     const axisStyle = getAxisStyle(isDark);
     const option = {
-        ...getCommonOptions('RMSSD', isDark),
+        ...getCommonOptions('RMSSD', isDark, data),
         tooltip: getTooltipStyle(isDark),
         xAxis: {
             type: 'category',
@@ -603,7 +664,7 @@ export const RMSSDChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>RMSSD Trend</h5>
-            <ReactECharts option={option} style={{ height: '400px' }} />
+            <ZoomableChart option={option} style={{ height: '400px' }} />
         </div>
     );
 };
@@ -629,7 +690,7 @@ export const ACWRChartCombined = ({ data }) => {
     const yLimit = Math.max(2.0, Math.ceil((maxVal + 0.2) * 10) / 10); // Min 2.0, or max + padding
 
     const option = {
-        ...getCommonOptions('Workload Ratio (ACWR)', isDark),
+        ...getCommonOptions('Workload Ratio (ACWR)', isDark, data),
         backgroundColor: 'transparent',
         tooltip: {
             ...getTooltipStyle(isDark),
@@ -707,7 +768,7 @@ export const ACWRChartCombined = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Workload Ratio (ACWR)</h5>
-            <ReactECharts option={option} style={{ height: '400px' }} />
+            <ZoomableChart option={option} style={{ height: '400px' }} />
         </div>
     );
 };
@@ -843,7 +904,7 @@ export const MonthlyLoadCombinedChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Monthly Training Load vs HRV Trend</h5>
-            <ReactECharts option={option} style={{ height: '450px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '450px', width: '100%' }} />
         </div>
     );
 };
@@ -890,7 +951,7 @@ export const WeeklyZoneStackChart = ({ data }) => {
     }));
 
     const option = {
-        ...getCommonOptions('HR Zone Split (mins)', isDark),
+        ...getCommonOptions('HR Zone Split (mins)', isDark, data),
         tooltip: {
             ...getTooltipStyle(isDark),
             axisPointer: { type: 'shadow' }
@@ -922,7 +983,7 @@ export const WeeklyZoneStackChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>HR Zone Split (mins)</h5>
-            <ReactECharts option={option} style={{ height: '400px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
         </div>
     );
 };
@@ -1001,7 +1062,7 @@ export const MonthlyZoneStackChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Monthly Zone Split (mins)</h5>
-            <ReactECharts option={option} style={{ height: '350px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '350px', width: '100%' }} />
         </div>
     );
 };
@@ -1082,7 +1143,7 @@ export const MonthlyHRAvgRangeChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Monthly HR Range (Avg)</h5>
-            <ReactECharts option={option} style={{ height: '350px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '350px', width: '100%' }} />
         </div>
     );
 };
@@ -1187,7 +1248,7 @@ export const MonthlyACWRChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Monthly ACWR Trend</h5>
-            <ReactECharts option={option} style={{ height: '300px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '300px', width: '100%' }} />
         </div>
     );
 };
@@ -1273,7 +1334,7 @@ export const MonthlyMovementComboChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Monthly Movement Intensity & Load</h5>
-            <ReactECharts option={option} style={{ height: '350px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '350px', width: '100%' }} />
         </div>
     );
 };
@@ -1285,7 +1346,7 @@ export const TrainingEffectChart = ({ data }) => {
     const dates = data.map(d => d.date);
 
     const option = {
-        ...getCommonOptions('Training Effect', isDark),
+        ...getCommonOptions('Training Effect', isDark, data),
         tooltip: {
             ...getTooltipStyle(isDark),
             trigger: 'axis',
@@ -1334,7 +1395,7 @@ export const TrainingEffectChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Training Effect</h5>
-            <ReactECharts option={option} style={{ height: '400px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
         </div>
     );
 };
@@ -1346,7 +1407,7 @@ export const ExerciseDurationChart = ({ data }) => {
     const dates = data.map(d => d.date);
 
     const option = {
-        ...getCommonOptions('Exercise duration', isDark),
+        ...getCommonOptions('Exercise duration', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
         xAxis: {
             type: 'category',
@@ -1374,7 +1435,7 @@ export const ExerciseDurationChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Exercise Duration</h5>
-            <ReactECharts option={option} style={{ height: '400px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
         </div>
     );
 };
@@ -1386,7 +1447,7 @@ export const RestingHRChart = ({ data }) => {
     const dates = data.map(d => d.date);
 
     const option = {
-        ...getCommonOptions('Resting HR', isDark),
+        ...getCommonOptions('Resting HR', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
         xAxis: {
             type: 'category',
@@ -1440,7 +1501,7 @@ export const RestingHRChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Resting Heart Rate</h5>
-            <ReactECharts option={option} style={{ height: '400px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
         </div>
     );
 };
@@ -1452,7 +1513,7 @@ export const HRRecoveryChart = ({ data }) => {
     const dates = data.map(d => d.date);
 
     const option = {
-        ...getCommonOptions('HR Recovery (60s)', isDark),
+        ...getCommonOptions('HR Recovery (60s)', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
         xAxis: {
             type: 'category',
@@ -1483,7 +1544,7 @@ export const HRRecoveryChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>HR Recovery (60s)</h5>
-            <ReactECharts option={option} style={{ height: '400px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
         </div>
     );
 };

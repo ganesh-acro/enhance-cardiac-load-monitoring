@@ -12,6 +12,7 @@ import { AuthProvider } from "./context/auth-context"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 
 import Reports from "./pages/Reports"
+import UserProfile from "./pages/UserProfile"
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
               <Route path="/users" element={<Users />} />
               <Route path="/sessions" element={<GroupDashboard />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/profile" element={<UserProfile />} />
             </Route>
           </Route>
 

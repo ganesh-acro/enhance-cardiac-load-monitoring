@@ -55,6 +55,7 @@ def profiles_summary(
             "rest_hr": pf(latest.get("rest_hr")),
             "rmssd": pf(latest.get("rmssd")),
             "training_load": pf(latest.get("training_load")),
+            "latest_session_type": latest.get("session_type", "N/A"),
             "flag": flag,
         })
 

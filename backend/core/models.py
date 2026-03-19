@@ -52,6 +52,22 @@ class RefreshToken(Base):
     )
 
 
+class LoginHistory(Base):
+    __tablename__ = "login_history"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    ip_address = Column(String, nullable=False, default="unknown")
+    user_agent = Column(String, nullable=False, default="unknown")
+    logged_in_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+
+    __table_args__ = (
+        Index("idx_login_history_user", "user_id"),
+    )
+
+
 class Athlete(Base):
     __tablename__ = "athletes"
 

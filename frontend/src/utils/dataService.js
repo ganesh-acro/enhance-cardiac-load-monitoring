@@ -146,6 +146,21 @@ export const fetchReportsSummary = () => apiFetch('/reports/summary');
 /** Full session list for a single athlete (for PDF generation). */
 export const fetchReportDetail = (athleteId) => apiFetch(`/reports/${athleteId}`);
 
+// ── User profile ────────────────────────────────────────────────────────────
+
+/** Get current user's profile. */
+export const fetchMyProfile = () => apiFetch('/auth/me');
+
+/** Get current user's login history. */
+export const fetchMyLoginHistory = () => apiFetch('/auth/me/login-history');
+
+/** Clear current user's login history. */
+export const clearMyLoginHistory = () => apiMutate('/auth/me/login-history', 'DELETE');
+
+/** Change own password. */
+export const changeMyPassword = (newPassword) =>
+    apiMutate('/auth/me/password', 'PATCH', { new_password: newPassword });
+
 // ── Admin — User management ─────────────────────────────────────────────────
 
 /** List all users (admin only). */

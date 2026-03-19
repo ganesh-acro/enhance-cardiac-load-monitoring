@@ -43,13 +43,19 @@ def dashboard_overview(
         if not rows:
             continue
         latest = rows[-1]
+        # Use rest_hr from the last readiness session specifically
+        last_readiness = next(
+            (r for r in reversed(rows)
+             if r.get("session_type") in ("Readiness", "Light Activity")),
+            latest,
+        )
         athletes_data.append({
             "id": athlete["id"],
             "name": athlete["name"],
             "img": athlete.get("img") or f"https://api.dicebear.com/7.x/avataaars/svg?seed={athlete['name']}",
             "acwr": pf(latest.get("acwr")),
             "avg_hr": pf(latest.get("avg_hr")),
-            "rest_hr": pf(latest.get("rest_hr")),
+            "rest_hr": pf(last_readiness.get("rest_hr")),
             "rmssd": pf(latest.get("rmssd")),
             "training_load": pf(latest.get("training_load")),
             "zones": {

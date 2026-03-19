@@ -167,7 +167,7 @@ export default function Profiles() {
                                     <th className="px-6 py-6 font-mono">ID</th>
                                     <th className="px-6 py-6">Sport</th>
                                     <th className="px-6 py-6">Readiness</th>
-                                    <th className="px-6 py-6">Load</th>
+                                    <th className="px-6 py-6">Session</th>
                                     <th className="px-6 py-6">ACWR</th>
                                     <th className="px-6 py-6">Status</th>
                                     <th className="px-8 py-6 text-right">Action</th>
@@ -214,7 +214,13 @@ export default function Profiles() {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-5">
-                                                    <span className="text-lg font-bold text-foreground">{athlete.training_load}</span>
+                                                    <span className={`inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider ${
+                                                        athlete.latest_session_type === 'Training'
+                                                            ? 'bg-brand-500/10 text-brand-600'
+                                                            : 'bg-emerald-500/10 text-emerald-600'
+                                                    }`}>
+                                                        {athlete.latest_session_type || 'N/A'}
+                                                    </span>
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center gap-2">
