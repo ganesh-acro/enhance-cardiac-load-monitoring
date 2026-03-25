@@ -39,6 +39,16 @@ function getDefaultZoomStart(data) {
     return Math.floor((startIdx / data.length) * 100);
 }
 
+// Format minutes to "Xh Ym" display
+function fmtMins(m) {
+    if (!m || m <= 0) return '';
+    const h = Math.floor(m / 60);
+    const mins = Math.round(m % 60);
+    if (h > 0 && mins > 0) return `${h}h ${mins}m`;
+    if (h > 0) return `${h}h`;
+    return `${mins}m`;
+}
+
 // Common Chart Options
 const getCommonOptions = (title, isDark, data) => {
     const zoomStart = data ? getDefaultZoomStart(data) : 0;
@@ -1036,7 +1046,7 @@ export const WeeklyZoneStackChart = ({ data }) => {
         label: {
             show: true,
             position: 'top',
-            formatter: (params) => params.value > 0 ? params.value : '',
+            formatter: (params) => fmtMins(params.value),
             fontSize: 11,
             fontWeight: 600,
             color: isDark ? '#ffffff' : '#333',
@@ -1050,10 +1060,25 @@ export const WeeklyZoneStackChart = ({ data }) => {
     }));
 
     const option = {
-        ...getCommonOptions('HR Zone Split (mins)', isDark, data),
+        ...getCommonOptions('HR Zone Split', isDark, data),
         tooltip: {
             ...getTooltipStyle(isDark),
-            axisPointer: { type: 'shadow' }
+            axisPointer: { type: 'shadow' },
+            formatter: (params) => {
+                let tooltip = `<div class="font-bold mb-1" style="font-family: Inter, sans-serif;">${params[0].name}</div>`;
+                params.forEach(p => {
+                    tooltip += `
+                        <div class="flex items-center justify-between gap-4" style="margin-bottom: 2px;">
+                            <span class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full" style="background-color: ${p.color}; display: inline-block; width: 8px; height: 8px; border-radius: 50%;"></span>
+                                ${p.seriesName}
+                            </span>
+                            <span class="font-mono font-bold">${fmtMins(p.value)}</span>
+                        </div>
+                    `;
+                });
+                return tooltip;
+            }
         },
         legend: {
             top: 40,
@@ -1071,9 +1096,9 @@ export const WeeklyZoneStackChart = ({ data }) => {
         },
         yAxis: {
             type: 'value',
-            name: 'Minutes',
+            name: 'Time',
             nameTextStyle: axisStyle.nameTextStyle,
-            axisLabel: axisStyle.axisLabel,
+            axisLabel: { ...axisStyle.axisLabel, formatter: (v) => fmtMins(v) || '0' },
             splitLine: axisStyle.splitLine,
             splitNumber: 5,
         },
@@ -1081,7 +1106,7 @@ export const WeeklyZoneStackChart = ({ data }) => {
     };
     return (
         <div className="w-full h-full">
-            <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>HR Zone Split (mins)</h5>
+            <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>HR Zone Split</h5>
             <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
         </div>
     );
@@ -1115,7 +1140,7 @@ export const MonthlyZoneStackChart = ({ data }) => {
 
     const axisStyle = getAxisStyle(isDark);
     const option = {
-        ...getCommonOptions('Monthly Zone Split (mins)', isDark),
+        ...getCommonOptions('Monthly Zone Split', isDark),
         tooltip: {
             ...getTooltipStyle(isDark),
             axisPointer: { type: 'shadow' },
@@ -1131,7 +1156,7 @@ export const MonthlyZoneStackChart = ({ data }) => {
                                 <span class="w-2 h-2 rounded-full" style="background-color: ${p.color}; display: inline-block; width: 8px; height: 8px; border-radius: 50%;"></span>
                                 ${p.seriesName}
                             </span>
-                            <span class="font-mono font-bold">${p.value}</span>
+                            <span class="font-mono font-bold">${fmtMins(p.value)}</span>
                         </div>
                     `;
                 });
@@ -1150,9 +1175,9 @@ export const MonthlyZoneStackChart = ({ data }) => {
         },
         yAxis: {
             type: 'value',
-            name: 'Minutes',
+            name: 'Time',
             nameTextStyle: axisStyle.nameTextStyle,
-            axisLabel: axisStyle.axisLabel,
+            axisLabel: { ...axisStyle.axisLabel, formatter: (v) => fmtMins(v) || '0' },
             splitLine: axisStyle.splitLine,
             splitNumber: 5,
         },
@@ -1160,7 +1185,7 @@ export const MonthlyZoneStackChart = ({ data }) => {
     };
     return (
         <div className="w-full h-full">
-            <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Monthly Zone Split (mins)</h5>
+            <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Monthly Zone Split</h5>
             <ZoomableChart option={option} style={{ height: '350px', width: '100%' }} />
         </div>
     );

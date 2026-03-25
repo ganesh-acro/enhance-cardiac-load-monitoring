@@ -336,8 +336,8 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                         <div className="space-y-6 flex-1 flex flex-col justify-center px-4">
                             {[5, 4, 3, 2, 1, 0].map(z => {
                                 const avgZone = zoneAverages[`z${z}`] ?? 0;
-                                const colors = ['#d1d5db', '#9ca3af', '#3b82f6', '#22c55e', '#eab308', '#ef4444'].reverse();
-                                const intensityNames = ['Recovery', 'Aerobic', 'Tempo', 'Lactate', 'Anaerobic', 'Maximum'].reverse();
+                                const colors = ['#d1d5db', '#9ca3af', '#3b82f6', '#22c55e', '#eab308', '#ef4444'];
+                                const intensityNames = ['Recovery', 'Aerobic', 'Tempo', 'Lactate', 'Anaerobic', 'Maximum'];
                                 return (
                                     <div key={z} className="group/zone">
                                         <div className="flex justify-between text-sm font-medium tracking-tight mb-2">

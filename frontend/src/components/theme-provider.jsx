@@ -37,6 +37,15 @@ export function ThemeProvider({
 
         updateResolvedTheme()
 
+        // Swap favicon based on resolved theme
+        const favicon = document.querySelector('link[rel="icon"]')
+        if (favicon) {
+            const resolved = theme === "system"
+                ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+                : theme
+            favicon.href = resolved === "dark" ? "/favicon-dark.svg" : "/favicon-light.svg"
+        }
+
         if (theme === "system") {
             const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
             const listener = () => updateResolvedTheme()

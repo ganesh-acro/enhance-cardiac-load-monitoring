@@ -1,5 +1,5 @@
-import React from 'react';
-import { Calendar, Users, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, Users, ChevronDown, AlertCircle } from 'lucide-react';
 
 export const DashboardHeader = ({
     activeTab,
@@ -12,24 +12,48 @@ export const DashboardHeader = ({
     onStartDateChange,
     onEndDateChange
 }) => {
+    const [hoveredDisabled, setHoveredDisabled] = useState(false);
+
+    const handleTabClick = (tabKey) => {
+        if (tabKey !== 'overview' && !selectedAthlete) return;
+        onTabChange(tabKey);
+    };
+
     return (
         <div className="relative z-10 mb-8">
             <div className="bg-card border border-border rounded-xl shadow-sm p-4 md:p-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     {/* Tabs */}
-                    <div className="flex p-1.5 bg-muted/50 rounded-lg w-fit">
-                        {['Overview', 'Training', 'Readiness', 'Comparison'].map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => onTabChange(tab.toLowerCase().replace(' ', ''))}
-                                className={`px-3 py-2 md:px-6 md:py-2.5 rounded-lg text-sm md:text-base font-bold transition-all duration-200 ${activeTab === tab.toLowerCase().replace(' ', '')
-                                    ? "bg-brand-500 text-white shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                    }`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
+                    <div className="flex flex-col gap-2">
+                        <div className="flex p-1.5 bg-muted/50 rounded-lg w-fit">
+                            {['Overview', 'Training', 'Readiness', 'Comparison'].map((tab) => {
+                                const tabKey = tab.toLowerCase().replace(' ', '');
+                                const needsAthlete = tabKey !== 'overview';
+                                const isDisabled = needsAthlete && !selectedAthlete;
+                                return (
+                                    <button
+                                        key={tab}
+                                        onClick={() => handleTabClick(tabKey)}
+                                        onMouseEnter={() => isDisabled && setHoveredDisabled(true)}
+                                        onMouseLeave={() => setHoveredDisabled(false)}
+                                        className={`px-3 py-2 md:px-6 md:py-2.5 rounded-lg text-sm md:text-base font-bold transition-all duration-200 ${activeTab === tabKey
+                                            ? "bg-brand-500 text-white shadow-sm"
+                                            : isDisabled
+                                                ? "text-muted-foreground/40 cursor-not-allowed"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                            }`}
+                                    >
+                                        {tab}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {hoveredDisabled && (
+                            <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider animate-in fade-in slide-in-from-top-2 duration-300">
+                                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                Select an athlete first
+                            </div>
+                        )}
                     </div>
 
                     {/* Filters */}
