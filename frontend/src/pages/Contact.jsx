@@ -26,7 +26,7 @@ export default function Contact() {
             </header>
 
             <main className="container mx-auto py-20">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-0 bg-white dark:bg-card shadow-2xl rounded-[40px] overflow-hidden border border-border">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-0 bg-white dark:bg-card shadow-md rounded-xl overflow-hidden border border-border">
 
                     {/* Left Side: Form */}
                     <motion.div {...fadeIn} className="p-8 md:p-12 lg:p-20 2xl:p-24 space-y-10">
@@ -36,7 +36,7 @@ export default function Contact() {
                                 <input
                                     type="text"
                                     placeholder="First name"
-                                    className="w-full bg-transparent border border-border rounded-2xl px-5 py-4 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-semibold"
+                                    className="w-full bg-transparent border border-border rounded-lg px-5 py-4 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-semibold"
                                 />
                             </div>
                             <div className="space-y-3">
@@ -44,7 +44,7 @@ export default function Contact() {
                                 <input
                                     type="text"
                                     placeholder="Last name"
-                                    className="w-full bg-transparent border border-border rounded-2xl px-5 py-4 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-semibold"
+                                    className="w-full bg-transparent border border-border rounded-lg px-5 py-4 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-semibold"
                                 />
                             </div>
                         </div>
@@ -57,7 +57,7 @@ export default function Contact() {
                                 <input
                                     type="email"
                                     placeholder="Email"
-                                    className="w-full bg-transparent border border-border rounded-2xl px-5 py-4 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-semibold"
+                                    className="w-full bg-transparent border border-border rounded-lg px-5 py-4 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-semibold"
                                     required
                                 />
                             </div>
@@ -71,7 +71,7 @@ export default function Contact() {
                                     <input
                                         type="tel"
                                         placeholder="Phone"
-                                        className="w-full bg-transparent border border-border rounded-2xl pl-28 pr-5 py-4 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-semibold"
+                                        className="w-full bg-transparent border border-border rounded-lg pl-28 pr-5 py-4 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-semibold"
                                     />
                                 </div>
                             </div>
@@ -84,12 +84,12 @@ export default function Contact() {
                             <textarea
                                 placeholder="Message"
                                 rows={6}
-                                className="w-full bg-transparent border border-border rounded-2xl px-5 py-4 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-semibold resize-none"
+                                className="w-full bg-transparent border border-border rounded-lg px-5 py-4 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-semibold resize-none"
                                 required
                             />
                         </div>
 
-                        <button className="bg-brand-500 hover:bg-brand-600 text-white font-black py-5 px-16 rounded-full transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-brand-500/25 text-lg tracking-widest">
+                        <button className="bg-brand-500 hover:bg-brand-600 text-white font-black py-5 px-16 rounded-lg transition-colors shadow-sm text-lg tracking-widest">
                             Send message
                         </button>
                     </motion.div>

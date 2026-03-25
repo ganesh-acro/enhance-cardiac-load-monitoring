@@ -1,6 +1,6 @@
 import {
     HeartRateChart, HRVMultiLineChart, RecoveryBeatsChart,
-    ACWRChartCombined, RestingHRChart, HRRecoveryChart
+    ACWRChartCombined, RestingHRChart
 } from './FeatureCharts';
 
 export const ReadinessTab = ({ primaryChartData }) => {
@@ -9,7 +9,7 @@ export const ReadinessTab = ({ primaryChartData }) => {
         <div className="space-y-8 animate-in fade-in duration-700 pt-6 pb-12">
             <div className="grid grid-cols-1 gap-12">
                 {/* 1. ACWR Combined */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Acute:chronic workload ratio
                     </h5>
@@ -25,7 +25,7 @@ export const ReadinessTab = ({ primaryChartData }) => {
                 </div>
 
                 {/* 2. Resting HR & HR Std */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Resting heart rate
                     </h5>
@@ -41,7 +41,7 @@ export const ReadinessTab = ({ primaryChartData }) => {
                 </div>
 
                 {/* 3. Heart Rate (all sessions) */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Heart rate
                     </h5>
@@ -51,7 +51,7 @@ export const ReadinessTab = ({ primaryChartData }) => {
                 </div>
 
                 {/* 4. HRV Trend */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         HRV trends
                     </h5>
@@ -60,24 +60,8 @@ export const ReadinessTab = ({ primaryChartData }) => {
                     />
                 </div>
 
-                {/* 5. HR Recovery 60s */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
-                    <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
-                        HR recovery (60s)
-                    </h5>
-                    {primaryChartData.hr_recovery && primaryChartData.hr_recovery.length > 0 ? (
-                        <HRRecoveryChart
-                            data={primaryChartData.hr_recovery}
-                        />
-                    ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                            No HR recovery data found for this period.
-                        </div>
-                    )}
-                </div>
-
-                {/* 6. Recovery Beats */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+{/* 6. Recovery Beats */}
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Recovery beats
                     </h5>

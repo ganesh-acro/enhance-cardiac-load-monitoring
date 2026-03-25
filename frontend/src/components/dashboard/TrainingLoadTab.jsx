@@ -23,7 +23,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
         <div className="space-y-8 animate-in fade-in duration-700 pt-6 pb-12">
             <div className="grid grid-cols-1 gap-12">
                 {/* 1. Training Load Trend */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Training load trend
                     </h5>
@@ -39,7 +39,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                 </div>
 
                 {/* 2. Training Effect (Aerobic & Anaerobic) */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Training effect
                     </h5>
@@ -55,7 +55,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                 </div>
 
                 {/* 3. Exercise Duration */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Exercise duration
                     </h5>
@@ -71,7 +71,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                 </div>
 
                 {/* 4. Oxygen Debt */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         EPOC (Oxygen debt)
                     </h5>
@@ -87,7 +87,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                 </div>
 
                 {/* 5. Energy Expenditure */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Energy expenditure (kcal)
                     </h5>
@@ -103,7 +103,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                 </div>
 
                 {/* 6. Movement Trend */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Movement load
                     </h5>
@@ -119,7 +119,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                 </div>
 
                 {/* 7. Oxygen Consumption */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         VO2 max estimate
                     </h5>
@@ -135,7 +135,7 @@ export const TrainingLoadTab = ({ primaryChartData, primaryLabel }) => {
                 </div>
 
                 {/* 8. Weekly Zone Distribution */}
-                <div className="p-6 rounded-[40px] border border-border bg-card shadow-sm min-h-[450px]">
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
                     <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                         Zone distribution
                     </h5>

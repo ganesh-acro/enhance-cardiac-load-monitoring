@@ -110,7 +110,7 @@ export default function Users() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-1 p-1.5 bg-card/40 backdrop-blur-xl border border-border/50 rounded-2xl mb-8 w-fit">
+                <div className="flex gap-1 p-1.5 bg-card border border-border rounded-lg mb-8 w-fit">
                     {TABS.map(({ key, label, icon: Icon }) => (
                         <button
                             key={key}
@@ -173,7 +173,7 @@ function ViewUsersTab({ users, currentUser }) {
     };
 
     return (
-        <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl overflow-hidden shadow-xl">
+        <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
             <table className="w-full">
                 <thead>
                     <tr className="border-b border-border/50 bg-secondary/30 text-muted-foreground uppercase text-[11px] font-semibold tracking-[0.15em]">
@@ -260,7 +260,7 @@ function CreateUserTab({ onCreated }) {
 
     return (
         <div className="max-w-lg">
-            <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-10 shadow-xl">
+            <div className="bg-card border border-border rounded-xl p-10 shadow-sm">
                 <h3 className="text-2xl font-bold text-foreground mb-1">New User</h3>
                 <p className="text-sm text-muted-foreground font-medium mb-8">Add a new user to the platform</p>
 
@@ -324,7 +324,7 @@ function CreateUserTab({ onCreated }) {
                     )}
 
                     <button type="submit" disabled={isSubmitting}
-                        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm bg-foreground text-background hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 shadow-lg mt-2"
+                        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-70 shadow-lg mt-2"
                     >
                         <Plus className="h-4 w-4" />
                         {isSubmitting ? "Creating..." : "Create User"}
@@ -369,7 +369,7 @@ function ResetPasswordTab({ users, currentUser, onReset }) {
 
     return (
         <div className="max-w-lg">
-            <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl p-10 shadow-xl">
+            <div className="bg-card border border-border rounded-xl p-10 shadow-sm">
                 <h3 className="text-2xl font-bold text-foreground mb-1">Reset Password</h3>
                 <p className="text-sm text-muted-foreground font-medium mb-8">Set a new password for any user</p>
 
@@ -424,7 +424,7 @@ function ResetPasswordTab({ users, currentUser, onReset }) {
                     )}
 
                     <button type="submit" disabled={isSubmitting || !selectedUser}
-                        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm bg-foreground text-background hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 shadow-lg mt-2"
+                        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-70 shadow-lg mt-2"
                     >
                         <KeyRound className="h-4 w-4" />
                         {isSubmitting ? "Resetting..." : "Reset Password"}
@@ -444,7 +444,7 @@ function AssignRolesTab({ users, currentUser, onRoleChange, onDelete, onToggleAc
 
     return (
         <>
-            <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-3xl overflow-hidden shadow-xl">
+            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-border/50 bg-secondary/30 text-muted-foreground uppercase text-[11px] font-semibold tracking-[0.15em]">
@@ -501,7 +501,7 @@ function AssignRolesTab({ users, currentUser, onRoleChange, onDelete, onToggleAc
                                             className={`inline-flex items-center gap-1.5 text-sm font-bold px-3 py-1.5 rounded-xl border transition-all ${u.is_active
                                                 ? "bg-green-500/10 text-green-500 border-green-500/20"
                                                 : "bg-red-500/10 text-red-500 border-red-500/20"
-                                                } ${isSelf ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:scale-105"}`}
+                                                } ${isSelf ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:opacity-80"}`}
                                         >
                                             <span className={`w-2 h-2 rounded-full ${u.is_active ? "bg-green-500" : "bg-red-500"}`} />
                                             {u.is_active ? "Active" : "Inactive"}
@@ -608,9 +608,9 @@ function AssignAthletesModal({ user, onClose, onSave }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
-            <div className="relative z-10 w-full max-w-[500px] mx-6 bg-card/95 dark:bg-card/90 backdrop-blur-3xl border border-white/20 dark:border-white/5 rounded-[32px] p-8 shadow-2xl shadow-black/10 ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-300">
-                <button onClick={onClose} className="absolute top-5 right-5 p-2 rounded-full hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground">
+            <div className="absolute inset-0 bg-black/50 animate-in fade-in duration-200" onClick={onClose} />
+            <div className="relative z-10 w-full max-w-[500px] mx-6 bg-card border border-border rounded-xl p-8 shadow-md ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-300">
+                <button onClick={onClose} className="absolute top-5 right-5 p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground">
                     <span className="text-lg font-bold">&times;</span>
                 </button>
 
@@ -652,7 +652,7 @@ function AssignAthletesModal({ user, onClose, onSave }) {
 
                         <div className="flex gap-3 mt-6">
                             <button onClick={onClose} className="flex-1 py-3.5 rounded-xl font-bold text-base border border-border hover:bg-muted/30 transition-all">Cancel</button>
-                            <button onClick={handleSave} disabled={saving} className="flex-1 py-3.5 rounded-xl font-bold text-base bg-foreground text-background hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70">
+                            <button onClick={handleSave} disabled={saving} className="flex-1 py-3.5 rounded-xl font-bold text-base bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-70">
                                 {saving ? "Saving..." : "Save"}
                             </button>
                         </div>

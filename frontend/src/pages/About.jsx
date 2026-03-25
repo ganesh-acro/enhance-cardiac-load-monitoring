@@ -30,7 +30,7 @@ export default function About() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 1 }}
-                        className="relative rounded-[40px] overflow-hidden shadow-2xl aspect-[4/5] lg:aspect-auto h-full lg:min-h-[600px]"
+                        className="relative rounded-xl overflow-hidden shadow-md aspect-[4/5] lg:aspect-auto h-full lg:min-h-[600px]"
                     >
                         <img
                             src="https://static.wixstatic.com/media/f0e14c_f4139a96ea67447fb89a158d0949b3fe~mv2.jpg/v1/fill/w_894,h_690,fp_0.50_0.43,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/image%2010.jpg"
@@ -87,9 +87,9 @@ export default function About() {
                                     initial={{ opacity: 0, y: 20 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.1 }}
-                                    className="group p-10 rounded-[32px] border border-border bg-card/50 hover:bg-brand-500 transition-all duration-500"
+                                    className="group p-10 rounded-xl border border-border bg-card hover:bg-brand-500 transition-colors duration-300"
                                 >
-                                    <div className="h-16 w-16 rounded-2xl bg-brand-500 text-white flex items-center justify-center mb-8 group-hover:bg-white group-hover:text-brand-500 shadow-xl shadow-brand-500/10 transition-colors">
+                                    <div className="h-16 w-16 rounded-lg bg-brand-500 text-white flex items-center justify-center mb-8 group-hover:bg-white group-hover:text-brand-500 shadow-sm transition-colors">
                                         <item.icon className="h-8 w-8" />
                                     </div>
                                     <h4 className="text-2xl font-black mb-4 group-hover:text-white transition-colors">{item.title}</h4>
@@ -169,9 +169,8 @@ export default function About() {
                                             className="flex flex-col items-center group w-32 md:w-36"
                                         >
                                             <div className="relative mb-4">
-                                                <div className="absolute inset-0 bg-brand-500/20 blur-2xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                                                <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-[28px] border border-border bg-card/50 backdrop-blur-sm flex items-center justify-center shadow-lg group-hover:border-brand-500/40 group-hover:bg-brand-500/10 transition-all duration-500">
-                                                    <metric.icon className="h-10 w-10 md:h-12 md:w-12 text-foreground/80 group-hover:text-brand-500 group-hover:scale-110 transition-all duration-500" strokeWidth={1.5} />
+                                                <div className="h-20 w-20 md:h-24 md:w-24 rounded-xl border border-border bg-card flex items-center justify-center shadow-sm group-hover:border-brand-500/40 group-hover:bg-brand-500/10 transition-colors duration-300">
+                                                    <metric.icon className="h-10 w-10 md:h-12 md:w-12 text-foreground/80 group-hover:text-brand-500 transition-colors duration-300" strokeWidth={1.5} />
                                                 </div>
                                             </div>
                                             <span className="text-muted-foreground text-[10px] md:text-sm font-black tracking-widest text-center group-hover:text-foreground transition-colors duration-300">

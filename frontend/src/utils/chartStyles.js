@@ -1,7 +1,10 @@
 import * as echarts from 'echarts';
 
 // ─── Brand Palette ───────────────────────────────────────────────────────────
-export const BRAND_ORANGE = '#ff7a00';
+export const BRAND_TEAL = '#0d7377';
+export const BRAND_AMBER = '#b08347';
+export const BRAND_ORANGE = '#0d7377'; // default; use getBrandColor(isDark) for mode-aware
+export const getBrandColor = (isDark) => isDark ? BRAND_AMBER : BRAND_TEAL;
 export const SECONDARY_BLUE = '#1f77b4';
 
 // ─── Typography ──────────────────────────────────────────────────────────────
@@ -112,6 +115,6 @@ export const getBarItemStyle = (color = BRAND_ORANGE) => ({
 /** Convert #rrggbb to "r,g,b" string for use in rgba() */
 function hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) return '255,122,0';
+    if (!result) return '13,115,119';
     return `${parseInt(result[1], 16)},${parseInt(result[2], 16)},${parseInt(result[3], 16)}`;
 }

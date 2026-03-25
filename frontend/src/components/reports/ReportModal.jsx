@@ -3,6 +3,7 @@ import { X, Download } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
+import { EnhanceLogo } from '../common/EnhanceLogo';
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import {
@@ -138,12 +139,12 @@ export const ReportModal = ({ isOpen, onClose, athlete, reportData, autoDownload
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex justify-center p-4 bg-background/80 backdrop-blur-sm overflow-y-auto items-start py-12">
+                <div className="fixed inset-0 z-50 flex justify-center p-4 bg-background/60 overflow-y-auto items-start py-12">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="relative w-full max-w-4xl bg-white text-slate-900 rounded-[32px] shadow-2xl overflow-hidden"
+                        className="relative w-full max-w-4xl bg-white text-slate-900 rounded-xl shadow-md overflow-hidden"
                     >
                         {/* Auto-download Overlay */}
                         <AnimatePresence>
@@ -152,7 +153,7 @@ export const ReportModal = ({ isOpen, onClose, athlete, reportData, autoDownload
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
-                                    className="absolute inset-0 z-[60] bg-white/95 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center"
+                                    className="absolute inset-0 z-[60] bg-white/95 flex flex-col items-center justify-center p-8 text-center"
                                 >
                                     <div className="w-16 h-16 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-6"></div>
                                     <h2 className="text-2xl font-bold text-slate-900 uppercase tracking-widest mb-2">Preparing Report...</h2>
@@ -198,7 +199,7 @@ export const ReportModal = ({ isOpen, onClose, athlete, reportData, autoDownload
                                         </div>
                                     </div>
                                 </div>
-                                <img src="/logo bright.png" alt="Enhance Health" className="h-28 w-auto object-contain" />
+                                <EnhanceLogo height={112} color="#0d7377" />
                             </div>
 
                             {/* Summary Cards */}
@@ -257,7 +258,7 @@ export const ReportModal = ({ isOpen, onClose, athlete, reportData, autoDownload
                                 <div className="space-y-12">
                                     <div>
                                         <h3 className="text-lg font-normal text-slate-900 uppercase tracking-tight mb-6">Current ACWR</h3>
-                                        <div className="h-56 flex flex-col items-center justify-center bg-slate-50/20 rounded-3xl border border-slate-50 p-8">
+                                        <div className="h-56 flex flex-col items-center justify-center bg-slate-50/20 rounded-xl border border-slate-50 p-8">
                                             <div className="text-4xl font-normal mb-2" style={{ color: acwrColor }}>{acwrStatus}</div>
                                             <div className="text-xl font-normal text-slate-900 tracking-tight">Ratio: {latestACWR.toFixed(2)}</div>
                                         </div>
@@ -265,7 +266,7 @@ export const ReportModal = ({ isOpen, onClose, athlete, reportData, autoDownload
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-normal text-slate-900 uppercase tracking-tight mb-6">Zone Intensity Distribution</h3>
-                                        <div className="space-y-4 px-4 py-6 bg-slate-50/30 rounded-3xl border border-slate-50">
+                                        <div className="space-y-4 px-4 py-6 bg-slate-50/30 rounded-xl border border-slate-50">
                                             {[5, 4, 3, 2, 1, 0].map(z => {
                                                 const avgZone = Math.round(last7Days.reduce((acc, curr) => acc + (curr[zones[z]] || 0), 0) / last7Days.length);
                                                 return (

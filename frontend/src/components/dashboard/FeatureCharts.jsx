@@ -5,7 +5,7 @@ import { useTheme } from '../theme-provider';
 import { format, parseISO, subMonths } from 'date-fns';
 import { ZoomIn } from 'lucide-react';
 import {
-    BRAND_ORANGE, SECONDARY_BLUE, FONT_FAMILY,
+    BRAND_ORANGE, SECONDARY_BLUE, FONT_FAMILY, getBrandColor,
     getTooltipStyle, getAxisStyle, getLegendStyle, getGridStyle,
     getLineSeriesStyle, getBarItemStyle
 } from '../../utils/chartStyles';
@@ -294,18 +294,32 @@ export const HRVMultiLineChart = ({ data }) => {
     );
 };
 
-// 4. Oxygen Debt (EPOC)
+// 4. Oxygen Debt (EPOC) — Scatter bubble + connecting line
 export const OxygenDebtChart = ({ data }) => {
     const isDark = useChartTheme();
     if (!data || data.length === 0) return null;
     const dates = data.map(d => d.date);
+    const brandColor = getBrandColor(isDark);
+
+    const totals = data.map(d => d.epoc_total || 0);
+    const peaks = data.map(d => d.epoc_peak || 0);
 
     const option = {
         ...getCommonOptions('Oxygen Debt (EPOC)', isDark, data),
-        tooltip: { ...getTooltipStyle(isDark), axisPointer: { type: 'cross' } },
+        tooltip: {
+            ...getTooltipStyle(isDark),
+            trigger: 'axis',
+            axisPointer: { type: 'cross' },
+        },
+        legend: {
+            top: 5,
+            ...getLegendStyle(isDark),
+        },
+        grid: getGridStyle({ top: 50, bottom: 60, left: 50, right: 20 }),
         xAxis: {
             type: 'category',
             data: dates,
+            boundaryGap: false,
             ...getAxisStyle(isDark),
         },
         yAxis: {
@@ -317,28 +331,31 @@ export const OxygenDebtChart = ({ data }) => {
             splitNumber: 5,
         },
         series: [
+            // Total EPOC — area line
             {
                 name: 'Total EPOC',
-                type: 'bar',
-                data: data.map(d => d.epoc_total || 0),
-                itemStyle: getBarItemStyle('#8b5cf6'),
-                barMaxWidth: 30
+                type: 'line',
+                data: totals,
+                ...getLineSeriesStyle(brandColor, true),
+                symbol: 'circle',
+                symbolSize: 5,
+                z: 2,
             },
+            // Peak EPOC — thinner line, no fill
             {
                 name: 'Peak EPOC',
                 type: 'line',
-                data: data.map(d => d.epoc_peak || 0),
-                itemStyle: { color: '#ef4444' },
+                data: peaks,
+                ...getLineSeriesStyle(SECONDARY_BLUE, false),
+                lineStyle: { width: 2, color: SECONDARY_BLUE, type: 'solid' },
                 symbol: 'circle',
-                symbolSize: 8,
-                smooth: true,
-                lineStyle: { width: 3 }
-            }
-        ]
+                symbolSize: 4,
+                z: 3,
+            },
+        ],
     };
     return (
         <div className="w-full h-full">
-            <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Oxygen Debt (EPOC)</h5>
             <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
         </div>
     );
@@ -581,46 +598,128 @@ export const ZoneDistributionChart = ({ data }) => {
     );
 };
 
-// 9a. Recovery Beats
+// 9a. Recovery Beats — Color-encoded dot strip + sparkline
 export const RecoveryBeatsChart = ({ data }) => {
     const isDark = useChartTheme();
-    if (!data) return null;
+    if (!data || data.length === 0) return null;
     const dates = data.map(d => d.date);
 
-    const axisStyle = getAxisStyle(isDark);
+    const values = data.map(d => d.recovery_beats || 0);
+    const validValues = values.filter(v => v > 0);
+    const minVal = validValues.length > 0 ? Math.min(...validValues) : 0;
+    const maxVal = validValues.length > 0 ? Math.max(...validValues) : 100;
+    const latest = values[values.length - 1];
+    const avg = validValues.length > 0
+        ? Math.round(validValues.reduce((a, b) => a + b, 0) / validValues.length)
+        : 0;
+
+    // Color mapping: red(low) → amber(mid) → green(high)
+    const getColor = (v) => {
+        if (v <= 0) return isDark ? '#334155' : '#e2e8f0';
+        const ratio = (v - minVal) / ((maxVal - minVal) || 1);
+        if (ratio < 0.33) return '#ef4444';
+        if (ratio < 0.66) return '#f59e0b';
+        return '#10b981';
+    };
+
     const option = {
         ...getCommonOptions('Recovery beats', isDark, data),
-        tooltip: getTooltipStyle(isDark),
+        tooltip: {
+            ...getTooltipStyle(isDark),
+            trigger: 'axis',
+            formatter: (params) => {
+                const i = params[0]?.dataIndex;
+                if (i == null) return '';
+                const d = data[i];
+                const v = values[i];
+                const color = getColor(v);
+                return `<div style="font-weight:600; margin-bottom:6px; font-family: Inter, sans-serif;">${d.date}</div>
+                    <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};margin-right:6px;"></span>Recovery: <strong>${v} beats</strong></div>`;
+            }
+        },
+        grid: getGridStyle({ top: 50, bottom: '15%' }),
         xAxis: {
             type: 'category',
             data: dates,
-            axisLabel: axisStyle.axisLabel,
-            axisLine: axisStyle.axisLine,
+            ...getAxisStyle(isDark),
         },
-        yAxis: {
-            type: 'value',
-            name: 'Beats',
-            nameTextStyle: axisStyle.nameTextStyle,
-            axisLabel: axisStyle.axisLabel,
-            splitLine: axisStyle.splitLine,
-            splitNumber: 5,
-        },
-        series: [{
-            name: 'Recovery',
-            type: 'line',
-            data: data.map(d => d.recovery_beats),
-            ...getLineSeriesStyle(BRAND_ORANGE, true),
-            showSymbol: false,
-            markLine: {
-                silent: true,
-                data: [{ yAxis: 50, lineStyle: { color: isDark ? '#4b5563' : '#94a3b8', type: 'dashed' } }]
+        yAxis: [
+            // Dot strip (fixed single row)
+            {
+                type: 'value',
+                min: 0,
+                max: 1,
+                show: false,
+            },
+            // Sparkline axis
+            {
+                type: 'value',
+                name: 'Beats',
+                nameTextStyle: getAxisStyle(isDark).nameTextStyle,
+                axisLabel: getAxisStyle(isDark).axisLabel,
+                splitLine: { ...getAxisStyle(isDark).splitLine, show: true },
+                splitNumber: 4,
+                position: 'right',
             }
-        }]
+        ],
+        series: [
+            // Dot strip — single row of colored circles
+            {
+                name: 'Recovery',
+                type: 'scatter',
+                yAxisIndex: 0,
+                data: values.map(v => ({
+                    value: 0.5,
+                    itemStyle: {
+                        color: getColor(v),
+                        borderColor: isDark ? '#1e293b' : '#fff',
+                        borderWidth: 1.5,
+                    }
+                })),
+                symbolSize: (val, params) => {
+                    const v = values[params.dataIndex];
+                    return v <= 0 ? 6 : 12 + ((v - minVal) / ((maxVal - minVal) || 1)) * 8;
+                },
+                z: 3,
+            },
+            // Sparkline trend overlay
+            {
+                name: 'Trend',
+                type: 'line',
+                yAxisIndex: 1,
+                data: values,
+                smooth: true,
+                symbol: 'none',
+                lineStyle: { width: 1.5, color: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)' },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                        { offset: 1, color: 'transparent' },
+                    ]),
+                },
+                z: 1,
+            }
+        ]
     };
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Recovery Beats</h5>
-            <ZoomableChart option={option} style={{ height: '400px' }} />
+            <div className="flex justify-center gap-6 mb-4">
+                <div className="text-center">
+                    <p className="text-2xl font-semibold text-foreground">{latest}</p>
+                    <p className="text-xs text-muted-foreground">Latest</p>
+                </div>
+                <div className="text-center">
+                    <p className="text-2xl font-semibold text-muted-foreground">{avg}</p>
+                    <p className="text-xs text-muted-foreground">Average</p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444]"></span>Low
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span>Mid
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></span>High
+                </div>
+            </div>
+            <ZoomableChart option={option} style={{ height: '300px' }} />
         </div>
     );
 };
@@ -1339,11 +1438,14 @@ export const MonthlyMovementComboChart = ({ data }) => {
     );
 };
 
-// 20. Training Effect Chart (Aerobic & Anaerobic)
+// 20. Training Effect Chart — Horizontal Dumbbell / Lollipop
 export const TrainingEffectChart = ({ data }) => {
     const isDark = useChartTheme();
     if (!data || data.length === 0) return null;
+    const brandColor = getBrandColor(isDark);
     const dates = data.map(d => d.date);
+    const aerobic = data.map(d => d.aerobic_te_value || 0);
+    const anaerobic = data.map(d => d.anaerobic_te_value || 0);
 
     const option = {
         ...getCommonOptions('Training Effect', isDark, data),
@@ -1351,24 +1453,26 @@ export const TrainingEffectChart = ({ data }) => {
             ...getTooltipStyle(isDark),
             trigger: 'axis',
             formatter: (params) => {
-                const idx = params[0].dataIndex;
+                const idx = params[0]?.dataIndex;
+                if (idx == null || !data[idx]) return '';
                 const d = data[idx];
-                let tooltip = `<div class="font-bold mb-1" style="font-family: Inter, sans-serif;">${params[0].name}</div>`;
-                tooltip += `<div style="margin-bottom: 4px;"><span style="color: ${BRAND_ORANGE}; font-weight: bold;">Aerobic:</span> ${d.aerobic_te_value} — ${d.aerobic_te_comment || 'N/A'}</div>`;
-                tooltip += `<div><span style="color: ${SECONDARY_BLUE}; font-weight: bold;">Anaerobic:</span> ${d.anaerobic_te_value} — ${d.anaerobic_te_comment || 'N/A'}</div>`;
-                return tooltip;
+                let tip = `<div style="font-weight:600; margin-bottom:6px; font-family: Inter, sans-serif;">${d.date}</div>`;
+                tip += `<div style="margin-bottom:3px;">${params[0]?.marker || ''} Aerobic: <strong>${d.aerobic_te_value}</strong> — ${d.aerobic_te_comment || 'N/A'}</div>`;
+                tip += `<div>${params[1]?.marker || ''} Anaerobic: <strong>${d.anaerobic_te_value}</strong> — ${d.anaerobic_te_comment || 'N/A'}</div>`;
+                return tip;
             }
         },
         xAxis: {
             type: 'category',
             data: dates,
+            boundaryGap: false,
             ...getAxisStyle(isDark),
         },
         yAxis: {
             type: 'value',
             name: 'TE Value',
             min: 0,
-            max: 5.5,
+            max: 5,
             nameTextStyle: getAxisStyle(isDark).nameTextStyle,
             axisLabel: getAxisStyle(isDark).axisLabel,
             splitLine: getAxisStyle(isDark).splitLine,
@@ -1376,42 +1480,66 @@ export const TrainingEffectChart = ({ data }) => {
         },
         series: [
             {
-                name: 'Aerobic TE',
-                type: 'bar',
-                data: data.map(d => d.aerobic_te_value || 0),
-                itemStyle: getBarItemStyle(BRAND_ORANGE),
-                barMaxWidth: 30,
-                barGap: '10%'
+                name: 'Aerobic',
+                type: 'line',
+                data: aerobic,
+                ...getLineSeriesStyle(brandColor, true),
+                symbol: 'circle',
+                symbolSize: 5,
             },
             {
-                name: 'Anaerobic TE',
-                type: 'bar',
-                data: data.map(d => d.anaerobic_te_value || 0),
-                itemStyle: getBarItemStyle(SECONDARY_BLUE),
-                barMaxWidth: 30
-            }
-        ]
+                name: 'Anaerobic',
+                type: 'line',
+                data: anaerobic,
+                ...getLineSeriesStyle(SECONDARY_BLUE, false),
+                lineStyle: { width: 2, color: SECONDARY_BLUE, type: 'solid' },
+                symbol: 'circle',
+                symbolSize: 4,
+            },
+        ],
     };
+
     return (
-        <div className="w-full h-full">
-            <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Training Effect</h5>
-            <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
-        </div>
+        <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
     );
 };
 
-// 21. Exercise Duration Chart
+// 21. Exercise Duration Chart — Step-area with rolling average
 export const ExerciseDurationChart = ({ data }) => {
     const isDark = useChartTheme();
     if (!data || data.length === 0) return null;
     const dates = data.map(d => d.date);
+    const brandColor = getBrandColor(isDark);
+
+    const durations = data.map(d => d.exercise_duration || 0);
+
+    // 7-session rolling average
+    const windowSize = 7;
+    const rollingAvg = durations.map((_, i) => {
+        const start = Math.max(0, i - windowSize + 1);
+        const window = durations.slice(start, i + 1);
+        return Math.round(window.reduce((a, b) => a + b, 0) / window.length);
+    });
+
+    const rgb = isDark ? '176,131,71' : '13,115,119';
 
     const option = {
         ...getCommonOptions('Exercise duration', isDark, data),
-        tooltip: { ...getTooltipStyle(isDark) },
+        tooltip: {
+            ...getTooltipStyle(isDark),
+            trigger: 'axis',
+            formatter: (params) => {
+                let tip = `<div style="font-weight:600; margin-bottom:4px; font-family: Inter, sans-serif;">${params[0].name}</div>`;
+                params.forEach(p => {
+                    tip += `<div style="margin-bottom:2px;">${p.marker} ${p.seriesName}: <strong>${p.value} min</strong></div>`;
+                });
+                return tip;
+            }
+        },
         xAxis: {
             type: 'category',
             data: dates,
+            boundaryGap: false,
             ...getAxisStyle(isDark),
         },
         yAxis: {
@@ -1425,10 +1553,29 @@ export const ExerciseDurationChart = ({ data }) => {
         series: [
             {
                 name: 'Duration',
-                type: 'bar',
-                data: data.map(d => d.exercise_duration || 0),
-                itemStyle: getBarItemStyle('#8b5cf6'),
-                barMaxWidth: 30
+                type: 'line',
+                step: 'middle',
+                data: durations,
+                itemStyle: { color: brandColor },
+                lineStyle: { width: 1.5, color: brandColor },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: `rgba(${rgb}, 0.25)` },
+                        { offset: 1, color: `rgba(${rgb}, 0.03)` },
+                    ]),
+                },
+                showSymbol: false,
+                z: 1,
+            },
+            {
+                name: '7-session avg',
+                type: 'line',
+                data: rollingAvg,
+                smooth: true,
+                symbol: 'none',
+                lineStyle: { width: 2.5, color: '#8b5cf6', type: 'solid' },
+                itemStyle: { color: '#8b5cf6' },
+                z: 2,
             }
         ]
     };
@@ -1506,44 +1653,96 @@ export const RestingHRChart = ({ data }) => {
     );
 };
 
-// 23. HR Recovery 60s Chart (Readiness)
+// 23. HR Recovery 60s Chart — Waterfall deviation from personal baseline
 export const HRRecoveryChart = ({ data }) => {
     const isDark = useChartTheme();
     if (!data || data.length === 0) return null;
     const dates = data.map(d => d.date);
 
+    const values = data.map(d => d.hr_recovery_60s || 0);
+    const validValues = values.filter(v => v > 0);
+    const baseline = validValues.length > 0
+        ? Math.round(validValues.reduce((a, b) => a + b, 0) / validValues.length)
+        : 0;
+
+    // Deviation from baseline
+    const deviations = values.map(v => Math.round(v - baseline));
+
+    const goodColor = '#10b981';
+    const poorColor = '#ef4444';
+
     const option = {
         ...getCommonOptions('HR Recovery (60s)', isDark, data),
-        tooltip: { ...getTooltipStyle(isDark) },
+        tooltip: {
+            ...getTooltipStyle(isDark),
+            trigger: 'axis',
+            formatter: (params) => {
+                const i = params[0]?.dataIndex;
+                if (i == null) return '';
+                const d = data[i];
+                const dev = deviations[i];
+                const devLabel = dev >= 0 ? `+${dev}` : `${dev}`;
+                const devColor = dev >= 0 ? goodColor : poorColor;
+                return `<div style="font-weight:600; margin-bottom:6px; font-family: Inter, sans-serif;">${d.date}</div>
+                    <div style="margin-bottom:3px;">Recovery: <strong>${d.hr_recovery_60s} BPM</strong></div>
+                    <div style="margin-bottom:3px;">Baseline avg: <strong>${baseline} BPM</strong></div>
+                    <div style="color:${devColor}; font-weight:600;">Deviation: ${devLabel} BPM</div>`;
+            }
+        },
         xAxis: {
             type: 'category',
             data: dates,
-            boundaryGap: false,
             ...getAxisStyle(isDark),
         },
         yAxis: {
             type: 'value',
-            name: 'BPM drop',
+            name: 'vs Baseline (BPM)',
             nameTextStyle: getAxisStyle(isDark).nameTextStyle,
-            axisLabel: getAxisStyle(isDark).axisLabel,
+            axisLabel: {
+                ...getAxisStyle(isDark).axisLabel,
+                formatter: (v) => v >= 0 ? `+${v}` : v
+            },
             splitLine: getAxisStyle(isDark).splitLine,
             splitNumber: 5,
         },
         series: [
             {
-                name: 'HR Recovery 60s',
+                name: 'Recovery vs baseline',
+                type: 'bar',
+                data: deviations.map(d => ({
+                    value: d,
+                    itemStyle: {
+                        color: d >= 0
+                            ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: goodColor },
+                                { offset: 1, color: goodColor + '44' },
+                            ])
+                            : new echarts.graphic.LinearGradient(0, 1, 0, 0, [
+                                { offset: 0, color: poorColor },
+                                { offset: 1, color: poorColor + '44' },
+                            ]),
+                        borderRadius: d >= 0 ? [4, 4, 0, 0] : [0, 0, 4, 4],
+                    }
+                })),
+                barMaxWidth: 24,
+            },
+            // Zero baseline reference
+            {
+                name: 'Baseline',
                 type: 'line',
-                data: data.map(d => d.hr_recovery_60s || 0),
-                ...getLineSeriesStyle('#10b981', true),
-                symbol: 'circle',
-                symbolSize: 6,
-                smooth: true,
+                data: deviations.map(() => 0),
+                symbol: 'none',
+                lineStyle: { width: 1.5, color: isDark ? '#475569' : '#94a3b8', type: 'dashed' },
+                silent: true,
             }
         ]
     };
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>HR Recovery (60s)</h5>
+            <p className="text-xs text-center text-muted-foreground mb-4" style={{ fontFamily: FONT_FAMILY }}>
+                Deviation from personal average ({baseline} BPM) — green = better than usual
+            </p>
             <ZoomableChart option={option} style={{ height: '400px', width: '100%' }} />
         </div>
     );

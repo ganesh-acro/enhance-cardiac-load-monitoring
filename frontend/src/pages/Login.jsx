@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/auth-context";
-import { useTheme } from "../components/theme-provider";
+
 import { Lock, Mail, ArrowRight } from "lucide-react";
+import { EnhanceLogo } from "../components/common/EnhanceLogo";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -10,7 +11,6 @@ export default function Login() {
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { login, user } = useAuth();
-    const { resolvedTheme } = useTheme();
     const navigate = useNavigate();
 
     // If already logged in, redirect to home
@@ -34,24 +34,16 @@ export default function Login() {
 
     return (
         <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background">
-            {/* Background Decorative Elements */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-brand-500/10 blur-[120px] animate-pulse" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[35%] h-[35%] rounded-full bg-blue-500/10 blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-
             {/* Main Login Card */}
             <div className="relative z-10 w-full max-w-[500px] px-6">
                 <div className="animate-in fade-in zoom-in duration-700">
                     {/* Logo Section */}
-                    <div className="flex flex-col items-center mb-8">
-                        <img
-                            src={resolvedTheme === 'dark' ? '/logo dark.png' : '/logo bright.png'}
-                            alt="Enhance Health"
-                            className="w-[450px] h-auto object-contain"
-                        />
+                    <div className="flex justify-center mb-8">
+                        <EnhanceLogo height={96} />
                     </div>
 
-                    {/* Glassmorphic Form Container */}
-                    <div className="bg-card/40 dark:bg-card/20 backdrop-blur-3xl border border-white/20 dark:border-white/5 rounded-[40px] p-12 shadow-2xl shadow-black/5 ring-1 ring-black/5">
+                    {/* Form Container */}
+                    <div className="bg-card border border-border rounded-xl p-12 shadow-sm">
                         <div className="mb-10">
                             <h2 className="text-4xl font-black text-foreground mb-1">Welcome back</h2>
                         </div>
@@ -69,7 +61,7 @@ export default function Login() {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="block w-full pl-16 pr-6 py-5 bg-background/50 border border-border/50 rounded-2xl text-lg font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
+                                        className="block w-full pl-16 pr-6 py-5 bg-background border border-border rounded-lg text-lg font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
                                     />
                                 </div>
                             </div>
@@ -89,13 +81,13 @@ export default function Login() {
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="block w-full pl-16 pr-6 py-5 bg-background/50 border border-border/50 rounded-2xl text-lg font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
+                                        className="block w-full pl-16 pr-6 py-5 bg-background border border-border rounded-lg text-lg font-bold focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 outline-none transition-all"
                                     />
                                 </div>
                             </div>
 
                             {error && (
-                                <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold animate-in fade-in slide-in-from-top-2">
+                                <div className="p-3.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold animate-in fade-in slide-in-from-top-2">
                                     {error}
                                 </div>
                             )}
@@ -104,14 +96,12 @@ export default function Login() {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="w-full flex items-center justify-center gap-3 group relative overflow-hidden bg-foreground py-5 rounded-2xl font-black text-lg text-background shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:hover:scale-100"
+                                className="w-full flex items-center justify-center gap-3 bg-foreground py-5 rounded-lg font-black text-lg text-background shadow-sm hover:opacity-90 transition-opacity disabled:opacity-70"
                             >
-                                <span className="relative z-10 flex items-center gap-2">
+                                <span className="flex items-center gap-2">
                                     {isSubmitting ? 'Logging in...' : 'Log in to Portal'}
-                                    {!isSubmitting && <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />}
+                                    {!isSubmitting && <ArrowRight className="h-5 w-5" />}
                                 </span>
-                                {/* Hover Glow */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-brand-400 to-brand-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                             </button>
                         </form>
 

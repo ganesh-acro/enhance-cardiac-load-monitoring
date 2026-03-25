@@ -78,7 +78,7 @@ export const ComparisonTab = ({
     return (
         <div className="space-y-8 animate-in fade-in duration-700 pb-12">
             {/* Control Panel */}
-            <div className="p-5 lg:p-8 rounded-3xl border border-border bg-card shadow-sm sticky top-24 z-30 backdrop-blur-md bg-opacity-95">
+            <div className="p-5 lg:p-8 rounded-xl border border-border bg-card shadow-sm sticky top-24 z-30">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 lg:gap-8">
                     <div className="flex items-center gap-6 w-full md:w-auto">
                         <div className="p-4 rounded-xl bg-brand-500/10 text-brand-500">
@@ -142,7 +142,7 @@ export const ComparisonTab = ({
             {/* Comparison Visualizations */}
             {secondaryChartData && secondaryAthlete ? (
                 <div className="animate-in zoom-in-95 fade-in duration-700">
-                    <div className="p-10 rounded-[3rem] border border-border bg-card shadow-2xl overflow-hidden relative group transition-all hover:shadow-brand-500/5">
+                    <div className="p-10 rounded-xl border border-border bg-card shadow-sm overflow-hidden relative group">
 
                         <div className="min-h-[500px] w-full">
                             <ActiveChartComponent
@@ -156,7 +156,7 @@ export const ComparisonTab = ({
                     </div>
                 </div>
             ) : (
-                <div className="h-96 flex flex-col items-center justify-center border border-dashed border-border rounded-3xl bg-muted/5 animate-in fade-in duration-700">
+                <div className="h-96 flex flex-col items-center justify-center border border-dashed border-border rounded-xl bg-muted/5 animate-in fade-in duration-700">
                     <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6">
                         <Users className="h-10 w-10 text-muted-foreground/50" />
                     </div>

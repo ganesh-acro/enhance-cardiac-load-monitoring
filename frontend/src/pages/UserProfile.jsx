@@ -143,7 +143,7 @@ export default function UserProfile() {
                                                 console.error("Failed to clear history:", err)
                                             }
                                         }}
-                                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider text-red-500 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all active:scale-95"
+                                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider text-red-500 hover:bg-red-500/10 rounded-lg border border-red-500/20 transition-colors"
                                     >
                                         <Trash2 className="h-3.5 w-3.5" />
                                         Clear history

@@ -6,9 +6,9 @@ export function NavigationCard({ title, description, icon: Icon, onClick }) {
     return (
         <button
             onClick={onClick}
-            className="group relative flex flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl border border-border/50 bg-card/50 p-8 text-center shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:scale-[1.05] hover:shadow-2xl hover:shadow-brand-500/20 hover:border-brand-500/40 dark:hover:border-brand-400/40"
+            className="group relative flex flex-col items-center justify-center gap-4 overflow-hidden rounded-xl border border-border bg-card p-8 text-center shadow-sm transition-colors duration-200 hover:shadow-md hover:border-brand-500/30"
         >
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-400 group-hover:bg-brand-500 group-hover:text-white transition-all duration-300 shadow-inner overflow-hidden">
+            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-400 group-hover:bg-brand-500 group-hover:text-white transition-colors duration-200 overflow-hidden">
                 {isImage ? (
                     <img
                         src={Icon}

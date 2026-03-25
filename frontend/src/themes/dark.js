@@ -42,7 +42,7 @@
         return;
     }
     var contrastColor = '#B9B8CE';
-    var backgroundColor = '#100C2A';
+    var backgroundColor = 'transparent';
     var axisCommon = function () {
         return {
             axisLine: {
@@ -52,7 +52,7 @@
             },
             splitLine: {
                 lineStyle: {
-                    color: '#484753'
+                    color: '#1e293b'
                 }
             },
             splitArea: {
@@ -62,7 +62,7 @@
             },
             minorSplitLine: {
                 lineStyle: {
-                    color: '#20203B'
+                    color: '#0f172a'
                 }
             }
         };

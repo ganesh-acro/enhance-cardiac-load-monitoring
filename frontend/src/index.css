@@ -7,9 +7,7 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    /* White */
     --foreground: 222.2 84% 4.9%;
-    /* Dark */
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -17,8 +15,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 24.6 95% 53.1%;
-    /* Orange-500: #f97316 */
+    --primary: 181 82% 26%;
+    /* Deep Teal: #0d7377 */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -35,25 +33,36 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 24.6 95% 53.1%;
+    --ring: 181 82% 26%;
 
     --radius: 0.5rem;
+
+    /* Brand scale — Deep Teal for light mode */
+    --brand-50: #effcfc;
+    --brand-100: #d0f5f5;
+    --brand-200: #a6eaeb;
+    --brand-300: #6bd8da;
+    --brand-400: #33bdc1;
+    --brand-500: #0d7377;
+    --brand-600: #0a5f63;
+    --brand-700: #0b4d51;
+    --brand-800: #0e3e41;
+    --brand-900: #0a2e30;
+    --brand-950: #051b1d;
   }
 
   .dark {
     --background: 222.2 25% 6%;
-    /* Deeper Slate/Grey instead of near-black */
     --foreground: 210 40% 98%;
 
     --card: 222.2 24% 10%;
-    /* Slightly lighter than bg */
     --card-foreground: 210 40% 98%;
 
     --popover: 222.2 25% 6%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 24.6 95% 53.1%;
-    /* Orange */
+    --primary: 36 40% 48%;
+    /* Warm Amber: #b08347 */
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -70,7 +79,20 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 24.6 95% 53.1%;
+    --ring: 36 40% 48%;
+
+    /* Brand scale — Warm Amber for dark mode */
+    --brand-50: #faf6f0;
+    --brand-100: #f2e8d5;
+    --brand-200: #e4d0ab;
+    --brand-300: #d4b47c;
+    --brand-400: #c49a5a;
+    --brand-500: #b08347;
+    --brand-600: #966d3a;
+    --brand-700: #7a5730;
+    --brand-800: #5e4326;
+    --brand-900: #45311d;
+    --brand-950: #2a1e11;
   }
 }
 
@@ -97,9 +119,17 @@
 }
 
 .brand-orange-filter {
-  filter: invert(58%) sepia(82%) saturate(2253%) hue-rotate(344deg) brightness(101%) contrast(98%);
+  filter: invert(38%) sepia(50%) saturate(500%) hue-rotate(140deg) brightness(90%) contrast(95%);
 }
 
 .group:hover .group-hover\:brand-orange-filter {
-  filter: invert(58%) sepia(82%) saturate(2253%) hue-rotate(344deg) brightness(101%) contrast(98%);
+  filter: invert(38%) sepia(50%) saturate(500%) hue-rotate(140deg) brightness(90%) contrast(95%);
+}
+
+.dark .brand-orange-filter {
+  filter: invert(55%) sepia(30%) saturate(600%) hue-rotate(5deg) brightness(95%) contrast(90%);
+}
+
+.dark .group:hover .group-hover\:brand-orange-filter {
+  filter: invert(55%) sepia(30%) saturate(600%) hue-rotate(5deg) brightness(95%) contrast(90%);
 }

@@ -23,15 +23,15 @@ export function SidebarNav() {
     return (
         <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[60] flex items-center h-[400px]">
             {/* Sidebar Content */}
-            <div className="flex flex-col gap-4 p-2 rounded-2xl border border-border bg-card/50 backdrop-blur-xl shadow-2xl transition-all duration-300">
+            <div className="flex flex-col gap-4 p-2 rounded-lg border border-border bg-card shadow-md transition-colors">
                 {navItems.map((item) => {
                     const isActive = location.pathname === item.route
                     return (
                         <button
                             key={item.label}
                             onClick={() => navigate(item.route)}
-                            className={`p-3 rounded-xl transition-all group relative overflow-hidden ${isActive
-                                ? "bg-brand-500 text-white shadow-lg shadow-brand-500/20"
+                            className={`p-3 rounded-lg transition-colors group relative overflow-hidden ${isActive
+                                ? "bg-brand-500 text-white shadow-sm"
                                 : "hover:bg-secondary text-foreground/70 hover:text-brand-600"
                                 }`}
                             title={item.label}
