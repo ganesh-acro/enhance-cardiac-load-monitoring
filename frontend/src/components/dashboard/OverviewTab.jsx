@@ -13,19 +13,16 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
     const trainingLoadFlag = summaryData.training_load_flag || null;
 
     const exertionColors = {
-        "Minimal": { bg: "bg-gray-500/10 border-gray-500/40", circle: "bg-gray-500 text-white" },
         "Low": { bg: "bg-emerald-500/10 border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.2)]", circle: "bg-emerald-500 text-white" },
         "Moderate": { bg: "bg-yellow-500/10 border-yellow-500/40 shadow-[0_0_30px_rgba(234,179,8,0.2)]", circle: "bg-yellow-500 text-white" },
-        "High": { bg: "bg-orange-500/10 border-orange-500/40 shadow-[0_0_30px_rgba(249,115,22,0.2)]", circle: "bg-orange-500 text-white" },
-        "Peak": { bg: "bg-red-500/10 border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]", circle: "bg-red-500 text-white" },
+        "High": { bg: "bg-red-500/10 border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]", circle: "bg-red-500 text-white" },
     };
     const exertionStyle = exertionColors[exertionLevel] || { bg: "bg-muted/20 border-border/60", circle: "bg-muted text-muted-foreground" };
 
     const tlColors = {
         "Low": { bg: "bg-emerald-500/10 border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.2)]", circle: "bg-emerald-500 text-white" },
         "Moderate": { bg: "bg-yellow-500/10 border-yellow-500/40 shadow-[0_0_30px_rgba(234,179,8,0.2)]", circle: "bg-yellow-500 text-white" },
-        "High": { bg: "bg-orange-500/10 border-orange-500/40 shadow-[0_0_30px_rgba(249,115,22,0.2)]", circle: "bg-orange-500 text-white" },
-        "Very High": { bg: "bg-red-500/10 border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]", circle: "bg-red-500 text-white" },
+        "High": { bg: "bg-red-500/10 border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]", circle: "bg-red-500 text-white" },
     };
     const tlStyle = tlColors[trainingLoadFlag] || { bg: "bg-muted/20 border-border/60", circle: "bg-muted text-muted-foreground" };
 

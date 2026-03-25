@@ -103,7 +103,7 @@ export default function Reports() {
                     <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground">
                         Session <span className="text-brand-500">reports</span>
                     </h1>
-                    <p className="text-muted-foreground mt-2 font-bold">Select an athlete to view their session history and generate reports.</p>
+
                 </div>
 
                 {/* Split Panel Layout */}

@@ -1,7 +1,7 @@
 """
 core/flags.py — Classification flags for Readiness, Training Load, and Exertion.
 
-Ported from Raise_flags.py. Pure Python (no pandas/numpy).
+Ported from Flags_Score.py. Pure Python (no pandas/numpy).
 Operates on session row dicts as returned by data.read_athlete_sessions().
 
 FLAG 1 — READINESS (Readiness sessions only)
@@ -9,12 +9,12 @@ FLAG 1 — READINESS (Readiness sessions only)
   Based on RMSSD, session quality, resting HR, 7-day trends.
 
 FLAG 2 — EXERTION (Training sessions only)
-  Minimal / Low / Moderate / High / Peak
+  Low / Moderate / High
   6-step hierarchical: ACWR → Zone 4+5 gate → modifiers → EPOC → Max HR%.
 
 FLAG 3 — TRAINING LOAD (Training sessions only)
-  Low / Moderate / High / Very High
-  Based on training_load (AU) thresholds.
+  Low / Moderate / High
+  Thresholds: p33/p67 percentile split · Lucia (2003) · Foster (2001) · Seiler (2006)
 """
 from __future__ import annotations
 
@@ -158,15 +158,15 @@ def classify_readiness(
 
 
 # ---------------------------------------------------------------------------
-# EXERTION CLASSIFICATION — 5-level hierarchical
+# EXERTION CLASSIFICATION — 3-level hierarchical
 # ---------------------------------------------------------------------------
 
-_EXERTION_LEVELS = ["Minimal", "Low", "Moderate", "High", "Peak"]
+_EXERTION_LEVELS = ["Low", "Moderate", "High"]
 
 
 def _bump(level: str, n: int = 1) -> str:
     idx = _EXERTION_LEVELS.index(level)
-    return _EXERTION_LEVELS[min(idx + n, 4)]
+    return _EXERTION_LEVELS[min(idx + n, 2)]
 
 
 def _drop(level: str, n: int = 1) -> str:
@@ -177,6 +177,8 @@ def _drop(level: str, n: int = 1) -> str:
 def classify_exertion(row: Dict) -> Dict:
     """
     Classify a training session's exertion using a 6-step hierarchical model.
+
+    3-tier output: Low / Moderate / High
 
     Steps: ACWR base → Zone 4+5 gate → intensity/fat-burn modifiers →
            EPOC cross-check → Max HR% cross-check.
@@ -195,14 +197,14 @@ def classify_exertion(row: Dict) -> Dict:
     total_sec = z0 + z1 + z2 + z3 + z4 + z5
     fat_burn = (z0 + z1 + z2) / total_sec if total_sec > 0 else None
 
-    # STEP 1: Base via ACWR
+    # STEP 1: Base via ACWR (3-tier: <0.80 Low, 0.80-1.30 Moderate, >1.30 High)
     if acwr is not None:
-        if acwr < 0.5:
-            level = "Minimal"
-        elif acwr >= 1.0:
-            level = "High"
-        else:
+        if acwr < 0.80:
+            level = "Low"
+        elif acwr <= 1.30:
             level = "Moderate"
+        else:
+            level = "High"
     else:
         level = "Moderate"
 
@@ -210,7 +212,7 @@ def classify_exertion(row: Dict) -> Dict:
     if zone45_sec == 0:
         level = "Low"
     else:
-        # STEP 3: Zone 4+5 upgrade
+        # STEP 3: Zone 4+5 upgrade (>600s)
         if zone45_sec > 600:
             level = _bump(level)
 
@@ -224,59 +226,61 @@ def classify_exertion(row: Dict) -> Dict:
         elif fat_burn < 0.50:
             level = _bump(level)
 
-    # STEP 5: EPOC Cross-Check
+    # STEP 5: EPOC Cross-Check (Børsheim & Bahr 2003)
     epoc_total = _val(row, "epoc_total")
     epoc_peak = _val(row, "epoc_peak")
 
     if epoc_total is not None:
-        if epoc_total < 100 and level in ("High", "Peak"):
+        if epoc_total < 100 and level == "High":
             level = _drop(level)
-        elif epoc_total > 600 and level in ("Moderate", "High"):
+        elif epoc_total > 600 and level in ("Low", "Moderate"):
             level = _bump(level)
-        elif epoc_total < 300 and level == "Peak":
-            level = "High"
-        elif epoc_peak is not None and epoc_peak > 7.0 and level in ("Moderate", "High"):
+        elif epoc_total < 300 and level == "High":
+            level = "Moderate"
+        elif epoc_peak is not None and epoc_peak > 7.0 and level in ("Low", "Moderate"):
             level = _bump(level)
 
-    # STEP 6: Max HR % Cross-Check
+    # STEP 6: Max HR % Cross-Check (Seiler 2010)
     max_hr_pct = _val(row, "max_hr_pct")
 
     if max_hr_pct is not None:
         epoc_confirmed = epoc_total is not None and epoc_total >= 50
-        if max_hr_pct > 90 and epoc_confirmed and level in ("Moderate", "High"):
+        if max_hr_pct > 90 and epoc_confirmed and level in ("Low", "Moderate"):
             level = _bump(level)
-        elif max_hr_pct < 65 and level in ("High", "Peak"):
+        elif max_hr_pct < 65 and level == "High":
             level = _drop(level)
 
     return {"level": level}
 
 
 # ---------------------------------------------------------------------------
-# TRAINING LOAD CLASSIFICATION — 4-tier
+# TRAINING LOAD CLASSIFICATION — 3-tier
 # ---------------------------------------------------------------------------
 
 def classify_training_load(row: Dict) -> Dict:
     """
-    Classify a training session's load into 4 tiers.
+    Classify a training session's load into 3 tiers.
 
-    Thresholds from:
-      - Lucia (2003) VT zones
-      - Foster (2001) RPE
-      - Seiler (2006) polarised model
-      - Data-driven percentile split (p33≈84, p67≈128, p90≈201)
+    Thresholds: data-driven p33/p67 percentile split across sessions:
+      Low      : < 84 AU  — aerobic / recovery (bottom third)
+      Moderate : 84–128 AU — tempo / threshold (middle third)
+      High     : > 128 AU  — hard / peak effort (top third)
+
+    References:
+      - Lucia et al. (2003) VT zones
+      - Foster et al. (2001) RPE categories
+      - Seiler & Kjerland (2006) polarised training model
     """
     load = _val(row, "training_load")
 
     if load is None:
         return {"flag": None}
 
-    if load < 80:
+    if load < 84:
         flag = "Low"
-    elif load < 130:
+    elif load <= 128:
         flag = "Moderate"
-    elif load < 200:
-        flag = "High"
     else:
-        flag = "Very High"
+        flag = "High"
 
     return {"flag": flag}

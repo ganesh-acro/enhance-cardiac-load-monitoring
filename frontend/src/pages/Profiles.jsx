@@ -51,28 +51,22 @@ export default function Profiles() {
     const getTrainingLoadBadge = (flag) => {
         if (flag === "Low") return { label: "Low", color: "bg-emerald-500/30 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40", flagColor: "#22c55e" }
         if (flag === "Moderate") return { label: "Moderate", color: "bg-yellow-500/30 text-yellow-700 dark:text-yellow-400 border border-yellow-500/40", flagColor: "#eab308" }
-        if (flag === "High") return { label: "High", color: "bg-orange-500/30 text-orange-700 dark:text-orange-400 border border-orange-500/40", flagColor: "#ef4444" }
-        if (flag === "Very High") return { label: "Very High", color: "bg-red-500/30 text-red-700 dark:text-red-400 border border-red-500/40", flagColor: "#ef4444" }
+        if (flag === "High") return { label: "High", color: "bg-red-500/30 text-red-700 dark:text-red-400 border border-red-500/40", flagColor: "#ef4444" }
         return { label: "N/A", color: "bg-muted text-muted-foreground border border-border", flagColor: "#94a3b8" }
     }
 
     const getExertionBadge = (level) => {
-        const map = {
-            "Minimal": { color: "bg-slate-500/30 text-slate-700 dark:text-slate-400 border border-slate-500/40", flagColor: "#22c55e" },
-            "Low": { color: "bg-emerald-500/30 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40", flagColor: "#22c55e" },
-            "Moderate": { color: "bg-yellow-500/30 text-yellow-700 dark:text-yellow-400 border border-yellow-500/40", flagColor: "#eab308" },
-            "High": { color: "bg-orange-500/30 text-orange-700 dark:text-orange-400 border border-orange-500/40", flagColor: "#ef4444" },
-            "Peak": { color: "bg-red-500/30 text-red-700 dark:text-red-400 border border-red-500/40", flagColor: "#ef4444" },
-        }
-        const entry = map[level] || { color: "bg-muted text-muted-foreground border border-border", flagColor: "#94a3b8" }
-        return { label: level || "N/A", ...entry }
+        if (level === "Low") return { label: "Low", color: "bg-emerald-500/30 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40", flagColor: "#22c55e" }
+        if (level === "Moderate") return { label: "Moderate", color: "bg-yellow-500/30 text-yellow-700 dark:text-yellow-400 border border-yellow-500/40", flagColor: "#eab308" }
+        if (level === "High") return { label: "High", color: "bg-red-500/30 text-red-700 dark:text-red-400 border border-red-500/40", flagColor: "#ef4444" }
+        return { label: "N/A", color: "bg-muted text-muted-foreground border border-border", flagColor: "#94a3b8" }
     }
 
     const [sortConfig, setSortConfig] = useState({ field: 'name', direction: 'asc' })
 
     const READINESS_ORDER = { "READY": 0, "PARTIALLY READY": 1, "NOT READY": 2 }
-    const EXERTION_ORDER = { "Minimal": 0, "Low": 1, "Moderate": 2, "High": 3, "Peak": 4 }
-    const TRAINING_LOAD_ORDER = { "Low": 0, "Moderate": 1, "High": 2, "Very High": 3 }
+    const EXERTION_ORDER = { "Low": 0, "Moderate": 1, "High": 2 }
+    const TRAINING_LOAD_ORDER = { "Low": 0, "Moderate": 1, "High": 2 }
 
     const handleSort = (field) => {
         setSortConfig(prev => ({
