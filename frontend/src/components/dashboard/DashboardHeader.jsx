@@ -14,17 +14,17 @@ export const DashboardHeader = ({
 }) => {
     return (
         <div className="relative z-10 mb-8">
-            <div className="bg-card border border-border rounded-2xl shadow-xl p-4 md:p-6 backdrop-blur-md bg-opacity-90">
+            <div className="bg-card border border-border rounded-xl shadow-sm p-4 md:p-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     {/* Tabs */}
-                    <div className="flex p-1.5 bg-muted/50 rounded-xl w-fit">
+                    <div className="flex p-1.5 bg-muted/50 rounded-lg w-fit">
                         {['Overview', 'Training', 'Readiness', 'Comparison'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => onTabChange(tab.toLowerCase().replace(' ', ''))}
-                                className={`px-3 py-2 md:px-6 md:py-2.5 rounded-lg text-sm md:text-base font-bold transition-all duration-300 ${activeTab === tab.toLowerCase().replace(' ', '')
-                                    ? "bg-background text-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground"
+                                className={`px-3 py-2 md:px-6 md:py-2.5 rounded-lg text-sm md:text-base font-bold transition-all duration-200 ${activeTab === tab.toLowerCase().replace(' ', '')
+                                    ? "bg-brand-500 text-white shadow-sm"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                     }`}
                             >
                                 {tab}
@@ -36,7 +36,7 @@ export const DashboardHeader = ({
                     <div className="flex flex-wrap items-center gap-4">
                         {/* Athlete Selector */}
                         <div className="relative group">
-                            <div className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-xl hover:border-brand-500/50 transition-all cursor-pointer">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-lg hover:border-brand-500/50 transition-colors cursor-pointer">
                                 <Users className="h-4 w-4 text-brand-500" />
                                 <select
                                     value={selectedAthlete?.id || ""}
@@ -56,7 +56,7 @@ export const DashboardHeader = ({
                         </div>
 
                         {/* Date Range Selector */}
-                        <div className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-xl">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-lg">
                             <Calendar className="h-4 w-4 text-brand-500" />
                             <div className="flex items-center gap-1">
                                 <input

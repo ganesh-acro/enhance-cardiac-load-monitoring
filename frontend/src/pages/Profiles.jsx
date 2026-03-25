@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { Search, Activity, ChevronRight, TrendingUp, AlertCircle, AlertTriangle, CheckCircle2, Heart } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { Search, Activity, ChevronRight, AlertCircle, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { fetchTeamSummary } from "../utils/dataService"
 
@@ -34,11 +34,58 @@ export default function Profiles() {
         loadData()
     }, [])
 
-    const getFlag = (acwr) => {
-        const val = parseFloat(acwr)
-        if (val > 1.3) return { label: 'Overtraining', color: 'bg-red-500/10 text-red-600', icon: AlertCircle }
-        if (val < 0.8) return { label: 'Undertraining', color: 'bg-amber-500/10 text-amber-600', icon: AlertTriangle }
-        return { label: 'Optimal', color: 'bg-emerald-500/10 text-emerald-600', icon: CheckCircle2 }
+    const FlagIcon = ({ fill }) => (
+        <svg width="20" height="20" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+            <path d="M42 8 C42 8, 42 488, 42 504" stroke={fill} strokeWidth="48" strokeLinecap="round" />
+            <path d="M66 40 C120 20, 200 0, 280 40 C360 80, 440 60, 480 40 L480 260 C440 280, 360 300, 280 260 C200 220, 120 240, 66 260 Z" fill={fill} />
+        </svg>
+    )
+
+    const getReadinessBadge = (status) => {
+        if (status === "READY") return { label: "Ready", color: "bg-emerald-500/30 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40", icon: CheckCircle2, flagColor: "#22c55e" }
+        if (status === "PARTIALLY READY") return { label: "Partial", color: "bg-amber-500/30 text-amber-700 dark:text-amber-400 border border-amber-500/40", icon: AlertTriangle, flagColor: "#eab308" }
+        if (status === "NOT READY") return { label: "Not Ready", color: "bg-red-500/30 text-red-700 dark:text-red-400 border border-red-500/40", icon: AlertCircle, flagColor: "#ef4444" }
+        return { label: "N/A", color: "bg-muted text-muted-foreground border border-border", icon: Activity, flagColor: "#94a3b8" }
+    }
+
+    const getTrainingLoadBadge = (flag) => {
+        if (flag === "Low") return { label: "Low", color: "bg-emerald-500/30 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40", flagColor: "#22c55e" }
+        if (flag === "Moderate") return { label: "Moderate", color: "bg-yellow-500/30 text-yellow-700 dark:text-yellow-400 border border-yellow-500/40", flagColor: "#eab308" }
+        if (flag === "High") return { label: "High", color: "bg-orange-500/30 text-orange-700 dark:text-orange-400 border border-orange-500/40", flagColor: "#ef4444" }
+        if (flag === "Very High") return { label: "Very High", color: "bg-red-500/30 text-red-700 dark:text-red-400 border border-red-500/40", flagColor: "#ef4444" }
+        return { label: "N/A", color: "bg-muted text-muted-foreground border border-border", flagColor: "#94a3b8" }
+    }
+
+    const getExertionBadge = (level) => {
+        const map = {
+            "Minimal": { color: "bg-slate-500/30 text-slate-700 dark:text-slate-400 border border-slate-500/40", flagColor: "#22c55e" },
+            "Low": { color: "bg-emerald-500/30 text-emerald-700 dark:text-emerald-400 border border-emerald-500/40", flagColor: "#22c55e" },
+            "Moderate": { color: "bg-yellow-500/30 text-yellow-700 dark:text-yellow-400 border border-yellow-500/40", flagColor: "#eab308" },
+            "High": { color: "bg-orange-500/30 text-orange-700 dark:text-orange-400 border border-orange-500/40", flagColor: "#ef4444" },
+            "Peak": { color: "bg-red-500/30 text-red-700 dark:text-red-400 border border-red-500/40", flagColor: "#ef4444" },
+        }
+        const entry = map[level] || { color: "bg-muted text-muted-foreground border border-border", flagColor: "#94a3b8" }
+        return { label: level || "N/A", ...entry }
+    }
+
+    const [sortConfig, setSortConfig] = useState({ field: 'name', direction: 'asc' })
+
+    const READINESS_ORDER = { "READY": 0, "PARTIALLY READY": 1, "NOT READY": 2 }
+    const EXERTION_ORDER = { "Minimal": 0, "Low": 1, "Moderate": 2, "High": 3, "Peak": 4 }
+    const TRAINING_LOAD_ORDER = { "Low": 0, "Moderate": 1, "High": 2, "Very High": 3 }
+
+    const handleSort = (field) => {
+        setSortConfig(prev => ({
+            field,
+            direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
+        }))
+    }
+
+    const SortArrow = ({ field }) => {
+        if (sortConfig.field !== field) return null
+        return sortConfig.direction === 'asc'
+            ? <ArrowUp className="h-3 w-3 inline ml-1" />
+            : <ArrowDown className="h-3 w-3 inline ml-1" />
     }
 
     const handleFilterChange = (e) => {
@@ -65,6 +112,32 @@ export default function Profiles() {
 
         return matchesSearch && matchesID && matchesSport
     })
+
+    const sortedData = useMemo(() => {
+        return [...filteredData].sort((a, b) => {
+            const { field, direction } = sortConfig
+            let valA, valB
+
+            if (field === 'readiness_status') {
+                valA = READINESS_ORDER[a.readiness_status] ?? 99
+                valB = READINESS_ORDER[b.readiness_status] ?? 99
+            } else if (field === 'exertion_level') {
+                valA = EXERTION_ORDER[a.exertion_level] ?? 99
+                valB = EXERTION_ORDER[b.exertion_level] ?? 99
+            } else if (field === 'training_load_flag') {
+                valA = TRAINING_LOAD_ORDER[a.training_load_flag] ?? 99
+                valB = TRAINING_LOAD_ORDER[b.training_load_flag] ?? 99
+            } else {
+                valA = a[field] ?? ''
+                valB = b[field] ?? ''
+            }
+
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                return direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
+            }
+            return direction === 'asc' ? valA - valB : valB - valA
+        })
+    }, [filteredData, sortConfig])
 
     // Dynamically extract unique sports/events from the athletes data
     const sportOptions = Array.from(new Set(
@@ -98,7 +171,7 @@ export default function Profiles() {
                 </div>
 
                 {/* Filter Bar */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 p-4 rounded-3xl border border-border bg-card shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 p-4 rounded-xl border border-border bg-card shadow-sm">
                     {/* Name/General Search */}
                     <div className="relative group">
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-brand-500">
@@ -110,7 +183,7 @@ export default function Profiles() {
                             placeholder="Search by name..."
                             value={filters.search}
                             onChange={handleFilterChange}
-                            className="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-bold"
+                            className="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-bold"
                         />
                     </div>
 
@@ -122,7 +195,7 @@ export default function Profiles() {
                             placeholder="Filter by ID..."
                             value={filters.id}
                             onChange={handleFilterChange}
-                            className="w-full px-4 py-2 bg-background border border-input rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-bold"
+                            className="w-full px-4 py-2 bg-background border border-input rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-bold"
                         />
                     </div>
 
@@ -150,7 +223,7 @@ export default function Profiles() {
                     {/* Search Button */}
                     <button
                         onClick={handleSearch}
-                        className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-black uppercase text-sm tracking-widest py-2 px-6 rounded-xl transition-all shadow-lg shadow-brand-500/20 active:scale-95"
+                        className="flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-black uppercase text-sm tracking-widest py-2 px-6 rounded-lg transition-colors shadow-sm"
                     >
                         <Search className="h-4 w-4" />
                         Search
@@ -158,25 +231,36 @@ export default function Profiles() {
                 </div>
 
                 {/* Main Table Container */}
-                <div className="bg-card border border-border rounded-[40px] overflow-hidden shadow-sm">
+                <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                     <div className="overflow-x-auto min-h-[500px]">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-secondary/30 text-muted-foreground uppercase text-xs font-black tracking-[0.2em] border-b border-border">
-                                    <th className="px-8 py-6">Athlete</th>
-                                    <th className="px-6 py-6 font-mono">ID</th>
+                                    <th className="px-8 py-6 cursor-pointer hover:text-foreground transition-colors select-none" onClick={() => handleSort('name')}>
+                                        Athlete <SortArrow field="name" />
+                                    </th>
+                                    <th className="px-6 py-6 font-mono cursor-pointer hover:text-foreground transition-colors select-none" onClick={() => handleSort('id')}>
+                                        ID <SortArrow field="id" />
+                                    </th>
                                     <th className="px-6 py-6">Sport</th>
-                                    <th className="px-6 py-6">Readiness</th>
-                                    <th className="px-6 py-6">Session</th>
-                                    <th className="px-6 py-6">ACWR</th>
-                                    <th className="px-6 py-6">Status</th>
+                                    <th className="px-8 py-6 cursor-pointer hover:text-foreground transition-colors select-none" onClick={() => handleSort('readiness_status')}>
+                                        Readiness <SortArrow field="readiness_status" />
+                                    </th>
+                                    <th className="px-8 py-6 cursor-pointer hover:text-foreground transition-colors select-none" onClick={() => handleSort('exertion_level')}>
+                                        Exertion <SortArrow field="exertion_level" />
+                                    </th>
+                                    <th className="px-8 py-6 cursor-pointer hover:text-foreground transition-colors select-none" onClick={() => handleSort('training_load_flag')}>
+                                        Training Load <SortArrow field="training_load_flag" />
+                                    </th>
                                     <th className="px-8 py-6 text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/50">
-                                {filteredData.length > 0 ? (
-                                    filteredData.map((athlete) => {
-                                        const flag = getFlag(athlete.acwr)
+                                {sortedData.length > 0 ? (
+                                    sortedData.map((athlete) => {
+                                        const readinessBadge = getReadinessBadge(athlete.readiness_status)
+                                        const trainingLoadBadge = getTrainingLoadBadge(athlete.training_load_flag)
+                                        const exertionBadge = getExertionBadge(athlete.exertion_level)
                                         const staticInfo = athletesList.find(a => a.id === athlete.id) ||
                                             athletesList.find(a => a.name === athlete.name);
 
@@ -188,7 +272,7 @@ export default function Profiles() {
                                             >
                                                 <td className="px-8 py-5">
                                                     <div className="flex items-center gap-4">
-                                                        <div className="w-12 h-12 rounded-2xl bg-brand-500/10 flex items-center justify-center text-brand-500 text-lg font-black border border-brand-500/20 group-hover:bg-brand-500 group-hover:text-white transition-all duration-300">
+                                                        <div className="w-12 h-12 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-500 text-lg font-black border border-brand-500/20 group-hover:bg-brand-500 group-hover:text-white transition-colors duration-200">
                                                             {athlete.name?.charAt(0)}
                                                         </div>
                                                         <p className="font-bold text-foreground group-hover:text-brand-500 transition-colors tracking-tight text-lg">{athlete.name}</p>
@@ -202,40 +286,32 @@ export default function Profiles() {
                                                         {staticInfo?.sport || 'Athlete'}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                                                            <div
-                                                                className="h-full bg-emerald-500 group-hover:shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-500"
-                                                                style={{ width: `${athlete.readiness}%` }}
-                                                            ></div>
-                                                        </div>
-                                                        <span className="text-lg font-bold text-foreground">{athlete.readiness}%</span>
+                                                <td className="px-8 py-5">
+                                                    <div className="inline-flex items-center gap-2">
+                                                        <span className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-black uppercase tracking-wider ${readinessBadge.color}`}>
+                                                            {readinessBadge.label}
+                                                        </span>
+                                                        <FlagIcon fill={readinessBadge.flagColor} />
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-5">
-                                                    <span className={`inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider ${
-                                                        athlete.latest_session_type === 'Training'
-                                                            ? 'bg-brand-500/10 text-brand-600'
-                                                            : 'bg-emerald-500/10 text-emerald-600'
-                                                    }`}>
-                                                        {athlete.latest_session_type || 'N/A'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <div className="flex items-center gap-2">
-                                                        <TrendingUp className={`h-4 w-4 ${parseFloat(athlete.acwr) > 1.3 ? 'text-red-500' : 'text-emerald-500'}`} />
-                                                        <span className="text-lg font-bold text-foreground">{athlete.acwr.toFixed(2)}</span>
+                                                <td className="px-8 py-5">
+                                                    <div className="inline-flex items-center gap-2">
+                                                        <span className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-black uppercase tracking-wider ${exertionBadge.color}`}>
+                                                            {exertionBadge.label}
+                                                        </span>
+                                                        <FlagIcon fill={exertionBadge.flagColor} />
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-5">
-                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider ${flag.color}`}>
-                                                        <flag.icon className="h-3.5 w-3.5" />
-                                                        {flag.label}
-                                                    </span>
+                                                <td className="px-8 py-5">
+                                                    <div className="inline-flex items-center gap-2">
+                                                        <span className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-black uppercase tracking-wider ${trainingLoadBadge.color}`}>
+                                                            {trainingLoadBadge.label}
+                                                        </span>
+                                                        <FlagIcon fill={trainingLoadBadge.flagColor} />
+                                                    </div>
                                                 </td>
                                                 <td className="px-8 py-5 text-right">
-                                                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground group-hover:text-brand-500 group-hover:bg-brand-500/10 transition-all active:scale-90">
+                                                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground group-hover:text-brand-500 group-hover:bg-brand-500/10 transition-colors">
                                                         <ChevronRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
                                                     </div>
                                                 </td>
@@ -244,7 +320,7 @@ export default function Profiles() {
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan="8" className="py-20 text-center">
+                                        <td colSpan="7" className="py-20 text-center">
                                             <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                                 <AlertCircle className="h-10 w-10 opacity-20" />
                                                 <p className="font-bold uppercase tracking-widest text-xs">No matching athletes found</p>

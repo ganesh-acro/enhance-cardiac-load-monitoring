@@ -85,7 +85,7 @@ const HeartRateAnalyticsChart = ({ teamData, avgTeamHR }) => {
     );
 };
 
-const ReadinessDonutChart = ({ readyAthletes, yellowFlags, redFlags }) => {
+const ReadinessDonutChart = ({ readyAthletes, partiallyReady, notReady }) => {
     const isDark = useChartTheme();
 
     const option = {
@@ -101,7 +101,7 @@ const ReadinessDonutChart = ({ readyAthletes, yellowFlags, redFlags }) => {
             ...getLegendStyle(isDark),
         },
         series: [{
-            name: 'ACWR Status',
+            name: 'Readiness',
             type: 'pie',
             radius: ['45%', '70%'],
             center: ['50%', '42%'],
@@ -122,9 +122,9 @@ const ReadinessDonutChart = ({ readyAthletes, yellowFlags, redFlags }) => {
                 }
             },
             data: [
-                { value: readyAthletes, name: 'Optimal', itemStyle: { color: '#10b981' } },
-                { value: yellowFlags, name: 'Caution', itemStyle: { color: '#f59e0b' } },
-                { value: redFlags, name: 'Risk', itemStyle: { color: '#ef4444' } }
+                { value: readyAthletes, name: 'Ready', itemStyle: { color: '#10b981' } },
+                { value: partiallyReady, name: 'Partially Ready', itemStyle: { color: '#f59e0b' } },
+                { value: notReady, name: 'Not Ready', itemStyle: { color: '#ef4444' } }
             ]
         }]
     };
@@ -171,7 +171,7 @@ const RestingHRChart = ({ teamData, avgRestHR }) => {
                 itemStyle: getBarItemStyle(BRAND_ORANGE),
                 barWidth: '35%',
                 emphasis: {
-                    itemStyle: { color: '#cc6200' }
+                    itemStyle: { color: '#f5a623' }
                 }
             },
             {
@@ -201,17 +201,13 @@ const RestingHRChart = ({ teamData, avgRestHR }) => {
 };
 
 // 3. StatCard Sub-component
-const StatCard = ({ id, title, value, icon: Icon, color, glowColor, onClick }) => (
+const StatCard = ({ id, title, value, icon: Icon, color, onClick }) => (
     <div
         onClick={onClick}
-        className={`relative p-5 lg:p-6 rounded-[32px] bg-card border border-border/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 group transition-all duration-700 hover:border-brand-500/60 hover:-translate-y-1 cursor-pointer overflow-hidden min-h-[140px]`}
+        className="relative p-5 lg:p-6 rounded-xl bg-card border border-border shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 group transition-colors duration-200 hover:border-brand-500/40 hover:shadow-lg cursor-pointer min-h-[140px]"
     >
-        {/* Massive Glow Effect */}
-        <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 pointer-events-none bg-gradient-to-br ${glowColor} blur-[100px] -m-20 scale-[2.5]`}></div>
-        <div className={`absolute inset-0 opacity-0 group-hover:opacity-50 transition-all duration-700 pointer-events-none bg-gradient-to-tr ${glowColor} blur-[60px] -m-10 scale-150`}></div>
-
         {/* Icon Container - Left */}
-        <div className="relative z-10 flex items-center justify-center w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-slate-500/5 dark:bg-white/5 border border-border shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-all duration-700 backdrop-blur-xl">
+        <div className="flex items-center justify-center w-12 h-12 lg:w-14 lg:h-14 rounded-lg bg-slate-500/5 dark:bg-white/5 border border-border shrink-0">
             {typeof Icon === 'string' ? (
                 <img src={Icon} alt="" className="h-6 w-6 lg:h-8 lg:w-8 object-contain" />
             ) : (
@@ -220,20 +216,17 @@ const StatCard = ({ id, title, value, icon: Icon, color, glowColor, onClick }) =
         </div>
 
         {/* Typography - Label Centered, Value Right */}
-        <div className="relative z-10 flex-1 flex items-center justify-center text-center px-1">
-            <span className="text-sm lg:text-base font-medium text-muted-foreground leading-tight group-hover:text-foreground transition-colors duration-500 uppercase tracking-wide">
+        <div className="flex-1 flex items-center justify-center text-center px-1">
+            <span className="text-sm lg:text-base font-medium text-muted-foreground leading-tight group-hover:text-foreground transition-colors uppercase tracking-wide">
                 {title}
             </span>
         </div>
 
-        <div className="relative z-10 text-right shrink-0">
-            <span className="text-4xl lg:text-5xl font-light text-foreground tracking-tighter leading-none group-hover:scale-105 transition-transform duration-500 block">
+        <div className="text-right shrink-0">
+            <span className="text-4xl lg:text-5xl font-light text-foreground tracking-tighter leading-none block">
                 {value}
             </span>
         </div>
-
-        {/* Top Shine Accent */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-brand-500/20 to-transparent opacity-30"></div>
     </div>
 );
 
@@ -246,9 +239,9 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
 
     // All aggregates come pre-computed from the backend via teamStats
     const totalAthletes = teamStats.totalAthletes ?? teamData.length;
-    const redFlags = teamStats.redFlags ?? 0;
-    const yellowFlags = teamStats.yellowFlags ?? 0;
     const readyAthletes = teamStats.readyAthletes ?? 0;
+    const partiallyReady = teamStats.partiallyReady ?? 0;
+    const notReady = teamStats.notReady ?? 0;
     const avgTeamHR = teamStats.avgTeamHR ?? 0;
     const avgRestHR = teamStats.avgRestHR ?? 0;
     const zoneAverages = teamStats.zoneAverages ?? {};
@@ -258,9 +251,9 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
         if (!selectedPopup) return [];
         switch (selectedPopup.id) {
             case 'total': return teamData;
-            case 'ready': return teamData.filter(a => parseFloat(a.acwr) >= 0.8 && parseFloat(a.acwr) <= 1.3);
-            case 'overtraining': return teamData.filter(a => parseFloat(a.acwr) > 1.3);
-            case 'undertraining': return teamData.filter(a => parseFloat(a.acwr) < 0.8);
+            case 'ready': return teamData.filter(a => a.readiness_status === 'READY');
+            case 'partially_ready': return teamData.filter(a => a.readiness_status === 'PARTIALLY READY');
+            case 'not_ready': return teamData.filter(a => a.readiness_status === 'NOT READY');
             default: return [];
         }
     };
@@ -281,30 +274,30 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                     />
                     <StatCard
                         id="ready"
-                        title="No. of athletes ready"
+                        title="Ready"
                         value={readyAthletes}
                         icon="/assets/icons/ready_athletes.png"
                         color="text-emerald-400"
                         glowColor="from-emerald-500/90 to-transparent"
-                        onClick={() => setSelectedPopup({ id: 'ready', title: 'No. of athletes ready', color: 'text-emerald-400', glowColor: 'from-emerald-500/90 to-transparent' })}
+                        onClick={() => setSelectedPopup({ id: 'ready', title: 'Ready', color: 'text-emerald-400', glowColor: 'from-emerald-500/90 to-transparent' })}
                     />
                     <StatCard
-                        id="overtraining"
-                        title="Overtraining athletes"
-                        value={redFlags}
-                        icon="/assets/icons/overtraining.png"
-                        color="text-red-400"
-                        glowColor="from-red-500/90 to-transparent"
-                        onClick={() => setSelectedPopup({ id: 'overtraining', title: 'Overtraining athletes', color: 'text-red-400', glowColor: 'from-red-500/90 to-transparent' })}
-                    />
-                    <StatCard
-                        id="undertraining"
-                        title="Undertraining athletes"
-                        value={yellowFlags}
+                        id="partially_ready"
+                        title="Partially Ready"
+                        value={partiallyReady}
                         icon="/assets/icons/undertraining.png"
                         color="text-amber-400"
                         glowColor="from-amber-500/90 to-transparent"
-                        onClick={() => setSelectedPopup({ id: 'undertraining', title: 'Undertraining athletes', color: 'text-amber-400', glowColor: 'from-amber-500/90 to-transparent' })}
+                        onClick={() => setSelectedPopup({ id: 'partially_ready', title: 'Partially Ready', color: 'text-amber-400', glowColor: 'from-amber-500/90 to-transparent' })}
+                    />
+                    <StatCard
+                        id="not_ready"
+                        title="Not Ready"
+                        value={notReady}
+                        icon="/assets/icons/overtraining.png"
+                        color="text-red-400"
+                        glowColor="from-red-500/90 to-transparent"
+                        onClick={() => setSelectedPopup({ id: 'not_ready', title: 'Not Ready', color: 'text-red-400', glowColor: 'from-red-500/90 to-transparent' })}
                     />
                 </div>
 
@@ -312,7 +305,7 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 
                     {/* 1. Heart Rate Plot - Spans 8 columns */}
-                    <div className="lg:col-span-8 p-5 lg:p-8 rounded-3xl lg:rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[300px] lg:min-h-[450px]">
+                    <div className="lg:col-span-8 p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md flex flex-col min-h-[300px] lg:min-h-[450px]">
                         <div className="flex items-center justify-between mb-8">
                             <div>
                                 <h4 className="text-2xl font-normal text-foreground mb-1">
@@ -326,17 +319,17 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                     </div>
 
                     {/* 2. Readiness Distribution Donut - Spans 4 columns */}
-                    <div className="lg:col-span-4 p-5 lg:p-8 rounded-3xl lg:rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[300px] lg:min-h-[450px]">
+                    <div className="lg:col-span-4 p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md flex flex-col min-h-[300px] lg:min-h-[450px]">
                         <h4 className="text-2xl font-normal text-foreground mb-4">
                             Readiness distribution
                         </h4>
                         <div className="flex-1 relative">
-                            <ReadinessDonutChart readyAthletes={readyAthletes} yellowFlags={yellowFlags} redFlags={redFlags} />
+                            <ReadinessDonutChart readyAthletes={readyAthletes} partiallyReady={partiallyReady} notReady={notReady} />
                         </div>
                     </div>
 
                     {/* 3. Zone Distribution - Spans 5 columns */}
-                    <div className="lg:col-span-5 p-5 lg:p-8 rounded-3xl lg:rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[350px] lg:min-h-[500px]">
+                    <div className="lg:col-span-5 p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md flex flex-col min-h-[350px] lg:min-h-[500px]">
                         <h4 className="text-2xl font-normal text-foreground mb-8">
                             Zone intensity
                         </h4>
@@ -347,7 +340,7 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                                 const intensityNames = ['Recovery', 'Aerobic', 'Tempo', 'Lactate', 'Anaerobic', 'Maximum'].reverse();
                                 return (
                                     <div key={z} className="group/zone">
-                                        <div className="flex justify-between text-sm font-medium tracking-tight mb-2 group-hover/zone:translate-x-1 transition-transform">
+                                        <div className="flex justify-between text-sm font-medium tracking-tight mb-2">
                                             <span className="text-foreground/70">Zone {z} — <span className="text-foreground/50 font-normal">{intensityNames[z]}</span></span>
                                             <span className="text-foreground font-semibold">{Math.round(avgZone)}%</span>
                                         </div>
@@ -357,7 +350,7 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                                                 style={{
                                                     width: `${avgZone}%`,
                                                     backgroundColor: colors[z],
-                                                    boxShadow: `0 0 15px ${colors[z]}30`
+                                                    boxShadow: 'none'
                                                 }}
                                             ></div>
                                         </div>
@@ -368,7 +361,7 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                     </div>
 
                     {/* 4. Resting HR Variance - Spans 7 columns */}
-                    <div className="lg:col-span-7 p-5 lg:p-8 rounded-3xl lg:rounded-[44px] bg-card border border-border/60 shadow-sm flex flex-col min-h-[350px] lg:min-h-[500px]">
+                    <div className="lg:col-span-7 p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md flex flex-col min-h-[350px] lg:min-h-[500px]">
                         <div className="flex items-center justify-between mb-8">
                             <div>
                                 <h4 className="text-2xl font-normal text-foreground mb-1">
@@ -394,7 +387,7 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setSelectedPopup(null)}
-                            className="absolute inset-0 bg-background/40 backdrop-blur-md"
+                            className="absolute inset-0 bg-background/60"
                         />
 
                         {/* Modal Container */}
@@ -403,11 +396,8 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
                             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                            className="relative w-full max-w-md bg-card/80 dark:bg-card/90 border border-border/50 shadow-2xl rounded-[40px] overflow-hidden backdrop-blur-2xl"
+                            className="relative w-full max-w-md bg-card border border-border shadow-md rounded-xl overflow-hidden"
                         >
-                            {/* Decorative Glow within Modal */}
-                            <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-gradient-to-b ${selectedPopup.glowColor} opacity-20 blur-3xl rounded-full -mt-32`}></div>
-
                             {/* Header */}
                             <div className="p-8 pb-4 relative z-10 flex items-center justify-between">
                                 <div>
@@ -420,7 +410,7 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                                 </div>
                                 <button
                                     onClick={() => setSelectedPopup(null)}
-                                    className="p-3 rounded-2xl bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+                                    className="p-3 rounded-lg bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     <X className="h-5 w-5" />
                                 </button>
@@ -440,13 +430,13 @@ export const AnalyticsOverview = ({ teamData, teamStats = {}, onAthleteSelect })
                                                     onAthleteSelect(athlete);
                                                     setSelectedPopup(null);
                                                 }}
-                                                className="flex items-center justify-between p-4 rounded-3xl hover:bg-muted/60 border border-transparent hover:border-border/30 transition-all cursor-pointer group"
+                                                className="flex items-center justify-between p-4 rounded-lg hover:bg-muted/60 border border-transparent hover:border-border/30 transition-colors cursor-pointer group"
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-bold">
                                                         {athlete.name.charAt(0)}
                                                     </div>
-                                                    <span className="text-lg font-normal text-foreground group-hover:translate-x-1 transition-transform">
+                                                    <span className="text-lg font-normal text-foreground">
                                                         {athlete.name}
                                                     </span>
                                                 </div>

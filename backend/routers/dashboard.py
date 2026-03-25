@@ -16,8 +16,10 @@ from core.data import (
     read_athlete_sessions, filter_by_date_range, pf
 )
 from core.compute import (
-    build_charts, prepare_summary, get_athlete_summary
+    build_charts, prepare_summary, get_athlete_summary,
+    _readiness_rows,
 )
+from core.flags import classify_readiness, compute_7day_baselines
 from core.security.dependencies import get_allowed_athlete_ids
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -49,6 +51,15 @@ def dashboard_overview(
              if r.get("session_type") in ("Readiness", "Light Activity")),
             latest,
         )
+
+        # Compute readiness status from latest readiness session
+        readiness = _readiness_rows(rows)
+        readiness_status = None
+        if readiness:
+            latest_r = readiness[-1]
+            rmssd_7d, rhr_7d = compute_7day_baselines(readiness, latest_r["date"])
+            readiness_status = classify_readiness(latest_r, rmssd_7d, rhr_7d)["status"]
+
         athletes_data.append({
             "id": athlete["id"],
             "name": athlete["name"],
@@ -58,6 +69,7 @@ def dashboard_overview(
             "rest_hr": pf(last_readiness.get("rest_hr")),
             "rmssd": pf(latest.get("rmssd")),
             "training_load": pf(latest.get("training_load")),
+            "readiness_status": readiness_status,
             "zones": {
                 "z0": pf(latest.get("zone_0_pct")),
                 "z1": pf(latest.get("zone_1_pct")),
@@ -70,10 +82,10 @@ def dashboard_overview(
 
     n = len(athletes_data) or 1
 
-    # Pre-compute team aggregates so the frontend does zero math
-    red_flags   = [a for a in athletes_data if a["acwr"] > 1.3]
-    yellow_flags = [a for a in athletes_data if a["acwr"] < 0.8]
-    ready        = [a for a in athletes_data if 0.8 <= a["acwr"] <= 1.3]
+    # Pre-compute team aggregates based on readiness classification
+    ready        = [a for a in athletes_data if a["readiness_status"] == "READY"]
+    partial      = [a for a in athletes_data if a["readiness_status"] == "PARTIALLY READY"]
+    not_ready    = [a for a in athletes_data if a["readiness_status"] == "NOT READY"]
 
     avg_team_hr  = round(sum(a["avg_hr"]  for a in athletes_data) / n, 1)
     avg_rest_hr  = round(sum(a["rest_hr"] for a in athletes_data) / n, 1)
@@ -88,8 +100,8 @@ def dashboard_overview(
         "teamStats": {
             "totalAthletes": len(athletes_data),
             "readyAthletes": len(ready),
-            "redFlags": len(red_flags),
-            "yellowFlags": len(yellow_flags),
+            "partiallyReady": len(partial),
+            "notReady": len(not_ready),
             "avgTeamHR": avg_team_hr,
             "avgRestHR": avg_rest_hr,
             "zoneAverages": zone_avgs,

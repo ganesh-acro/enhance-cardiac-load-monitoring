@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.data import get_athletes, read_athlete_sessions, pf
+from core.compute import _training_rows, _readiness_rows
+from core.flags import classify_readiness, classify_training_load, classify_exertion, compute_7day_baselines
 from core.security.dependencies import get_allowed_athlete_ids
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
@@ -29,15 +31,33 @@ def profiles_summary(
         rows = read_athlete_sessions(db, athlete["id"])
         if not rows:
             continue
+
         latest = rows[-1]
         acwr = pf(latest.get("acwr"))
 
-        if acwr > 1.3:
-            flag = "Overtraining"
-        elif acwr < 0.8:
-            flag = "Undertraining"
-        else:
-            flag = "Optimal"
+        # Split by session type
+        training = _training_rows(rows)
+        readiness = _readiness_rows(rows)
+
+        # Readiness classification (latest readiness session)
+        readiness_status = None
+        if readiness:
+            latest_readiness = readiness[-1]
+            rmssd_7d, rhr_7d = compute_7day_baselines(
+                readiness, latest_readiness["date"]
+            )
+            readiness_result = classify_readiness(latest_readiness, rmssd_7d, rhr_7d)
+            readiness_status = readiness_result["status"]
+
+        # Training Load + Exertion (latest training session)
+        training_load_flag = None
+        exertion_level = None
+        if training:
+            latest_training = training[-1]
+            tl_result = classify_training_load(latest_training)
+            training_load_flag = tl_result["flag"]
+            ex_result = classify_exertion(latest_training)
+            exertion_level = ex_result["level"]
 
         try:
             session_date = latest["date"].strftime("%b %d, %Y")
@@ -55,8 +75,9 @@ def profiles_summary(
             "rest_hr": pf(latest.get("rest_hr")),
             "rmssd": pf(latest.get("rmssd")),
             "training_load": pf(latest.get("training_load")),
-            "latest_session_type": latest.get("session_type", "N/A"),
-            "flag": flag,
+            "readiness_status": readiness_status,
+            "training_load_flag": training_load_flag,
+            "exertion_level": exertion_level,
         })
 
     return results

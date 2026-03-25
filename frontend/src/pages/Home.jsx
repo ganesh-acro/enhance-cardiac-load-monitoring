@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { NavigationCard } from "../components/home/NavigationCard"
 import { ThemeToggle } from "../components/common/ThemeToggle"
 import Contact from "./Contact"
-import { useTheme } from "../components/theme-provider"
+import { EnhanceLogo } from "../components/common/EnhanceLogo"
 
 // Custom Icons
 import analyticsIcon from "../assets/icons/analytics-icon.png"
@@ -12,7 +12,7 @@ import dashboardIcon from "../assets/icons/dashboard-icon.png"
 
 export default function Home() {
     const navigate = useNavigate()
-    const { resolvedTheme } = useTheme()
+
 
     const navItems = [
         {
@@ -47,7 +47,7 @@ export default function Home() {
                     alt="Background"
                     className="absolute inset-0 h-full w-full object-cover opacity-100 dark:opacity-90"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40 backdrop-blur-[1px]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
             </div>
 
 
@@ -59,7 +59,7 @@ export default function Home() {
                     <div className="flex flex-col items-center text-center gap-8 mb-24 max-w-6xl 3xl:max-w-7xl">
                         <h1 className="text-5xl md:text-7xl 2xl:text-8xl 3xl:text-9xl font-extrabold tracking-tighter text-foreground leading-[1.05]">
                             Cardiac load <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400 animate-gradient">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-brand-500">
                                 Performance analytics.
                             </span>
                         </h1>
@@ -100,16 +100,12 @@ export default function Home() {
                     </div>
 
                     {/* Main Footer Content */}
-                    <div className="bg-white dark:bg-card/50 backdrop-blur-xl border-t border-border py-16 px-10">
+                    <div className="bg-white dark:bg-card border-t border-border py-16 px-10">
                         <div className="container mx-auto">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 items-start text-center md:text-left">
                                 {/* Left: Branding & Contact */}
                                 <div className="flex flex-col items-center md:items-start gap-6">
-                                    <img
-                                        src={resolvedTheme === 'dark' ? '/logo dark.png' : '/logo bright.png'}
-                                        alt="Enhance Health"
-                                        className="h-14 w-auto object-contain"
-                                    />
+                                    <EnhanceLogo height={48} />
                                     <div className="space-y-2 text-sm font-medium text-foreground/70">
                                         <p>+91 98413 53952</p>
                                         <p>acroenhance@gmail.com</p>

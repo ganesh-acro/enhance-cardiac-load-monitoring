@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertCircle, AlertTriangle, TrendingUp, Heart, Activity, Info, Users, Dumbbell, ClipboardCheck, X, Calendar, User, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, Heart, Activity, Info, Users, Dumbbell, ClipboardCheck, X, Calendar, User } from 'lucide-react';
 import { SummarySparkline, HoverTrendChart, MonthlyLoadCombinedChart, MonthlyZoneStackChart, MonthlyHRAvgRangeChart, MonthlyACWRChart, MonthlyMovementComboChart, SimpleGaugeChart } from './FeatureCharts';
 import { format, parseISO } from 'date-fns';
 
@@ -8,15 +8,26 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
 
     const [selectedCard, setSelectedCard] = useState(null);
 
-    // ACWR Alert Logic
-    const acwrValue = parseFloat(summaryData.acwr) || 0;
-    const isOptimal = acwrValue >= 0.8 && acwrValue <= 1.3;
-    const isUnder = acwrValue < 0.8;
-    const isOver = acwrValue > 1.3;
+    // Exertion & Training Load from summaryData
+    const exertionLevel = summaryData.exertion_level || null;
+    const trainingLoadFlag = summaryData.training_load_flag || null;
 
-    // Flags from summaryData
-    const isOvertraining = summaryData.redFlags > 0;
-    const isUndertraining = summaryData.yellowFlags > 0;
+    const exertionColors = {
+        "Minimal": { bg: "bg-gray-500/10 border-gray-500/40", circle: "bg-gray-500 text-white" },
+        "Low": { bg: "bg-emerald-500/10 border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.2)]", circle: "bg-emerald-500 text-white" },
+        "Moderate": { bg: "bg-yellow-500/10 border-yellow-500/40 shadow-[0_0_30px_rgba(234,179,8,0.2)]", circle: "bg-yellow-500 text-white" },
+        "High": { bg: "bg-orange-500/10 border-orange-500/40 shadow-[0_0_30px_rgba(249,115,22,0.2)]", circle: "bg-orange-500 text-white" },
+        "Peak": { bg: "bg-red-500/10 border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]", circle: "bg-red-500 text-white" },
+    };
+    const exertionStyle = exertionColors[exertionLevel] || { bg: "bg-muted/20 border-border/60", circle: "bg-muted text-muted-foreground" };
+
+    const tlColors = {
+        "Low": { bg: "bg-emerald-500/10 border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.2)]", circle: "bg-emerald-500 text-white" },
+        "Moderate": { bg: "bg-yellow-500/10 border-yellow-500/40 shadow-[0_0_30px_rgba(234,179,8,0.2)]", circle: "bg-yellow-500 text-white" },
+        "High": { bg: "bg-orange-500/10 border-orange-500/40 shadow-[0_0_30px_rgba(249,115,22,0.2)]", circle: "bg-orange-500 text-white" },
+        "Very High": { bg: "bg-red-500/10 border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]", circle: "bg-red-500 text-white" },
+    };
+    const tlStyle = tlColors[trainingLoadFlag] || { bg: "bg-muted/20 border-border/60", circle: "bg-muted text-muted-foreground" };
 
     // Metric Cards (lower section)
 
@@ -48,8 +59,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                 {/* LEFT COLUMN: SIDEBAR - Spans 4 cols (Wider for Load Chart) */}
                 <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4 lg:gap-6">
                     {/* 1. Athlete Profile Card */}
-                    <div className="p-5 lg:p-8 rounded-3xl lg:rounded-[40px] bg-card border border-border shadow-xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-[80px] -mr-32 -mt-32 transition-all group-hover:bg-brand-500/20"></div>
+                    <div className="p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md relative overflow-hidden">
 
                         <div className="relative flex flex-col gap-8">
                             {/* Name & Identity */}
@@ -68,7 +78,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                                 </div>
 
                                 {/* Metadata Info - Now below name for better fit */}
-                                <div className="grid grid-cols-2 gap-4 p-4 lg:p-6 bg-muted/20 rounded-3xl border border-border/40">
+                                <div className="grid grid-cols-2 gap-4 p-4 lg:p-6 bg-muted/20 rounded-xl border border-border/40">
                                     <div className="flex flex-col gap-1 pr-4 border-r border-border/40">
                                         <p className="text-[10px] font-bold text-muted-foreground tracking-[0.2em] uppercase">Height</p>
                                         <p className="text-xl lg:text-2xl font-black text-foreground tracking-tight">{athleteSummary.height}<span className="text-xs ml-0.5 font-bold text-muted-foreground uppercase">cm</span></p>
@@ -84,7 +94,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                             </div>
 
                             {/* Session Taken Stat */}
-                            <div className="p-4 lg:p-6 bg-muted/30 rounded-2xl lg:rounded-3xl border border-border/50">
+                            <div className="p-4 lg:p-6 bg-muted/30 rounded-2xl lg:rounded-xl border border-border/50">
                                 <p className="text-xs font-semibold text-muted-foreground tracking-[0.2em] mb-2 uppercase">Total sessions</p>
                                 <p className="text-3xl lg:text-5xl font-normal text-foreground">{athleteSummary.totalSessions}</p>
                             </div>
@@ -122,7 +132,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                     </div>
 
                     {/* 2. Load & HRV Chart (Sidebar) */}
-                    <div className="p-4 lg:p-6 rounded-3xl lg:rounded-[40px] bg-card border border-border/60 shadow-lg flex-1">
+                    <div className="p-4 lg:p-6 rounded-xl lg:rounded-xl bg-card border border-border shadow-md flex-1">
                         <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
                             Load & HRV
                         </h5>
@@ -135,40 +145,34 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
 
                     {/* Top Row: Flags & Vitals */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-                        {/* Card 1: Optimal Shield */}
-                        <div className={`p-4 lg:p-5 xl:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex items-center justify-between relative overflow-hidden ${isOptimal
-                            ? 'bg-emerald-500/10 border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.2)]'
-                            : 'bg-muted/20 border-border/60 grayscale opacity-60'}`}>
+                        {/* Card 1: Exertion Level */}
+                        <div className={`p-4 lg:p-5 xl:p-8 rounded-2xl lg:rounded-xl border transition-all duration-700 flex items-center justify-between relative overflow-hidden ${exertionStyle.bg}`}>
                             <div className="relative z-10 min-w-0">
-                                <p className="text-[10px] lg:text-xs font-normal text-emerald-600/80 dark:text-white tracking-widest uppercase mb-1">Status</p>
+                                <p className="text-[10px] lg:text-xs font-normal tracking-widest uppercase mb-1 opacity-70 dark:text-white">Exertion</p>
                                 <p className="text-xl lg:text-2xl xl:text-4xl font-normal text-foreground tracking-tight leading-none truncate">
-                                    {isOptimal ? 'Optimal' : 'Optimal'}
+                                    {exertionLevel || 'N/A'}
                                 </p>
                             </div>
-                            <div className={`w-10 h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 rounded-full flex items-center justify-center shrink-0 relative z-10 ${isOptimal ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'}`}>
-                                <CheckCircle2 className="h-5 w-5 lg:h-6 lg:w-6 xl:h-8 xl:w-8" />
+                            <div className={`w-10 h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 rounded-full flex items-center justify-center shrink-0 relative z-10 ${exertionStyle.circle}`}>
+                                <Activity className="h-5 w-5 lg:h-6 lg:w-6 xl:h-8 xl:w-8" />
                             </div>
                         </div>
 
-                        {/* Card 2: Dynamic Load Alert */}
-                        <div className={`p-4 lg:p-5 xl:p-8 rounded-2xl lg:rounded-[32px] border transition-all duration-700 flex items-center justify-between relative overflow-hidden ${!isOptimal
-                            ? (isOver
-                                ? 'bg-red-500/10 border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.2)]'
-                                : 'bg-amber-500/10 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.2)]')
-                            : 'bg-muted/20 border-border/60 grayscale opacity-60'}`}>
+                        {/* Card 2: Training Load Tier */}
+                        <div className={`p-4 lg:p-5 xl:p-8 rounded-2xl lg:rounded-xl border transition-all duration-700 flex items-center justify-between relative overflow-hidden ${tlStyle.bg}`}>
                             <div className="relative z-10 min-w-0">
                                 <p className="text-[10px] lg:text-xs font-normal tracking-widest uppercase mb-1 opacity-70 dark:text-white">Training Load</p>
                                 <p className="text-xl lg:text-2xl xl:text-4xl font-normal text-foreground tracking-tight leading-none truncate">
-                                    {isOver ? 'Over' : isUnder ? 'Under' : 'Stable'}
+                                    {trainingLoadFlag || 'N/A'}
                                 </p>
                             </div>
-                            <div className={`w-8 h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 rounded-full flex items-center justify-center shrink-0 relative z-10 ${!isOptimal ? (isOver ? 'bg-red-500 text-white' : 'bg-amber-500 text-white') : 'bg-muted text-muted-foreground'}`}>
-                                {isOver ? <AlertCircle className="h-4 w-4 lg:h-5 lg:w-5 xl:h-6 xl:h-6" /> : <AlertTriangle className="h-4 w-4 lg:h-5 lg:w-5 xl:h-6 xl:h-6" />}
+                            <div className={`w-8 h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 rounded-full flex items-center justify-center shrink-0 relative z-10 ${tlStyle.circle}`}>
+                                <TrendingUp className="h-4 w-4 lg:h-5 lg:w-5 xl:h-6 xl:w-6" />
                             </div>
                         </div>
 
                         {/* Card 3: Latest Vitals (New Location) */}
-                        <div className="sm:col-span-2 lg:col-span-1 p-5 lg:p-8 rounded-2xl lg:rounded-[32px] bg-card border border-border/60 shadow-lg flex flex-col justify-center">
+                        <div className="sm:col-span-2 lg:col-span-1 p-5 lg:p-8 rounded-2xl lg:rounded-xl bg-card border border-border shadow-md flex flex-col justify-center">
                             <div className="flex items-center justify-around gap-4 h-full">
                                 {/* Avg HR */}
                                 <div className="text-center">
@@ -188,7 +192,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                     {/* Bottom Row: Monthly Charts Grid (Mixed) */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
                         {/* 1. Zone Split (Wide) */}
-                        <div className="lg:col-span-2 xl:col-span-2 p-5 lg:p-8 rounded-3xl lg:rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
+                        <div className="lg:col-span-2 xl:col-span-2 p-5 lg:p-8 rounded-xl lg:rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
                             <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
                                 Zone distribution
                             </h5>
@@ -196,7 +200,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                         </div>
 
                         {/* 2. HR Range (Compact) */}
-                        <div className="lg:col-span-2 xl:col-span-1 p-5 lg:p-8 rounded-3xl lg:rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
+                        <div className="lg:col-span-2 xl:col-span-1 p-5 lg:p-8 rounded-xl lg:rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
                             <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
                                 Heart rate stats
                             </h5>
@@ -204,7 +208,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                         </div>
 
                         {/* 3. ACWR Trend (Full Width) */}
-                        <div className="lg:col-span-2 xl:col-span-3 p-5 lg:p-8 rounded-3xl lg:rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
+                        <div className="lg:col-span-2 xl:col-span-3 p-5 lg:p-8 rounded-xl lg:rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
                             <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
                                 ACWR trend
                             </h5>
@@ -212,7 +216,7 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                         </div>
 
                         {/* 4. Movement Data (Full Width) */}
-                        <div className="lg:col-span-2 xl:col-span-3 p-5 lg:p-8 rounded-3xl lg:rounded-[40px] bg-card border border-border/60 shadow-sm hover:shadow-md transition-all">
+                        <div className="lg:col-span-2 xl:col-span-3 p-5 lg:p-8 rounded-xl lg:rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
                             <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
                                 Movement intensity & load
                             </h5>

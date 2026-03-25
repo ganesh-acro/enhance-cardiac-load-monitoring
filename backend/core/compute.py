@@ -319,13 +319,24 @@ def prepare_trends(rows: List[Dict]) -> List[Dict]:
 
 def prepare_summary(rows: List[Dict]) -> Optional[Dict]:
     """
-    Returns the latest session's pre-computed values directly from the CSV.
-    No derived formulas — the CSV already contains acwr, session_quality, etc.
+    Returns the latest session's pre-computed values plus classification flags.
+    Includes exertion level and training load flag from latest training session.
     """
+    from core.flags import classify_training_load, classify_exertion
+
     if not rows:
         return None
     latest = rows[-1]
     acwr_val = pf(latest.get("acwr"))
+
+    # Classify from latest training session
+    training = _training_rows(rows)
+    exertion_level = None
+    training_load_flag = None
+    if training:
+        latest_training = training[-1]
+        exertion_level = classify_exertion(latest_training)["level"]
+        training_load_flag = classify_training_load(latest_training)["flag"]
 
     return {
         "acwr": f"{acwr_val:.2f}",
@@ -338,6 +349,8 @@ def prepare_summary(rows: List[Dict]) -> Optional[Dict]:
         "redFlags": 1 if acwr_val > 1.3 else 0,
         "yellowFlags": 1 if acwr_val < 0.8 else 0,
         "latestDate": latest["date"].isoformat() if latest.get("date") else None,
+        "exertion_level": exertion_level,
+        "training_load_flag": training_load_flag,
     }
 
 

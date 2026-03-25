@@ -121,21 +121,21 @@ export default function GroupDashboard() {
                     </div>
 
                     <div className="flex items-center">
-                        <div className="bg-secondary/50 p-1.5 rounded-2xl flex">
+                        <div className="bg-secondary/50 p-1.5 rounded-lg flex">
                             <button
                                 onClick={() => setActiveTab('training')}
-                                className={`px-6 py-2.5 rounded-xl text-base font-bold transition-all ${activeTab === 'training'
-                                    ? 'bg-white dark:bg-card shadow-sm text-brand-500'
-                                    : 'text-muted-foreground hover:text-foreground'
+                                className={`px-6 py-2.5 rounded-lg text-base font-bold transition-all duration-200 ${activeTab === 'training'
+                                    ? 'bg-brand-500 text-white shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                                     }`}
                             >
                                 Training
                             </button>
                             <button
                                 onClick={() => setActiveTab('readiness')}
-                                className={`px-6 py-2.5 rounded-xl text-base font-bold transition-all ${activeTab === 'readiness'
-                                    ? 'bg-white dark:bg-card shadow-sm text-brand-500'
-                                    : 'text-muted-foreground hover:text-foreground'
+                                className={`px-6 py-2.5 rounded-lg text-base font-bold transition-all duration-200 ${activeTab === 'readiness'
+                                    ? 'bg-brand-500 text-white shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                                     }`}
                             >
                                 Readiness
@@ -171,13 +171,13 @@ export default function GroupDashboard() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setZoomedMetric(null)}
-                            className="absolute inset-0 bg-background/80 backdrop-blur-md"
+                            className="absolute inset-0 bg-background/60"
                         />
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-full max-w-6xl bg-card border border-border rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                            className="relative w-full max-w-6xl bg-card border border-border rounded-xl shadow-md overflow-hidden flex flex-col max-h-[90vh]"
                         >
                             <div className="p-8 border-b border-border flex items-center justify-between bg-secondary/30">
                                 <div className="flex items-center gap-6">
@@ -186,7 +186,7 @@ export default function GroupDashboard() {
                                         <select
                                             value={zoomedSelectedAthleteId}
                                             onChange={(e) => setZoomedSelectedAthleteId(e.target.value)}
-                                            className="appearance-none w-full bg-background border border-input text-foreground rounded-xl px-4 py-2 pr-10 font-bold text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all cursor-pointer shadow-sm"
+                                            className="appearance-none w-full bg-background border border-input text-foreground rounded-lg px-4 py-2 pr-10 font-bold text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all cursor-pointer shadow-sm"
                                         >
                                             <option value="all">Select athlete</option>
                                             {teamData.map(a => (
@@ -201,7 +201,7 @@ export default function GroupDashboard() {
                                         setZoomedMetric(null)
                                         setZoomedSelectedAthleteId("all")
                                     }}
-                                    className="p-4 rounded-full hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                                    className="p-4 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
                                 >
                                     <X className="h-6 w-6" />
                                 </button>
@@ -230,13 +230,13 @@ export default function GroupDashboard() {
                                         />
                                     </div>
                                     <div className="space-y-6">
-                                        <div className="p-8 rounded-[32px] bg-secondary/50 border border-border">
+                                        <div className="p-8 rounded-xl bg-secondary/50 border border-border">
                                             <p className="text-xl font-normal tracking-tight text-muted-foreground mb-2">Group average</p>
                                             <h4 className="text-5xl font-bold">
                                                 {groupAverages[zoomedMetric.key]} <span className="text-xl font-bold text-muted-foreground">{zoomedMetric.unit}</span>
                                             </h4>
                                         </div>
-                                        <div className={`p-8 rounded-[32px] ${zoomedMetric.theme.brandBg} border ${zoomedMetric.theme.brandBorder}`}>
+                                        <div className={`p-8 rounded-xl ${zoomedMetric.theme.brandBg} border ${zoomedMetric.theme.brandBorder}`}>
                                             <p className={`text-xs font-black tracking-widest ${zoomedMetric.theme.brandText} mb-2`}>Top performer</p>
                                             {(() => {
                                                 const top = [...teamData].sort((a, b) => b[zoomedMetric.key] - a[zoomedMetric.key])[0]
@@ -272,7 +272,7 @@ function MetricCard({ metric, theme, teamData, groupAverage, onZoom, sortConfig,
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-card border border-border rounded-[40px] shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col group overflow-hidden"
+            className="bg-card border border-border rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 flex flex-col group overflow-hidden"
         >
             <div className="p-6 md:p-8 flex items-center justify-between border-b border-border/50 bg-secondary/10">
                 <div className="flex items-center gap-4">
@@ -282,23 +282,23 @@ function MetricCard({ metric, theme, teamData, groupAverage, onZoom, sortConfig,
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="bg-secondary/50 p-1 rounded-xl flex">
+                    <div className="bg-secondary/50 p-1 rounded-lg flex">
                         <button
                             onClick={() => setView('graph')}
-                            className={`px-4 py-1.5 rounded-lg text-xs font-normal transition-all ${view === 'graph' ? `bg-white dark:bg-card shadow-sm ${theme.brandText} !font-bold` : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all duration-200 ${view === 'graph' ? 'bg-brand-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
                         >
                             Graph
                         </button>
                         <button
                             onClick={() => setView('table')}
-                            className={`px-4 py-1.5 rounded-lg text-xs font-normal transition-all ${view === 'table' ? `bg-white dark:bg-card shadow-sm ${theme.brandText} !font-bold` : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all duration-200 ${view === 'table' ? 'bg-brand-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
                         >
                             Table
                         </button>
                     </div>
                     <button
                         onClick={onZoom}
-                        className="p-2.5 rounded-xl hover:bg-secondary text-muted-foreground hover:text-brand-500 transition-all active:scale-90"
+                        className="p-2.5 rounded-lg hover:bg-secondary text-muted-foreground hover:text-brand-500 transition-colors"
                     >
                         <Maximize2 className="h-5 w-5" />
                     </button>
@@ -310,7 +310,7 @@ function MetricCard({ metric, theme, teamData, groupAverage, onZoom, sortConfig,
                     <select
                         value={selectedAthleteId}
                         onChange={(e) => setSelectedAthleteId(e.target.value)}
-                        className="appearance-none w-full bg-background border border-input text-foreground rounded-xl px-4 py-2.5 pr-10 font-bold text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all cursor-pointer shadow-sm"
+                        className="appearance-none w-full bg-background border border-input text-foreground rounded-lg px-4 py-2.5 pr-10 font-bold text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all cursor-pointer shadow-sm"
                     >
                         <option value="all">Select athlete</option>
                         {athletesList.map(a => (
@@ -389,8 +389,8 @@ function MetricChart({ metric, theme, data, groupAverage, selectedAthleteId, isZ
                 color: isSelected
                     ? (isAboveAvg
                         ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            { offset: 0, color: '#eb8144' },
-                            { offset: 1, color: '#f5a670' },
+                            { offset: 0, color: isDark ? '#c49a5a' : '#0d7377' },
+                            { offset: 1, color: isDark ? '#d4b47c' : '#33bdc1' },
                         ])
                         : new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                             { offset: 0, color: theme.gradient[0] },
@@ -477,7 +477,7 @@ function MetricTable({ metric, theme, groupAverage, sortConfig = { field: 'name'
         : sortedData.filter(athlete => athlete.id === selectedAthleteId);
 
     return (
-        <div className="w-full overflow-hidden border border-border rounded-2xl">
+        <div className="w-full overflow-hidden border border-border rounded-lg">
             <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
                 <table className="w-full text-left text-sm">
                     <thead>
