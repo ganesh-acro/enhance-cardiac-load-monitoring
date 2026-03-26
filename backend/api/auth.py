@@ -1,7 +1,12 @@
 """
 api/auth.py — Authentication and user-management endpoints.
-Handles login, token refresh, logout, and admin CRUD on users.
+
+Dual-mode: supports both hand-rolled auth and Auth0.
+When Auth0 Management API is configured, admin operations (create/delete/
+reset password) are mirrored to Auth0. When not configured, they fall back
+to local-only operations.
 """
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -18,7 +23,16 @@ from core.security.jwt import (
     refresh_token_expiry,
 )
 from core.security.dependencies import require_admin, get_current_user
+from core.security.auth0 import (
+    is_management_api_configured,
+    auth0_create_user,
+    auth0_delete_user,
+    auth0_change_password,
+    auth0_block_user,
+)
 from core.limiter import limiter
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -54,6 +68,7 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     created_at: str
+    auth_provider: str = "local"
 
     class Config:
         from_attributes = True
@@ -78,14 +93,13 @@ class AssignAthletesRequest(BaseModel):
 @limiter.limit("5/minute")
 def login(request: Request, body: LoginRequest, db: DBSession = Depends(get_db)):
     """
-    Authenticate a user and return access + refresh tokens.
-    Returns 401 for any credential failure — intentionally vague to
-    prevent user enumeration.
-    Rate-limited to 5 attempts per minute per IP.
+    Authenticate a user with email + password (hand-rolled auth).
+    Auth0 login is handled client-side via the Auth0 SDK — this endpoint
+    is only for the legacy login flow.
     """
     user = db.query(User).filter(User.email == body.email).first()
 
-    if not user or not verify_password(body.password, user.password_hash):
+    if not user or not user.password_hash or not verify_password(body.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials.",
@@ -199,6 +213,7 @@ def get_profile(db: DBSession = Depends(get_db), user: User = Depends(get_curren
         "name": user.name,
         "email": user.email,
         "role": user.role,
+        "auth_provider": "auth0" if user.auth0_id else "local",
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "assigned_athletes": athletes_list,
     }
@@ -245,10 +260,18 @@ def change_own_password(
     db: DBSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Change the current user's password."""
+    """Change the current user's password (local + Auth0 if linked)."""
     if len(body.new_password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
-    user.password_hash = hash_password(body.new_password)
+
+    # Update in Auth0 if the user has an Auth0 account
+    if user.auth0_id and is_management_api_configured():
+        if not auth0_change_password(user.auth0_id, body.new_password):
+            logger.warning(f"Failed to update password in Auth0 for user {user.id}")
+
+    # Update locally (for users with local passwords)
+    if user.password_hash is not None:
+        user.password_hash = hash_password(body.new_password)
     db.commit()
     return {"detail": "Password changed successfully."}
 
@@ -259,7 +282,12 @@ def create_user(
     db: DBSession = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    """Create a new user. Admin only."""
+    """
+    Create a new user. Admin only.
+
+    If Auth0 Management API is configured, also creates the user in Auth0.
+    Auth0 will automatically send a verification email.
+    """
     if body.role not in ("admin", "coach", "athlete"):
         raise HTTPException(status_code=400, detail="Invalid role.")
 
@@ -270,16 +298,36 @@ def create_user(
             detail="An account with this email already exists.",
         )
 
+    auth0_id = None
+
+    # Create in Auth0 if configured
+    if is_management_api_configured():
+        auth0_user = auth0_create_user(
+            email=body.email,
+            password=body.password,
+            name=body.name,
+        )
+        if auth0_user:
+            auth0_id = auth0_user.get("user_id")
+            logger.info(f"Created Auth0 user: {auth0_id}")
+        else:
+            logger.warning("Auth0 user creation failed — creating local-only user")
+
     user = User(
         name=body.name,
         email=body.email,
         password_hash=hash_password(body.password),
+        auth0_id=auth0_id,
         role=body.role,
     )
     db.add(user)
     db.commit()
 
-    return {"detail": f"User '{body.name}' created with role '{body.role}'."}
+    provider = "Auth0 + local" if auth0_id else "local"
+    return {
+        "detail": f"User '{body.name}' created with role '{body.role}' ({provider}).",
+        "auth_provider": "auth0" if auth0_id else "local",
+    }
 
 
 # ── Admin User Management ─────────────────────────────────────────────────────
@@ -299,6 +347,7 @@ def list_users(
             role=u.role,
             is_active=u.is_active,
             created_at=u.created_at.isoformat() if u.created_at else "",
+            auth_provider="auth0" if u.auth0_id else "local",
         )
         for u in users
     ]
@@ -326,6 +375,10 @@ def update_user(
             raise HTTPException(status_code=400, detail="Cannot deactivate yourself.")
         user.is_active = body.is_active
 
+        # Mirror block/unblock to Auth0
+        if user.auth0_id and is_management_api_configured():
+            auth0_block_user(user.auth0_id, blocked=not body.is_active)
+
     db.commit()
     return {"detail": "User updated."}
 
@@ -337,13 +390,18 @@ def reset_user_password(
     db: DBSession = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    """Reset a user's password. Admin only."""
+    """Reset a user's password. Admin only. Updates in Auth0 if linked."""
     if len(body.new_password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
 
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
+
+    # Update in Auth0 if linked
+    if user.auth0_id and is_management_api_configured():
+        if not auth0_change_password(user.auth0_id, body.new_password):
+            logger.warning(f"Failed to update password in Auth0 for user {user_id}")
 
     user.password_hash = hash_password(body.new_password)
     db.commit()
@@ -356,13 +414,18 @@ def delete_user(
     db: DBSession = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    """Delete a user. Admin only. Cannot delete yourself."""
+    """Delete a user. Admin only. Also removes from Auth0 if linked."""
     if user_id == admin.id:
         raise HTTPException(status_code=400, detail="Cannot delete yourself.")
 
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
+
+    # Delete from Auth0 if linked
+    if user.auth0_id and is_management_api_configured():
+        if not auth0_delete_user(user.auth0_id):
+            logger.warning(f"Failed to delete Auth0 user {user.auth0_id} — deleting locally anyway")
 
     db.delete(user)
     db.commit()

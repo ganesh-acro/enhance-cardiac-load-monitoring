@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/auth-context";
 
-import { Lock, Mail, ArrowRight } from "lucide-react";
+import { Lock, Mail, ArrowRight, Shield } from "lucide-react";
 import { EnhanceLogo } from "../components/common/EnhanceLogo";
 
 export default function Login() {
@@ -10,7 +10,7 @@ export default function Login() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { login, user } = useAuth();
+    const { login, loginWithAuth0, user, isAuth0Available } = useAuth();
     const navigate = useNavigate();
 
     // If already logged in, redirect to home
@@ -47,6 +47,30 @@ export default function Login() {
                         <div className="mb-10">
                             <h2 className="text-4xl font-black text-foreground mb-1">Welcome back</h2>
                         </div>
+
+                        {/* Auth0 Login Button */}
+                        {isAuth0Available && (
+                            <>
+                                <button
+                                    onClick={loginWithAuth0}
+                                    className="w-full flex items-center justify-center gap-3 bg-brand-500 py-5 rounded-lg font-black text-lg text-white shadow-sm hover:bg-brand-600 transition-colors mb-6"
+                                >
+                                    <Shield className="h-5 w-5" />
+                                    <span>Continue with Auth0</span>
+                                </button>
+
+                                <div className="relative mb-6">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <div className="w-full border-t border-border" />
+                                    </div>
+                                    <div className="relative flex justify-center text-xs">
+                                        <span className="bg-card px-4 text-muted-foreground font-bold tracking-widest uppercase">
+                                            or sign in with email
+                                        </span>
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         <form onSubmit={handleSubmit} className="space-y-5">
                             {/* Email Input */}

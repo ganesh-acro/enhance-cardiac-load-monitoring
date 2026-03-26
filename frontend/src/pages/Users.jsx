@@ -180,6 +180,7 @@ function ViewUsersTab({ users, currentUser }) {
                         <th className="text-left px-8 py-5">User</th>
                         <th className="text-left px-6 py-5">Role</th>
                         <th className="text-center px-6 py-5">Status</th>
+                        <th className="text-center px-6 py-5">Auth</th>
                         <th className="text-left px-6 py-5">Joined</th>
                     </tr>
                 </thead>
@@ -187,6 +188,7 @@ function ViewUsersTab({ users, currentUser }) {
                     {users.map((u) => {
                         const RoleIcon = roleIcon[u.role] || User;
                         const isCurrentUser = u.email === currentUser.email;
+                        const isAuth0User = u.auth_provider === "auth0";
                         return (
                             <tr key={u.id} className="border-b border-border/30 hover:bg-secondary/20 transition-colors">
                                 <td className="px-8 py-5">
@@ -215,6 +217,14 @@ function ViewUsersTab({ users, currentUser }) {
                                         }`}>
                                         <span className={`w-2 h-2 rounded-full ${u.is_active ? "bg-green-500" : "bg-red-500"}`} />
                                         {u.is_active ? "Active" : "Inactive"}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-5 text-center">
+                                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${isAuth0User
+                                        ? "bg-purple-500/10 text-purple-500 border-purple-500/20"
+                                        : "bg-muted/50 text-muted-foreground border-border/50"
+                                        }`}>
+                                        {isAuth0User ? "Auth0" : "Local"}
                                     </span>
                                 </td>
                                 <td className="px-6 py-5 text-sm text-muted-foreground font-medium">
