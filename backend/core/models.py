@@ -22,7 +22,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     email = Column(String, nullable=False, unique=True)
-    password_hash = Column(String, nullable=False)
+    password_hash = Column(String, nullable=True)            # nullable for Auth0 users
+    auth0_id = Column(String, nullable=True, unique=True)    # Auth0 user ID (e.g. "auth0|abc123")
     role = Column(String, nullable=False, default="coach")   # admin | coach | athlete
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)

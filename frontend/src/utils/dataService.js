@@ -1,18 +1,47 @@
 /**
  * dataService.js — All API calls to the FastAPI backend.
- * This replaces all direct CSV fetching and all JS data transformations.
+ *
+ * Dual-mode auth: tries Auth0 token first (if available), falls back
+ * to localStorage token (legacy hand-rolled auth).
  */
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-const authHeaders = () => {
-    const token = localStorage.getItem("enhance_token");
+// ── Auth0 token getter (set by auth-context when Auth0 is active) ───────────
+
+let _auth0TokenGetter = null;
+
+/**
+ * Called by auth-context to register the Auth0 getAccessTokenSilently function.
+ * This bridges the React context with the plain JS data service.
+ */
+export function setAuth0TokenGetter(getter) {
+    _auth0TokenGetter = getter;
+}
+
+const authHeaders = async () => {
     const headers = { "Content-Type": "application/json" };
+
+    // Try Auth0 token first
+    if (_auth0TokenGetter) {
+        try {
+            const token = await _auth0TokenGetter();
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+                return headers;
+            }
+        } catch {
+            // Auth0 token failed — fall through to localStorage
+        }
+    }
+
+    // Fall back to localStorage token (legacy)
+    const token = localStorage.getItem("enhance_token");
     if (token) headers["Authorization"] = `Bearer ${token}`;
     return headers;
 };
 
-// ── Refresh token interceptor ───────────────────────────────────────────────
+// ── Refresh token interceptor (legacy auth only) ────────────────────────────
 
 let refreshPromise = null;
 
@@ -53,31 +82,43 @@ function hardLogout() {
 }
 
 const apiFetch = async (path) => {
-    let res = await fetch(`${API_URL}${path}`, { headers: authHeaders() });
-    if (res.status === 401) {
+    const headers = await authHeaders();
+    let res = await fetch(`${API_URL}${path}`, { headers });
+    if (res.status === 401 && !_auth0TokenGetter) {
+        // Only try legacy refresh if not using Auth0
         const refreshed = await tryRefresh();
         if (refreshed) {
-            res = await fetch(`${API_URL}${path}`, { headers: authHeaders() });
+            const retryHeaders = await authHeaders();
+            res = await fetch(`${API_URL}${path}`, { headers: retryHeaders });
         }
         if (res.status === 401) { hardLogout(); return; }
+    } else if (res.status === 401) {
+        // Auth0 token was invalid — redirect to login
+        hardLogout();
+        return;
     }
     if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
     return res.json();
 };
 
 const apiMutate = async (path, method, body) => {
+    const headers = await authHeaders();
     const opts = {
         method,
-        headers: authHeaders(),
+        headers,
         body: body ? JSON.stringify(body) : undefined,
     };
     let res = await fetch(`${API_URL}${path}`, opts);
-    if (res.status === 401) {
+    if (res.status === 401 && !_auth0TokenGetter) {
         const refreshed = await tryRefresh();
         if (refreshed) {
-            res = await fetch(`${API_URL}${path}`, { ...opts, headers: authHeaders() });
+            const retryHeaders = await authHeaders();
+            res = await fetch(`${API_URL}${path}`, { ...opts, headers: retryHeaders });
         }
         if (res.status === 401) { hardLogout(); return; }
+    } else if (res.status === 401) {
+        hardLogout();
+        return;
     }
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
