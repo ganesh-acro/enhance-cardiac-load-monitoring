@@ -1,5 +1,5 @@
 """
-Create the default admin user.
+Create the default admin user via Auth0.
 
 Usage:
     cd backend
@@ -10,12 +10,11 @@ Safe to re-run — skips creation if the email already exists.
 import sys
 import os
 
-# Ensure backend root is on the path when run directly
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.database import SessionLocal, engine, Base
 from core.models import User  # noqa: F401 — registers User on Base
-from core.security.password import hash_password
+from core.security.auth0 import auth0_create_user
 
 ADMIN_NAME = "AcroEnhance Admin"
 ADMIN_EMAIL = "acroenhance@gmail.com"
@@ -24,7 +23,6 @@ ADMIN_ROLE = "admin"
 
 
 def create_admin() -> None:
-    # Ensure all tables exist before querying
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
@@ -34,10 +32,21 @@ def create_admin() -> None:
             print(f"[skip] Admin account already exists: {ADMIN_EMAIL}")
             return
 
+        auth0_user = auth0_create_user(
+            email=ADMIN_EMAIL,
+            password=ADMIN_PASSWORD,
+            name=ADMIN_NAME,
+        )
+        auth0_id = auth0_user.get("user_id") if auth0_user else None
+
+        if not auth0_id:
+            print("[error] Failed to create admin in Auth0. Check Auth0 credentials.")
+            return
+
         admin = User(
             name=ADMIN_NAME,
             email=ADMIN_EMAIL,
-            password_hash=hash_password(ADMIN_PASSWORD),
+            auth0_id=auth0_id,
             role=ADMIN_ROLE,
         )
         db.add(admin)

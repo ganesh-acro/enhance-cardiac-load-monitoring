@@ -179,7 +179,22 @@ def auth0_create_user(email: str, password: str, name: str) -> Optional[Dict[str
     try:
         response = httpx.post(url, json=payload, headers=headers, timeout=10.0)
         response.raise_for_status()
-        return response.json()
+        user_data = response.json()
+
+        # Send verification email
+        try:
+            job_url = f"https://{AUTH0_DOMAIN}/api/v2/jobs/verification-email"
+            job_payload = {
+                "user_id": user_data["user_id"],
+            }
+            print(f"[AUTH0] Sending verification email for {user_data['user_id']}...")
+            ver_resp = httpx.post(job_url, json=job_payload, headers=headers, timeout=10.0)
+            print(f"[AUTH0] Verification email response: {ver_resp.status_code} {ver_resp.text}")
+            ver_resp.raise_for_status()
+        except Exception as e:
+            print(f"[AUTH0] Failed to send verification email: {e}")
+
+        return user_data
     except httpx.HTTPStatusError as e:
         logger.error(f"Auth0 create user failed: {e.response.status_code} {e.response.text}")
         return None

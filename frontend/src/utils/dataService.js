@@ -1,20 +1,13 @@
 /**
- * dataService.js — All API calls to the FastAPI backend.
- *
- * Dual-mode auth: tries Auth0 token first (if available), falls back
- * to localStorage token (legacy hand-rolled auth).
+ * dataService.js — All API calls to the FastAPI backend (Auth0 only).
  */
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-// ── Auth0 token getter (set by auth-context when Auth0 is active) ───────────
+// ── Auth0 token getter (set by auth-context) ────────────────────────────────
 
 let _auth0TokenGetter = null;
 
-/**
- * Called by auth-context to register the Auth0 getAccessTokenSilently function.
- * This bridges the React context with the plain JS data service.
- */
 export function setAuth0TokenGetter(getter) {
     _auth0TokenGetter = getter;
 }
@@ -22,79 +15,27 @@ export function setAuth0TokenGetter(getter) {
 const authHeaders = async () => {
     const headers = { "Content-Type": "application/json" };
 
-    // Try Auth0 token first
     if (_auth0TokenGetter) {
         try {
             const token = await _auth0TokenGetter();
             if (token) {
                 headers["Authorization"] = `Bearer ${token}`;
-                return headers;
             }
         } catch {
-            // Auth0 token failed — fall through to localStorage
+            // Token acquisition failed
         }
     }
 
-    // Fall back to localStorage token (legacy)
-    const token = localStorage.getItem("enhance_token");
-    if (token) headers["Authorization"] = `Bearer ${token}`;
     return headers;
 };
 
-// ── Refresh token interceptor (legacy auth only) ────────────────────────────
-
-let refreshPromise = null;
-
-async function tryRefresh() {
-    const refreshToken = localStorage.getItem("enhance_refresh_token");
-    if (!refreshToken) return false;
-
-    // Deduplicate: if a refresh is already in flight, await the same promise
-    if (refreshPromise) return refreshPromise;
-
-    refreshPromise = (async () => {
-        try {
-            const res = await fetch(`${API_URL}/auth/refresh`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ refresh_token: refreshToken }),
-            });
-            if (!res.ok) return false;
-            const data = await res.json();
-            localStorage.setItem("enhance_token", data.access_token);
-            localStorage.setItem("enhance_refresh_token", data.refresh_token);
-            return true;
-        } catch {
-            return false;
-        } finally {
-            refreshPromise = null;
-        }
-    })();
-
-    return refreshPromise;
-}
-
-function hardLogout() {
-    localStorage.removeItem("enhance_token");
-    localStorage.removeItem("enhance_refresh_token");
-    localStorage.removeItem("enhance_user");
-    window.location.href = "/login";
-}
+// ── Core fetch helpers ──────────────────────────────────────────────────────
 
 const apiFetch = async (path) => {
     const headers = await authHeaders();
-    let res = await fetch(`${API_URL}${path}`, { headers });
-    if (res.status === 401 && !_auth0TokenGetter) {
-        // Only try legacy refresh if not using Auth0
-        const refreshed = await tryRefresh();
-        if (refreshed) {
-            const retryHeaders = await authHeaders();
-            res = await fetch(`${API_URL}${path}`, { headers: retryHeaders });
-        }
-        if (res.status === 401) { hardLogout(); return; }
-    } else if (res.status === 401) {
-        // Auth0 token was invalid — redirect to login
-        hardLogout();
+    const res = await fetch(`${API_URL}${path}`, { headers });
+    if (res.status === 401) {
+        window.location.href = "/login";
         return;
     }
     if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
@@ -108,16 +49,9 @@ const apiMutate = async (path, method, body) => {
         headers,
         body: body ? JSON.stringify(body) : undefined,
     };
-    let res = await fetch(`${API_URL}${path}`, opts);
-    if (res.status === 401 && !_auth0TokenGetter) {
-        const refreshed = await tryRefresh();
-        if (refreshed) {
-            const retryHeaders = await authHeaders();
-            res = await fetch(`${API_URL}${path}`, { ...opts, headers: retryHeaders });
-        }
-        if (res.status === 401) { hardLogout(); return; }
-    } else if (res.status === 401) {
-        hardLogout();
+    const res = await fetch(`${API_URL}${path}`, opts);
+    if (res.status === 401) {
+        window.location.href = "/login";
         return;
     }
     if (!res.ok) {
@@ -129,21 +63,12 @@ const apiMutate = async (path, method, body) => {
 
 // ── Athletes registry ────────────────────────────────────────────────────────
 
-/** Returns full athlete list [{id, name, age, height, weight, sport, img, file}] */
 export const fetchAthletes = () => apiFetch('/athletes');
 
 // ── Dashboard page ───────────────────────────────────────────────────────────
 
-/**
- * Team overview for AnalyticsOverview (no athlete selected).
- * Returns [{id, name, img, acwr, avg_hr, rest_hr, rmssd, zones}]
- */
 export const fetchDashboardOverview = () => apiFetch('/dashboard/overview');
 
-/**
- * Full chart data for a single athlete (all tabs).
- * Returns { athlete, summary, athleteSummary, charts }
- */
 export const fetchAthleteData = async (athlete, startDate = null, endDate = null) => {
     if (!athlete || !athlete.id) return null;
     let path = `/dashboard/${athlete.id}`;
@@ -154,10 +79,6 @@ export const fetchAthleteData = async (athlete, startDate = null, endDate = null
     return apiFetch(path);
 };
 
-/**
- * Comparison tab — secondary athlete or period.
- * Returns { athlete, athleteSummary, charts }
- */
 export const fetchComparison = async (athleteId, { targetId, startDate, endDate, secondaryStart, secondaryEnd } = {}) => {
     const params = [];
     if (targetId) params.push(`target_id=${targetId}`);
@@ -171,58 +92,43 @@ export const fetchComparison = async (athleteId, { targetId, startDate, endDate,
 
 // ── Group dashboard ──────────────────────────────────────────────────────────
 
-/** All athletes' latest metrics for Group Dashboard. */
 export const fetchGroupSummary = () => apiFetch('/group/summary');
 
 // ── Profiles page ────────────────────────────────────────────────────────────
 
-/** Latest snapshot per athlete for the Profiles listing. */
 export const fetchTeamSummary = () => apiFetch('/profiles/summary');
 
 // ── Reports page ─────────────────────────────────────────────────────────────
 
-/** Summary table for Reports page. */
 export const fetchReportsSummary = () => apiFetch('/reports/summary');
 
-/** Full session list for a single athlete (for PDF generation). */
 export const fetchReportDetail = (athleteId) => apiFetch(`/reports/${athleteId}`);
 
 // ── User profile ────────────────────────────────────────────────────────────
 
-/** Get current user's profile. */
 export const fetchMyProfile = () => apiFetch('/auth/me');
 
-/** Get current user's login history. */
 export const fetchMyLoginHistory = () => apiFetch('/auth/me/login-history');
 
-/** Clear current user's login history. */
 export const clearMyLoginHistory = () => apiMutate('/auth/me/login-history', 'DELETE');
 
-/** Change own password. */
 export const changeMyPassword = (newPassword) =>
     apiMutate('/auth/me/password', 'PATCH', { new_password: newPassword });
 
 // ── Admin — User management ─────────────────────────────────────────────────
 
-/** List all users (admin only). */
 export const fetchUsers = () => apiFetch('/auth/users');
 
-/** Create a new user (admin only). */
 export const createUser = (data) => apiMutate('/auth/users', 'POST', data);
 
-/** Update a user's role or active status (admin only). */
 export const updateUser = (userId, data) => apiMutate(`/auth/users/${userId}`, 'PATCH', data);
 
-/** Delete a user (admin only). */
 export const deleteUser = (userId) => apiMutate(`/auth/users/${userId}`, 'DELETE');
 
-/** Reset a user's password (admin only). */
 export const resetUserPassword = (userId, newPassword) =>
     apiMutate(`/auth/users/${userId}/password`, 'PATCH', { new_password: newPassword });
 
-/** Get assigned athlete IDs for a user (admin only). */
 export const getAssignedAthletes = (userId) => apiFetch(`/auth/users/${userId}/athletes`);
 
-/** Set assigned athletes for a user (admin only). */
 export const setAssignedAthletes = (userId, athleteIds) =>
     apiMutate(`/auth/users/${userId}/athletes`, 'PUT', { athlete_ids: athleteIds });

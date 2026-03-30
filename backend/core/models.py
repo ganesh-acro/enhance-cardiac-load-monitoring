@@ -22,8 +22,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     email = Column(String, nullable=False, unique=True)
-    password_hash = Column(String, nullable=True)            # nullable for Auth0 users
-    auth0_id = Column(String, nullable=True, unique=True)    # Auth0 user ID (e.g. "auth0|abc123")
+    auth0_id = Column(String, nullable=False, unique=True)    # Auth0 user ID (e.g. "auth0|abc123")
     role = Column(String, nullable=False, default="coach")   # admin | coach | athlete
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -34,23 +33,6 @@ class User(Base):
         Index("idx_users_email", "email"),
     )
 
-
-class RefreshToken(Base):
-    __tablename__ = "refresh_tokens"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    token = Column(String(128), unique=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-    revoked = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    user = relationship("User")
-
-    __table_args__ = (
-        Index("idx_refresh_tokens_token", "token"),
-        Index("idx_refresh_tokens_user", "user_id"),
-    )
 
 
 class LoginHistory(Base):
