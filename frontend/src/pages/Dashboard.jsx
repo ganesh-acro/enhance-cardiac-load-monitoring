@@ -19,6 +19,8 @@ export default function Dashboard() {
     const [athletesList, setAthletesList] = useState([])
     const [startDate, setStartDate] = useState("")
     const [endDate, setEndDate] = useState("")
+    const [appliedStartDate, setAppliedStartDate] = useState("")
+    const [appliedEndDate, setAppliedEndDate] = useState("")
     const [athletePayload, setAthletePayload] = useState(null)  // { athlete, summary, athleteSummary, charts }
     const [loading, setLoading] = useState(false)
     const [activeTab, setActiveTab] = useState("overview")
@@ -60,13 +62,13 @@ export default function Dashboard() {
         }
     }, [location.key, location.pathname, location.state, athletesList])
 
-    // ---------- Load athlete chart data when athlete or dates change ----------
+    // ---------- Load athlete chart data when athlete or applied dates change ----------
     useEffect(() => {
         if (!selectedAthlete) return
         const load = async () => {
             setLoading(true)
             try {
-                const data = await fetchAthleteData(selectedAthlete, startDate || null, endDate || null)
+                const data = await fetchAthleteData(selectedAthlete, appliedStartDate || null, appliedEndDate || null)
                 setAthletePayload(data)
             } catch (err) {
                 console.error("Athlete data load error:", err)
@@ -74,7 +76,7 @@ export default function Dashboard() {
             setLoading(false)
         }
         load()
-    }, [selectedAthlete, startDate, endDate])
+    }, [selectedAthlete, appliedStartDate, appliedEndDate])
 
     // ---------- Comparison state ----------
     const [compareType, setCompareType] = useState("athlete")
@@ -97,7 +99,7 @@ export default function Dashboard() {
         const load = async () => {
             try {
                 const opts = compareType === "athlete"
-                    ? { targetId: secondaryAthlete.id, startDate: startDate || null, endDate: endDate || null }
+                    ? { targetId: secondaryAthlete.id, startDate: appliedStartDate || null, endDate: appliedEndDate || null }
                     : { secondaryStart: secondaryStartDate, secondaryEnd: secondaryEndDate }
                 const data = await fetchComparison(selectedAthlete.id, opts)
                 setSecondaryPayload(data)
@@ -107,7 +109,7 @@ export default function Dashboard() {
             }
         }
         load()
-    }, [selectedAthlete, compareType, secondaryAthlete, secondaryStartDate, secondaryEndDate, startDate, endDate])
+    }, [selectedAthlete, compareType, secondaryAthlete, secondaryStartDate, secondaryEndDate, appliedStartDate, appliedEndDate])
 
     // ---------- Derived ----------
     const primaryChartData = athletePayload?.charts ?? null
@@ -137,6 +139,16 @@ export default function Dashboard() {
                     endDate={endDate}
                     onStartDateChange={setStartDate}
                     onEndDateChange={setEndDate}
+                    onApplyDates={() => {
+                        setAppliedStartDate(startDate)
+                        setAppliedEndDate(endDate)
+                    }}
+                    onResetDates={() => {
+                        setStartDate("")
+                        setEndDate("")
+                        setAppliedStartDate("")
+                        setAppliedEndDate("")
+                    }}
                 />
 
                 <div className="mt-6 pt-10 px-1">

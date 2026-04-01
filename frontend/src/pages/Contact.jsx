@@ -12,7 +12,7 @@ export default function Contact() {
     const athleteImageUrl = "https://static.wixstatic.com/media/f0e14c_f9ccb2795d604eeba0b18b5ad1885ee4~mv2.png/v1/crop/x_1007,y_0,w_4705,h_4480/fill/w_950,h_753,fp_0.50_0.50,q_90,usm_0.66_1.00_0.01,enc_avif,quality_auto/NETRIN%20AAKASH%20pose%202%20(1)%20(1).png";
 
     return (
-        <div id="contact" className="min-h-screen bg-background scroll-mt-24">
+        <div id="contact" className="min-h-screen bg-background scroll-mt-24 pt-24">
             {/* Header Banner */}
             <header className="bg-brand-500 h-48 md:h-64 flex items-center justify-center relative overflow-hidden">
                 <motion.h1

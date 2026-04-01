@@ -64,6 +64,24 @@ def profiles_summary(
         except Exception:
             session_date = "N/A"
 
+        # Last 5 sessions for mini chart (date, avg_hr, session_type)
+        recent_sessions = []
+        for row in rows[-5:]:
+            try:
+                d = row["date"].strftime("%b %d")
+            except Exception:
+                d = "N/A"
+            recent_sessions.append({
+                "date": d,
+                "avg_hr": pf(row.get("avg_hr")),
+                "session_type": row.get("session_type", "Training"),
+            })
+
+        # Raw training intensity for progress bar
+        training_intensity = None
+        if training:
+            training_intensity = pf(training[-1].get("training_intensity"))
+
         results.append({
             "id": athlete["id"],
             "name": athlete["name"],
@@ -78,6 +96,8 @@ def profiles_summary(
             "readiness_status": readiness_status,
             "training_load_flag": training_load_flag,
             "exertion_level": exertion_level,
+            "training_intensity": training_intensity,
+            "recent_sessions": recent_sessions,
         })
 
     return results

@@ -1,12 +1,63 @@
-import React, { useState } from 'react';
-import { TrendingUp, Heart, Activity, Info, Users, Dumbbell, ClipboardCheck, X, Calendar, User } from 'lucide-react';
-import { SummarySparkline, HoverTrendChart, MonthlyLoadCombinedChart, MonthlyZoneStackChart, MonthlyHRAvgRangeChart, MonthlyACWRChart, MonthlyMovementComboChart, SimpleGaugeChart } from './FeatureCharts';
-import { format, parseISO } from 'date-fns';
+import { useState, useEffect, useRef } from 'react';
+import { TrendingUp, Activity, Dumbbell, ClipboardCheck, Calendar, Info } from 'lucide-react';
+import { MonthlyLoadCombinedChart, MonthlyZoneStackChart, MonthlyHRAvgRangeChart, MonthlyACWRChart, MonthlyMovementComboChart } from './FeatureCharts';
 
-export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, startDate, endDate }) => {
+const CHART_INFO = {
+    loadHrv: {
+        title: "Load & HRV",
+        desc: "Monthly training load (bars) overlaid with HRV (RMSSD) trend (line). Rising load alongside stable or improving HRV indicates good adaptation."
+    },
+    zones: {
+        title: "Zone Distribution",
+        desc: "Stacked monthly breakdown of time spent in each heart rate zone (Z0–Z5). Reflects training intensity balance across the period."
+    },
+    heartRate: {
+        title: "Heart Rate Stats",
+        desc: "Monthly average, minimum, and maximum heart rate. Useful for spotting cardiovascular drift or recovery trends over time."
+    },
+    acwr: {
+        title: "ACWR Trend",
+        desc: "Acute:Chronic Workload Ratio over time. Values 0.8–1.3 are optimal; above 1.3 signals elevated injury risk from spike in acute load."
+    },
+    movement: {
+        title: "Movement Intensity & Load",
+        desc: "Combined view of movement-based load and intensity metrics per month. Tracks physical output beyond heart rate alone."
+    },
+};
+
+function ChartInfoPopup({ chartKey }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    const info = CHART_INFO[chartKey];
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+        };
+        if (open) document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, [open]);
+
+    return (
+        <span ref={ref} className="relative inline-flex items-center ml-1.5" onClick={e => e.stopPropagation()}>
+            <button
+                onClick={() => setOpen(v => !v)}
+                className="text-muted-foreground/40 hover:text-brand-500 transition-colors"
+            >
+                <Info className="h-3.5 w-3.5" />
+            </button>
+            {open && (
+                <div className="absolute top-6 left-0 z-50 w-72 bg-card border border-border rounded-xl shadow-lg p-4 text-left">
+                    <p className="text-xs font-black uppercase tracking-widest text-brand-500 mb-2">{info.title}</p>
+                    <p className="text-sm text-muted-foreground font-medium leading-relaxed">{info.desc}</p>
+                </div>
+            )}
+        </span>
+    );
+}
+
+export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData }) => {
     if (!summaryData || !athleteSummary) return null;
-
-    const [selectedCard, setSelectedCard] = useState(null);
 
     // Exertion & Training Load from summaryData
     const exertionLevel = summaryData.exertion_level || null;
@@ -28,17 +79,6 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
 
     // Metric Cards (lower section)
 
-    // Helper to format dates
-    const formatDateStr = (dateStr) => {
-        if (!dateStr) return 'N/A';
-        try {
-            return format(parseISO(dateStr), 'dd/MM/yyyy');
-        } catch (e) {
-            return dateStr;
-        }
-    };
-
-    // Get latest Average HR and RMSSD
     // Get latest Average HR and RMSSD
     const latestAvgHr = primaryChartData?.hr?.length > 0
         ? primaryChartData.hr[primaryChartData.hr.length - 1].avg_hr
@@ -53,92 +93,88 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
-                {/* LEFT COLUMN: SIDEBAR - Spans 4 cols (Wider for Load Chart) */}
-                <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4 lg:gap-6">
-                    {/* 1. Athlete Profile Card */}
-                    <div className="p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md relative overflow-hidden">
+                {/* LEFT COLUMN: SIDEBAR */}
+                <div className="lg:col-span-4 flex flex-col gap-4 lg:gap-6">
+                    {/* 1. Athlete Profile Card — Compact */}
+                    <div className="p-5 rounded-xl bg-card border border-border shadow-md">
 
-                        <div className="relative flex flex-col gap-8">
-                            {/* Name & Identity */}
-                            <div className="flex flex-col gap-6">
-                                <div className="space-y-4 min-w-0">
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-brand-500 tracking-[0.2em] mb-2 uppercase">Athlete profile</p>
-                                        <h1 className="text-3xl lg:text-4xl xl:text-5xl font-medium text-foreground tracking-tight leading-[1.1] break-words">
-                                            {athleteSummary.name}
-                                        </h1>
-                                        <div className="w-24 border-t-2 border-brand-500/30 mt-4 mb-2"></div>
-                                    </div>
-                                    <div className="inline-block px-4 py-1.5 bg-muted/50 rounded-full border border-border/40">
-                                        <p className="text-sm lg:text-base font-black text-muted-foreground/80 tracking-widest">{athleteSummary.age} / {athleteSummary.gender}</p>
-                                    </div>
+                        {/* Label */}
+                        <p className="text-xs font-semibold text-brand-500 tracking-[0.2em] mb-3 uppercase">Athlete profile</p>
+
+                        {/* Name (left) + Height / Weight / Sport (right, with border separator) */}
+                        <div className="flex items-start">
+                            <div className="flex-1 min-w-0 pr-6">
+                                <h1 className="text-3xl lg:text-4xl font-medium text-foreground tracking-tight leading-tight">
+                                    {athleteSummary.name}
+                                </h1>
+                                <div className="mt-2 inline-flex items-center px-3 py-1 bg-muted/50 rounded-full border border-border/40">
+                                    <p className="text-sm font-bold text-muted-foreground/80 tracking-widest">{athleteSummary.age}{athleteSummary.gender ? ` / ${athleteSummary.gender}` : ''}</p>
                                 </div>
+                            </div>
 
-                                {/* Metadata Info - Now below name for better fit */}
-                                <div className="grid grid-cols-2 gap-4 p-4 lg:p-6 bg-muted/20 rounded-xl border border-border/40">
-                                    <div className="flex flex-col gap-1 pr-4 border-r border-border/40">
+                            <div className="shrink-0 pl-6 border-l border-border/40 flex flex-col gap-2">
+                                <div className="flex items-center gap-4">
+                                    <div>
                                         <p className="text-[10px] font-bold text-muted-foreground tracking-[0.2em] uppercase">Height</p>
-                                        <p className="text-xl lg:text-2xl font-black text-foreground tracking-tight">{athleteSummary.height}<span className="text-xs ml-0.5 font-bold text-muted-foreground uppercase">cm</span></p>
+                                        <p className="text-lg font-black text-foreground">{athleteSummary.height}<span className="text-xs ml-0.5 font-bold text-muted-foreground">cm</span></p>
                                     </div>
-                                    <div className="flex flex-col gap-1 pl-2">
+                                    <div className="w-px h-8 bg-border/50" />
+                                    <div>
                                         <p className="text-[10px] font-bold text-muted-foreground tracking-[0.2em] uppercase">Weight</p>
-                                        <p className="text-xl lg:text-2xl font-black text-foreground tracking-tight">{athleteSummary.weight}<span className="text-xs ml-0.5 font-bold text-muted-foreground uppercase">kg</span></p>
-                                    </div>
-                                    <div className="col-span-2 pt-2 border-t border-border/40 text-center">
-                                        <p className="text-[10px] font-black text-brand-500 uppercase tracking-[0.4em]">{athleteSummary.sport}</p>
+                                        <p className="text-lg font-black text-foreground">{athleteSummary.weight}<span className="text-xs ml-0.5 font-bold text-muted-foreground">kg</span></p>
                                     </div>
                                 </div>
+                                <p className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em]">{athleteSummary.sport}</p>
                             </div>
+                        </div>
 
-                            {/* Session Taken Stat */}
-                            <div className="p-4 lg:p-6 bg-muted/30 rounded-2xl lg:rounded-xl border border-border/50">
-                                <p className="text-xs font-semibold text-muted-foreground tracking-[0.2em] mb-2 uppercase">Total sessions</p>
-                                <p className="text-3xl lg:text-5xl font-normal text-foreground">{athleteSummary.totalSessions}</p>
+                        {/* Divider */}
+                        <div className="border-t border-border/30 my-4" />
+
+                        {/* Sessions: Total (left) | Training + Readiness (right) */}
+                        <div className="flex items-stretch divide-x divide-border/40 gap-0">
+                            <div className="flex-1 pr-4">
+                                <p className="text-[10px] font-semibold text-muted-foreground tracking-[0.2em] uppercase mb-1">Total sessions</p>
+                                <p className="text-4xl font-normal text-foreground">{athleteSummary.totalSessions}</p>
                             </div>
-
-                            {/* Training & Readiness */}
-                            <div className="grid grid-cols-1 gap-4">
-                                <div className="flex items-center gap-4 p-4 bg-brand-500/[0.03] rounded-2xl border border-brand-500/10 group/stat">
-                                    <div className="p-3 bg-brand-500/10 rounded-xl">
-                                        <Dumbbell className="h-5 w-5 text-brand-500" />
-                                    </div>
+                            <div className="flex-1 pl-4 flex flex-col justify-center gap-3">
+                                <div className="flex items-center gap-2">
+                                    <Dumbbell className="h-3.5 w-3.5 text-brand-500 shrink-0" />
                                     <div>
-                                        <p className="text-xs font-semibold text-brand-500 tracking-[0.2em] uppercase">Training</p>
-                                        <p className="text-xl lg:text-2xl font-normal text-foreground">{athleteSummary.trainingSessions}</p>
+                                        <p className="text-[10px] font-bold text-brand-500 tracking-[0.15em] uppercase">Training</p>
+                                        <p className="text-xl font-normal text-foreground">{athleteSummary.trainingSessions}</p>
                                     </div>
                                 </div>
-
-                                <div className="flex items-center gap-4 p-4 bg-emerald-500/[0.03] rounded-2xl border border-emerald-500/10 group/stat">
-                                    <div className="p-3 bg-emerald-500/10 rounded-xl">
-                                        <ClipboardCheck className="h-5 w-5 text-emerald-500" />
-                                    </div>
+                                <div className="flex items-center gap-2">
+                                    <ClipboardCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                                     <div>
-                                        <p className="text-xs font-semibold text-emerald-500 tracking-[0.2em] uppercase">Readiness</p>
-                                        <p className="text-xl lg:text-2xl font-normal text-foreground">{athleteSummary.readinessSessions}</p>
+                                        <p className="text-[10px] font-bold text-emerald-500 tracking-[0.15em] uppercase">Readiness</p>
+                                        <p className="text-xl font-normal text-foreground">{athleteSummary.readinessSessions}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Dates Footer (Vertical) */}
-                        <div className="mt-8 pt-8 border-t border-border/40 flex flex-col gap-2 items-center text-center">
-                            <span className="text-base font-black text-foreground tracking-wider">{athleteSummary.sessionStart || 'N/A'}</span>
-                            <span className="text-sm font-medium text-muted-foreground uppercase">to</span>
-                            <span className="text-base font-black text-foreground tracking-wider">{athleteSummary.sessionEnd || 'N/A'}</span>
+                        {/* Date range — compact inline */}
+                        <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-center gap-2">
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                            <span className="text-sm font-bold text-foreground tracking-wide">{athleteSummary.sessionStart || 'N/A'}</span>
+                            <span className="text-muted-foreground font-medium text-sm">→</span>
+                            <span className="text-sm font-bold text-foreground tracking-wide">{athleteSummary.sessionEnd || 'N/A'}</span>
                         </div>
                     </div>
 
                     {/* 2. Load & HRV Chart (Sidebar) */}
                     <div className="p-4 lg:p-6 rounded-xl lg:rounded-xl bg-card border border-border shadow-md flex-1">
-                        <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4">
-                            Load & HRV
+                        <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4 inline-flex items-center">
+                            Load & HRV<ChartInfoPopup chartKey="loadHrv" />
                         </h5>
                         <MonthlyLoadCombinedChart data={primaryChartData?.monthly} />
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN: GRAPHS & FLAGS - Spans 8 cols */}
-                <div className="lg:col-span-7 xl:col-span-8 space-y-6 lg:space-y-8">
+                {/* RIGHT COLUMN: GRAPHS & FLAGS */}
+                <div className="lg:col-span-8 space-y-6 lg:space-y-8">
 
                     {/* Top Row: Flags & Vitals */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
@@ -190,32 +226,32 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, sta
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
                         {/* 1. Zone Split (Wide) */}
                         <div className="lg:col-span-2 xl:col-span-2 p-5 lg:p-8 rounded-xl lg:rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
-                            <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
-                                Zone distribution
+                            <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6 inline-flex items-center">
+                                Zone distribution<ChartInfoPopup chartKey="zones" />
                             </h5>
                             <MonthlyZoneStackChart data={primaryChartData?.monthly} />
                         </div>
 
                         {/* 2. HR Range (Compact) */}
                         <div className="lg:col-span-2 xl:col-span-1 p-5 lg:p-8 rounded-xl lg:rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
-                            <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
-                                Heart rate stats
+                            <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6 inline-flex items-center">
+                                Heart rate stats<ChartInfoPopup chartKey="heartRate" />
                             </h5>
                             <MonthlyHRAvgRangeChart data={primaryChartData?.monthly} />
                         </div>
 
                         {/* 3. ACWR Trend (Full Width) */}
                         <div className="lg:col-span-2 xl:col-span-3 p-5 lg:p-8 rounded-xl lg:rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
-                            <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
-                                ACWR trend
+                            <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6 inline-flex items-center">
+                                ACWR trend<ChartInfoPopup chartKey="acwr" />
                             </h5>
                             <MonthlyACWRChart data={primaryChartData?.monthly} />
                         </div>
 
                         {/* 4. Movement Data (Full Width) */}
                         <div className="lg:col-span-2 xl:col-span-3 p-5 lg:p-8 rounded-xl lg:rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
-                            <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6">
-                                Movement intensity & load
+                            <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6 inline-flex items-center">
+                                Movement intensity & load<ChartInfoPopup chartKey="movement" />
                             </h5>
                             <MonthlyMovementComboChart data={primaryChartData?.monthly} />
                         </div>

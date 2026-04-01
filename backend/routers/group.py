@@ -3,8 +3,9 @@ routers/group.py — GET /group/summary
 Serves the GroupDashboard page with all athletes' latest metrics,
 split by session type (Training vs Readiness).
 """
+from datetime import date as DateType
 from typing import Optional, List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from core.database import get_db
@@ -14,12 +15,12 @@ from core.security.dependencies import get_allowed_athlete_ids
 router = APIRouter(prefix="/group", tags=["group"])
 
 TRAINING_METRIC_KEYS = [
-    "training_load", "training_intensity", "movement_load",
+    "training_load", "training_intensity", "acwr",
     "vo2", "ee_men", "epoc_total",
 ]
 
 READINESS_METRIC_KEYS = [
-    "acwr", "avg_hr", "rmssd", "recovery_beats", "rest_hr",
+    "avg_hr", "rmssd", "recovery_beats", "rest_hr",
 ]
 
 
@@ -65,10 +66,12 @@ def _group_averages(results, metric_keys):
 def group_summary(
     db: Session = Depends(get_db),
     allowed_ids: Optional[List[str]] = Depends(get_allowed_athlete_ids),
+    date_from: Optional[DateType] = Query(None),
+    date_to: Optional[DateType] = Query(None),
 ):
     """
     Returns latest Training and Readiness session metrics per athlete,
-    with pre-computed group averages for each category.
+    within the given date range, with pre-computed group averages.
     """
     athletes = get_athletes(db, allowed_ids)
     training_results = []
@@ -79,12 +82,33 @@ def group_summary(
         if not rows:
             continue
 
+        # Filter by date range if provided
+        if date_from or date_to:
+            filtered = []
+            for r in rows:
+                d = r.get("date")
+                if d is None:
+                    continue
+                row_date = d.date() if hasattr(d, "date") else d
+                if date_from and row_date < date_from:
+                    continue
+                if date_to and row_date > date_to:
+                    continue
+                filtered.append(r)
+            rows = filtered
+
+        if not rows:
+            continue
+
         # Latest Training session
         latest_training = _latest_by_type(
             rows, lambda r: r.get("session_type") == "Training"
         )
         t_entry = _build_athlete_entry(athlete, latest_training, TRAINING_METRIC_KEYS)
         if t_entry:
+            # ACWR is a rolling metric — use the most recent value across all session types
+            latest_any = rows[-1]
+            t_entry["acwr"] = pf(latest_any.get("acwr"))
             training_results.append(t_entry)
 
         # Latest Readiness session

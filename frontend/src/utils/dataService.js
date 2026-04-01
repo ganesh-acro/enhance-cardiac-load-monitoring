@@ -92,7 +92,13 @@ export const fetchComparison = async (athleteId, { targetId, startDate, endDate,
 
 // ── Group dashboard ──────────────────────────────────────────────────────────
 
-export const fetchGroupSummary = () => apiFetch('/group/summary');
+export const fetchGroupSummary = (dateFrom, dateTo) => {
+    const params = new URLSearchParams()
+    if (dateFrom) params.set('date_from', dateFrom)
+    if (dateTo) params.set('date_to', dateTo)
+    const qs = params.toString() ? `?${params.toString()}` : ''
+    return apiFetch(`/group/summary${qs}`)
+}
 
 // ── Profiles page ────────────────────────────────────────────────────────────
 

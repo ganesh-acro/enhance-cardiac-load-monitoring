@@ -1,9 +1,6 @@
-import { useState } from "react"
-import { Users, Activity, BarChart3, FileText, LayoutDashboard, UserCircle, Settings, HelpCircle, Mail } from "lucide-react"
+import { Users, FileText } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { NavigationCard } from "../components/home/NavigationCard"
-import { ThemeToggle } from "../components/common/ThemeToggle"
-import Contact from "./Contact"
 import { EnhanceLogo } from "../components/common/EnhanceLogo"
 
 // Custom Icons
@@ -81,57 +78,30 @@ export default function Home() {
                     </div>
                 </main>
 
-                <Contact />
-
-                {/* Footer Section */}
+                {/* Footer */}
                 <footer className="relative z-10 w-full">
-                    {/* IIT Madras Bar */}
-                    <div className="bg-black text-white py-8">
-                        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center gap-6">
-                            <img
-                                src="/iit-logo.png"
-                                alt="IIT Madras"
-                                className="h-20 w-20 object-contain rounded-full border border-white/10"
-                            />
-                            <span className="text-2xl md:text-3xl font-bold tracking-tight text-center">
-                                Technology powered by IIT Madras
-                            </span>
+                    <div className="bg-black text-white py-6">
+                        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <img
+                                    src="/iit-logo.png"
+                                    alt="IIT Madras"
+                                    className="h-14 w-14 object-contain rounded-full border border-white/10"
+                                />
+                                <span className="text-lg md:text-xl font-bold tracking-tight">
+                                    Technology powered by IIT Madras
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-6 text-sm text-white/70 font-medium">
+                                <span>acroenhance@gmail.com</span>
+                                <span>+91 98413 53952</span>
+                            </div>
                         </div>
                     </div>
-
-                    {/* Main Footer Content */}
-                    <div className="bg-white dark:bg-card border-t border-border py-16 px-10">
-                        <div className="container mx-auto">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 items-start text-center md:text-left">
-                                {/* Left: Branding & Contact */}
-                                <div className="flex flex-col items-center md:items-start gap-6">
-                                    <EnhanceLogo height={48} />
-                                    <div className="space-y-2 text-sm font-medium text-foreground/70">
-                                        <p>+91 98413 53952</p>
-                                        <p>acroenhance@gmail.com</p>
-                                    </div>
-                                </div>
-
-                                {/* Center: Address */}
-                                <div className="flex flex-col items-center space-y-3">
-                                    <h3 className="text-base font-bold text-foreground">Our Location</h3>
-                                    <p className="text-sm text-foreground/60 text-center leading-relaxed font-medium">
-                                        ESB 309, IIT Madras,<br />
-                                        Chennai-600036, India.
-                                    </p>
-                                </div>
-
-                                {/* Right: placeholder for future links */}
-                                <div />
-                            </div>
-
-                            {/* Copyright */}
-                            <div className="mt-12 pt-6 border-t border-border/50 text-center">
-                                <p className="text-xs text-muted-foreground font-bold tracking-[0.2em]">
-                                    &copy; 2026 Enhance
-                                </p>
-                            </div>
-                        </div>
+                    <div className="bg-white dark:bg-card border-t border-border py-4">
+                        <p className="text-center text-xs text-muted-foreground font-bold tracking-[0.2em]">
+                            &copy; 2026 Enhance
+                        </p>
                     </div>
                 </footer>
             </div>

@@ -7,6 +7,7 @@ import GroupDashboard from "./pages/GroupDashboard"
 import Login from "./pages/Login"
 import About from "./pages/About"
 import Contact from "./pages/Contact"
+import Guide from "./pages/Guide"
 import AppLayout from "./components/layout/AppLayout"
 import { AuthProvider } from "./context/auth-context"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
@@ -29,6 +30,7 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/guide" element={<Guide />} />
               <Route path="/profiles" element={<Profiles />} />
               <Route path="/athletes" element={<Navigate to="/profiles" replace />} />
               <Route path="/users" element={<Users />} />

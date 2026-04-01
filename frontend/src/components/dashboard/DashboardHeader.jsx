@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Users, ChevronDown, AlertCircle } from 'lucide-react';
+import { Calendar, Users, ChevronDown, AlertCircle, Search, RotateCcw } from 'lucide-react';
 
 export const DashboardHeader = ({
     activeTab,
@@ -10,9 +10,12 @@ export const DashboardHeader = ({
     startDate,
     endDate,
     onStartDateChange,
-    onEndDateChange
+    onEndDateChange,
+    onApplyDates,
+    onResetDates,
 }) => {
     const [hoveredDisabled, setHoveredDisabled] = useState(false);
+    const [hoveredDateDisabled, setHoveredDateDisabled] = useState(false);
 
     const handleTabClick = (tabKey) => {
         if (tabKey !== 'overview' && !selectedAthlete) return;
@@ -57,7 +60,8 @@ export const DashboardHeader = ({
                     </div>
 
                     {/* Filters */}
-                    <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex flex-col gap-2 items-end">
+                        <div className="flex flex-wrap items-center gap-4">
                         {/* Athlete Selector */}
                         <div className="relative group">
                             <div className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-lg hover:border-brand-500/50 transition-colors cursor-pointer">
@@ -80,7 +84,11 @@ export const DashboardHeader = ({
                         </div>
 
                         {/* Date Range Selector */}
-                        <div className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-lg">
+                        <div
+                            onMouseEnter={() => !selectedAthlete && setHoveredDateDisabled(true)}
+                            onMouseLeave={() => setHoveredDateDisabled(false)}
+                            className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-lg"
+                        >
                             <Calendar className="h-4 w-4 text-brand-500" />
                             <div className="flex items-center gap-1">
                                 <input
@@ -98,6 +106,35 @@ export const DashboardHeader = ({
                                 />
                             </div>
                         </div>
+
+                        {/* Apply date filter */}
+                        <button
+                            onClick={onApplyDates}
+                            onMouseEnter={() => !selectedAthlete && setHoveredDateDisabled(true)}
+                            onMouseLeave={() => setHoveredDateDisabled(false)}
+                            title="Apply date filter"
+                            className="p-2.5 rounded-lg bg-background border border-border hover:border-brand-500/50 hover:text-brand-500 text-muted-foreground transition-colors"
+                        >
+                            <Search className="h-4 w-4" />
+                        </button>
+
+                        {/* Reset date filter */}
+                        <button
+                            onClick={onResetDates}
+                            onMouseEnter={() => !selectedAthlete && setHoveredDateDisabled(true)}
+                            onMouseLeave={() => setHoveredDateDisabled(false)}
+                            title="Reset date filter"
+                            className="p-2.5 rounded-lg bg-background border border-border hover:border-red-500/50 hover:text-red-500 text-muted-foreground transition-colors"
+                        >
+                            <RotateCcw className="h-4 w-4" />
+                        </button>
+                        </div>
+                        {hoveredDateDisabled && (
+                            <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider animate-in fade-in slide-in-from-top-2 duration-300">
+                                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                Select an athlete first
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

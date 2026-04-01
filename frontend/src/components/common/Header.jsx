@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { UserCircle, LogOut, ChevronDown, Info, Phone, Sun, Moon, Settings, User } from "lucide-react"
+import { UserCircle, LogOut, ChevronDown, Info, Phone, Sun, Moon, HelpCircle, User } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../../context/auth-context"
 import { useTheme } from "../theme-provider"
@@ -84,21 +84,18 @@ export function Header() {
                                 About Us
                             </button>
                             <button
-                                onClick={() => {
-                                    if (window.location.pathname === '/') {
-                                        document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-                                    } else {
-                                        navigate("/");
-                                        setTimeout(() => {
-                                            document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-                                        }, 100);
-                                    }
-                                    setIsMoreOpen(false);
-                                }}
+                                onClick={() => { navigate("/contact"); setIsMoreOpen(false); }}
                                 className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-foreground/70 hover:text-foreground hover:bg-secondary rounded-md transition-colors"
                             >
                                 <Phone className="h-4 w-4" />
                                 Contact Us
+                            </button>
+                            <button
+                                onClick={() => { navigate("/guide"); setIsMoreOpen(false); }}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-foreground/70 hover:text-foreground hover:bg-secondary rounded-md transition-colors"
+                            >
+                                <HelpCircle className="h-4 w-4" />
+                                Help & Guide
                             </button>
                         </div>
                     )}
@@ -123,11 +120,11 @@ export function Header() {
                                     Profile
                                 </button>
                                 <button
-                                    onClick={() => { setIsProfileOpen(false); }}
+                                    onClick={() => { navigate("/guide"); setIsProfileOpen(false); }}
                                     className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-foreground/70 hover:text-foreground hover:bg-secondary rounded-md transition-colors"
                                 >
-                                    <Settings className="h-4 w-4" />
-                                    Settings
+                                    <HelpCircle className="h-4 w-4" />
+                                    Help & Guide
                                 </button>
                                 <div className="my-1 border-t border-border" />
                                 <button

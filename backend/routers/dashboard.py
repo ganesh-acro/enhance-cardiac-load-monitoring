@@ -60,6 +60,13 @@ def dashboard_overview(
             rmssd_7d, rhr_7d = compute_7day_baselines(readiness, latest_r["date"])
             readiness_status = classify_readiness(latest_r, rmssd_7d, rhr_7d)["status"]
 
+        # Use latest Training session for zone data
+        last_training = next(
+            (r for r in reversed(rows) if r.get("session_type") == "Training"),
+            None,
+        )
+        zone_source = last_training or {}
+
         athletes_data.append({
             "id": athlete["id"],
             "name": athlete["name"],
@@ -71,12 +78,12 @@ def dashboard_overview(
             "training_load": pf(latest.get("training_load")),
             "readiness_status": readiness_status,
             "zones": {
-                "z0": pf(latest.get("zone_0_pct")),
-                "z1": pf(latest.get("zone_1_pct")),
-                "z2": pf(latest.get("zone_2_pct")),
-                "z3": pf(latest.get("zone_3_pct")),
-                "z4": pf(latest.get("zone_4_pct")),
-                "z5": pf(latest.get("zone_5_pct")),
+                "z0": pf(zone_source.get("zone_0_pct")),
+                "z1": pf(zone_source.get("zone_1_pct")),
+                "z2": pf(zone_source.get("zone_2_pct")),
+                "z3": pf(zone_source.get("zone_3_pct")),
+                "z4": pf(zone_source.get("zone_4_pct")),
+                "z5": pf(zone_source.get("zone_5_pct")),
             },
         })
 
@@ -89,6 +96,12 @@ def dashboard_overview(
 
     avg_team_hr  = round(sum(a["avg_hr"]  for a in athletes_data) / n, 1)
     avg_rest_hr  = round(sum(a["rest_hr"] for a in athletes_data) / n, 1)
+
+    rmssd_vals = [a["rmssd"] for a in athletes_data if a["rmssd"] > 0]
+    avg_rmssd = round(sum(rmssd_vals) / len(rmssd_vals), 1) if rmssd_vals else 0
+
+    load_vals = [a["training_load"] for a in athletes_data if a["training_load"] > 0]
+    avg_training_load = round(sum(load_vals) / len(load_vals), 1) if load_vals else 0
 
     zone_avgs = {
         f"z{z}": round(sum(a["zones"][f"z{z}"] for a in athletes_data) / n, 1)
@@ -104,6 +117,8 @@ def dashboard_overview(
             "notReady": len(not_ready),
             "avgTeamHR": avg_team_hr,
             "avgRestHR": avg_rest_hr,
+            "avgRmssd": avg_rmssd,
+            "avgTrainingLoad": avg_training_load,
             "zoneAverages": zone_avgs,
         }
     }
