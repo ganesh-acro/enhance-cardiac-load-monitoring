@@ -15,7 +15,7 @@ const CHART_INFO = {
             { label: "0.8–1.3 — Optimal", desc: "Balanced acute-to-chronic ratio. Ideal performance and adaptation zone." },
             { label: "> 1.3 — High Risk", desc: "Excessive acute load relative to chronic base. Elevated injury risk." },
         ],
-        note: "Based on Gabbett (2016). Acute = 7-day rolling load; Chronic = 28-day rolling average."
+
     },
     readiness: {
         title: "Readiness Distribution",
@@ -24,7 +24,7 @@ const CHART_INFO = {
             { label: "Needs Attention", desc: "RMSSD 20–50ms or mild HR elevation. Monitor workload closely." },
             { label: "Unavailable", desc: "RMSSD < 20ms, quality < 60%, or significant 7-day HRV decline." },
         ],
-        note: "Assessed from the most recent morning Readiness session per athlete."
+
     },
     zones: {
         title: "Zone Intensity",
@@ -36,7 +36,7 @@ const CHART_INFO = {
             { label: "Zone 4 — Anaerobic", desc: "80–90% max HR. High-intensity interval work." },
             { label: "Zone 5 — Maximum", desc: "> 90% max HR. Peak sprint / max effort." },
         ],
-        note: "Team averages from the most recent Training session per athlete."
+
     },
     restingHR: {
         title: "Resting HR",
@@ -46,7 +46,7 @@ const CHART_INFO = {
             { label: "60–75 bpm", desc: "Typical healthy resting range." },
             { label: "> 75 bpm", desc: "Slightly elevated. May indicate fatigue or incomplete recovery." },
         ],
-        note: "Sourced from the most recent Readiness session. Dashed line = team average."
+
     },
 };
 
@@ -236,12 +236,12 @@ const ReadinessDonutChart = ({ readyAthletes, partiallyReady, notReady }) => {
 
 const ZoneIntensityBars = ({ zoneAverages }) => {
     const ZONES = [
-        { key: 'z5', label: 'Zone 5', sub: 'Maximum',   color: '#ef4444' },
-        { key: 'z4', label: 'Zone 4', sub: 'Anaerobic',  color: '#eab308' },
-        { key: 'z3', label: 'Zone 3', sub: 'Aerobic',    color: '#22c55e' },
-        { key: 'z2', label: 'Zone 2', sub: 'Tempo',      color: '#3b82f6' },
-        { key: 'z1', label: 'Zone 1', sub: 'Recovery',   color: '#9ca3af' },
-        { key: 'z0', label: 'Zone 0', sub: 'Rest',       color: '#d1d5db' },
+        { key: 'z5', label: 'Zone 5', sub: 'Maximum', color: '#ef4444' },
+        { key: 'z4', label: 'Zone 4', sub: 'Anaerobic', color: '#eab308' },
+        { key: 'z3', label: 'Zone 3', sub: 'Aerobic', color: '#22c55e' },
+        { key: 'z2', label: 'Zone 2', sub: 'Tempo', color: '#3b82f6' },
+        { key: 'z1', label: 'Zone 1', sub: 'Recovery', color: '#9ca3af' },
+        { key: 'z0', label: 'Zone 0', sub: 'Rest', color: '#d1d5db' },
     ];
     return (
         <div className="space-y-5">

@@ -11,7 +11,7 @@ const COL_INFO = {
             { label: "Partial", desc: "RMSSD 20–50ms or mild HR elevation. Some fatigue present; monitor closely." },
             { label: "Not Ready", desc: "RMSSD < 20ms, quality < 60%, or large 7-day decline. High fatigue — reduce load." },
         ],
-        note: "Based on HRV (RMSSD), session quality, resting HR, and 7-day trends."
+
     },
     exertion: {
         title: "Exertion",
@@ -20,7 +20,7 @@ const COL_INFO = {
             { label: "Moderate (40–70%)", desc: "ACWR 0.80–1.30, balanced intensity. Typical training stimulus." },
             { label: "High (70–100%)", desc: "ACWR > 1.30, high zone 4+5 time or EPOC > 600 kJ. Peak effort — ensure adequate recovery." },
         ],
-        note: "Progress bar reflects training intensity relative to maximum. Coloured by level."
+
     },
     trainingLoad: {
         title: "Training Load",
@@ -29,7 +29,7 @@ const COL_INFO = {
             { label: "Moderate (84–128 AU)", desc: "Tempo or threshold work. Standard training dose." },
             { label: "High (> 128 AU)", desc: "Hard or peak effort. Requires 48–72h recovery before next hard session." },
         ],
-        note: "Thresholds based on Lucia (2003), Foster (2001), and Seiler (2006) load models."
+
     },
     recent: {
         title: "Recent Sessions",
@@ -37,7 +37,7 @@ const COL_INFO = {
             { barColor: "bg-brand-500", label: "Training", desc: "Strength, speed, or endurance work." },
             { barColor: "bg-violet-500", label: "Readiness", desc: "Morning HRV / recovery checks." },
         ],
-        note: "Bar height = avg heart rate (bpm). Hover a bar to see the value and date."
+
     },
 }
 
@@ -111,9 +111,9 @@ const getTrainingLoadBadge = (flag) => {
 }
 
 const getExertionBar = (level) => {
-    if (level === "Low")      return { pct: 28, label: "Low",      color: "bg-emerald-500", trackColor: "bg-emerald-500/15" }
-    if (level === "Moderate") return { pct: 62, label: "Moderate", color: "bg-amber-500",   trackColor: "bg-amber-500/15" }
-    if (level === "High")     return { pct: 90, label: "High",     color: "bg-red-500",     trackColor: "bg-red-500/15" }
+    if (level === "Low") return { pct: 28, label: "Low", color: "bg-emerald-500", trackColor: "bg-emerald-500/15" }
+    if (level === "Moderate") return { pct: 62, label: "Moderate", color: "bg-amber-500", trackColor: "bg-amber-500/15" }
+    if (level === "High") return { pct: 90, label: "High", color: "bg-red-500", trackColor: "bg-red-500/15" }
     return { pct: 0, label: null, color: "bg-muted", trackColor: "bg-muted/30" }
 }
 
