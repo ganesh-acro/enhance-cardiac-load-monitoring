@@ -172,6 +172,7 @@ export default function Dashboard() {
                                             summaryData={primarySummary}
                                             athleteSummary={athleteSummary}
                                             primaryChartData={primaryChartData}
+                                            monthlyFlags={athletePayload?.monthlyFlags ?? []}
                                             startDate={startDate}
                                             endDate={endDate}
                                         />

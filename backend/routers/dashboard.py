@@ -17,9 +17,9 @@ from core.data import (
 )
 from core.compute import (
     build_charts, prepare_summary, get_athlete_summary,
-    _readiness_rows,
+    _readiness_rows, prepare_monthly_flags,
 )
-from core.flags import classify_readiness, compute_7day_baselines
+from core.flags import classify_readiness, compute_baselines
 from core.security.dependencies import get_allowed_athlete_ids
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -57,8 +57,8 @@ def dashboard_overview(
         readiness_status = None
         if readiness:
             latest_r = readiness[-1]
-            rmssd_7d, rhr_7d = compute_7day_baselines(readiness, latest_r["date"])
-            readiness_status = classify_readiness(latest_r, rmssd_7d, rhr_7d)["status"]
+            bl = compute_baselines(readiness, latest_r["date"])
+            readiness_status = classify_readiness(latest_r, bl)["status"]
 
         # Use latest Training session for zone data
         last_training = next(
@@ -150,6 +150,7 @@ def athlete_dashboard(
     summary = prepare_summary(rows)
     athlete_summary = get_athlete_summary(rows, athlete)
     charts = build_charts(rows)
+    monthly_flags = prepare_monthly_flags(rows)
 
     return {
         "athlete": {
@@ -165,6 +166,7 @@ def athlete_dashboard(
         "summary": summary,
         "athleteSummary": athlete_summary,
         "charts": charts,
+        "monthlyFlags": monthly_flags,
     }
 
 

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from core.data import get_athletes, read_athlete_sessions, pf
 from core.compute import _training_rows, _readiness_rows
-from core.flags import classify_readiness, classify_training_load, classify_exertion, compute_7day_baselines
+from core.flags import classify_readiness, classify_training_load, classify_exertion, compute_baselines
 from core.security.dependencies import get_allowed_athlete_ids
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
@@ -43,10 +43,8 @@ def profiles_summary(
         readiness_status = None
         if readiness:
             latest_readiness = readiness[-1]
-            rmssd_7d, rhr_7d = compute_7day_baselines(
-                readiness, latest_readiness["date"]
-            )
-            readiness_result = classify_readiness(latest_readiness, rmssd_7d, rhr_7d)
+            bl = compute_baselines(readiness, latest_readiness["date"])
+            readiness_result = classify_readiness(latest_readiness, bl)
             readiness_status = readiness_result["status"]
 
         # Training Load + Exertion (latest training session)
@@ -57,7 +55,8 @@ def profiles_summary(
             tl_result = classify_training_load(latest_training)
             training_load_flag = tl_result["flag"]
             ex_result = classify_exertion(latest_training)
-            exertion_level = ex_result["level"]
+            raw_level = ex_result["level"]
+            exertion_level = raw_level.split(" - ")[1] if " - " in raw_level else raw_level
 
         try:
             session_date = latest["date"].strftime("%b %d, %Y")
