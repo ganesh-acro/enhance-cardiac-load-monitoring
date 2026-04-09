@@ -17,7 +17,7 @@ from core.data import (
 )
 from core.compute import (
     build_charts, prepare_summary, get_athlete_summary,
-    _readiness_rows, prepare_monthly_flags,
+    _readiness_rows, prepare_monthly_flags, compare_athletes_pairwise,
 )
 from core.flags import classify_readiness, compute_baselines
 from core.security.dependencies import get_allowed_athlete_ids
@@ -195,12 +195,28 @@ def athlete_comparison(
         secondary = get_athlete_by_id(db, target_id, allowed_ids)
         if not secondary:
             raise HTTPException(status_code=404, detail="Target athlete not found")
-        rows = read_athlete_sessions(db, secondary["id"])
-        rows = filter_by_date_range(rows, start_date, end_date)
+        
+        # Primary athlete data (already fetched in frontend context, but we need rows here for pairwise)
+        primary_rows = read_athlete_sessions(db, athlete_id)
+        secondary_rows = read_athlete_sessions(db, secondary["id"])
+        
+        # Build original chart data for the secondary side
+        secondary_rows_filtered = filter_by_date_range(secondary_rows, start_date, end_date)
+        
+        # Compute pairwise date-aligned comparison
+        athlete_primary = get_athlete_by_id(db, athlete_id, allowed_ids)
+        pairwise = compare_athletes_pairwise(
+            primary_rows, 
+            secondary_rows, 
+            athlete_primary["name"], 
+            secondary["name"]
+        )
+
         return {
             "athlete": {"id": secondary["id"], "name": secondary["name"]},
-            "athleteSummary": get_athlete_summary(rows, secondary),
-            "charts": build_charts(rows),
+            "athleteSummary": get_athlete_summary(secondary_rows_filtered, secondary),
+            "charts": build_charts(secondary_rows_filtered),
+            "pairwise": pairwise
         }
     elif secondary_start and secondary_end:
         # Period comparison — same athlete, different time slice

@@ -1,7 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from "react"
-import { Search, Activity, ChevronRight, AlertCircle, ArrowUp, ArrowDown, Info } from "lucide-react"
+import { Search, Activity, ChevronRight, AlertCircle, ArrowUp, ArrowDown, Info, FileStack } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { fetchTeamSummary } from "../utils/dataService"
+import { SessionReportModal } from "../components/dashboard/SessionReportModal"
+
+// ... (COL_INFO and other helpers remain the same)
 
 const COL_INFO = {
     recovery: {
@@ -159,6 +162,9 @@ export default function Profiles() {
     const [filters, setFilters] = useState({ id: "", sport: "", search: "" })
     const [activeFilters, setActiveFilters] = useState({ id: "", sport: "", search: "" })
     const [sortConfig, setSortConfig] = useState({ field: "name", direction: "asc" })
+
+    // Report Modal State
+    const [reportModal, setReportModal] = useState({ open: false, athleteId: null, athleteName: "" })
 
     useEffect(() => {
         const loadData = async () => {
@@ -398,8 +404,20 @@ export default function Profiles() {
 
                                                 {/* Action */}
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground group-hover:text-brand-500 group-hover:bg-brand-500/10 transition-colors">
-                                                        <ChevronRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setReportModal({ open: true, athleteId: athlete.id, athleteName: athlete.name });
+                                                            }}
+                                                            className="h-9 px-3 rounded-lg flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-brand-500 hover:bg-brand-500/10 transition-all border border-transparent hover:border-brand-500/20"
+                                                        >
+                                                            <FileStack className="h-4 w-4" />
+                                                            <span className="hidden sm:inline">Report</span>
+                                                        </button>
+                                                        <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground group-hover:text-brand-500 transition-colors">
+                                                            <ChevronRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -421,6 +439,13 @@ export default function Profiles() {
 
                 </div>
             </main>
+
+            <SessionReportModal
+                isOpen={reportModal.open}
+                onClose={() => setReportModal({ ...reportModal, open: false })}
+                athleteId={reportModal.athleteId}
+                athleteName={reportModal.athleteName}
+            />
         </div>
     )
 }

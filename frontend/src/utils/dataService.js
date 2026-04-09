@@ -104,6 +104,8 @@ export const fetchGroupSummary = (dateFrom, dateTo) => {
 
 export const fetchTeamSummary = () => apiFetch('/profiles/summary');
 
+export const fetchAthleteReport = (athleteId) => apiFetch(`/profiles/${athleteId}/report`);
+
 // ── Reports page ─────────────────────────────────────────────────────────────
 
 export const fetchReportsSummary = () => apiFetch('/reports/summary');

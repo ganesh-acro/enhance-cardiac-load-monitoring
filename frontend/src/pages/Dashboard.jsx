@@ -115,7 +115,7 @@ export default function Dashboard() {
     const primaryChartData = athletePayload?.charts ?? null
     const primarySummary = athletePayload?.summary ?? null
     const athleteSummary = athletePayload?.athleteSummary ?? null
-    const secondaryChartData = secondaryPayload?.charts ?? null
+    const secondaryChartData = secondaryPayload ?? null
 
     return (
         <div className="min-h-screen bg-background transition-colors duration-300 overflow-x-hidden">

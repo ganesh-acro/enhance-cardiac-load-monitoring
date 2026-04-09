@@ -708,3 +708,119 @@ export const ACWRComparisonChart = ({ primaryData, secondaryData, primaryName, s
         </div>
     );
 };
+
+// --- Pairwise Comparison Components (Shared date sessions) ---
+
+export const PairwiseGapChart = ({ data, metricKey, label, unit, primaryName, secondaryName }) => {
+    const isDark = useChartTheme();
+    if (!data || !data.length) return <div className="h-64 flex items-center justify-center text-muted-foreground uppercase text-xs font-bold tracking-widest">No matching dates for {label} comparison</div>;
+
+    const dates = data.map(d => d.date);
+    const gaps = data.map(d => d[`${metricKey}_gap`]);
+    const axisStyle = getAxisStyle(isDark);
+
+    const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+            ...getTooltipStyle(isDark),
+            trigger: 'axis',
+            formatter: (params) => {
+                const p = params[0];
+                const raw = data[p.dataIndex];
+                const valA = raw[`${metricKey}_a`];
+                const valB = raw[`${metricKey}_b`];
+                return `
+                    <div style="font-weight:bold; margin-bottom:8px; font-family: Inter, sans-serif;">${p.axisValue}</div>
+                    <div class="flex flex-col gap-1 text-xs">
+                        <div class="flex justify-between gap-4"><span>${primaryName}:</span> <span class="font-bold">${valA?.toFixed(1) || 'N/A'} ${unit}</span></div>
+                        <div class="flex justify-between gap-4"><span>${secondaryName}:</span> <span class="font-bold">${valB?.toFixed(1) || 'N/A'} ${unit}</span></div>
+                        <div class="mt-2 pt-2 border-t border-border/20 flex justify-between gap-4">
+                            <span>Gap (A-B):</span> 
+                            <span class="font-bold ${p.value >= 0 ? 'text-emerald-500' : 'text-red-500'}">${p.value >= 0 ? '+' : ''}${p.value.toFixed(1)} ${unit}</span>
+                        </div>
+                    </div>
+                `;
+            }
+        },
+        grid: getGridStyle({ left: '8%', right: '8%', top: '15%', bottom: '15%' }),
+        xAxis: {
+            type: 'category',
+            data: dates,
+            axisLabel: axisStyle.axisLabel,
+            axisLine: axisStyle.axisLine
+        },
+        yAxis: {
+            type: 'value',
+            name: `Δ ${unit}`,
+            nameTextStyle: axisStyle.nameTextStyle,
+            axisLabel: axisStyle.axisLabel,
+            splitLine: axisStyle.splitLine,
+            zero: true
+        },
+        series: [{
+            name: `${label} Gap`,
+            type: 'bar',
+            data: gaps,
+            itemStyle: {
+                color: (params) => params.value >= 0 ? '#10b981' : '#ef4444',
+                borderRadius: [4, 4, 0, 0]
+            },
+            barMaxWidth: 30
+        }]
+    };
+
+    return (
+        <div className="w-full h-full">
+            <h5 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-6 text-center">{label} Gap: {primaryName} vs {secondaryName}</h5>
+            <ReactECharts key={`gap-${metricKey}-${isDark}`} option={option} notMerge={true} style={{ height: '350px' }} />
+        </div>
+    );
+};
+
+export const PairwiseZoneComparison = ({ sessionA, sessionB, primaryName, secondaryName }) => {
+    const isDark = useChartTheme();
+    if (!sessionA || !sessionB) return null;
+
+    const colors = ['#d1d5db', '#9ca3af', '#3b82f6', '#22c55e', '#eab308', '#ef4444'];
+    const axisStyle = getAxisStyle(isDark);
+
+    const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+            ...getTooltipStyle(isDark),
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' }
+        },
+        legend: {
+            ...getLegendStyle(isDark),
+            top: 0
+        },
+        grid: getGridStyle({ left: '8%', right: '8%', top: '20%', bottom: '10%' }),
+        xAxis: {
+            type: 'value',
+            max: 100,
+            axisLabel: { ...axisStyle.axisLabel, formatter: '{value}%' },
+            splitLine: axisStyle.splitLine
+        },
+        yAxis: {
+            type: 'category',
+            data: [secondaryName, primaryName],
+            axisLabel: axisStyle.axisLabel,
+            axisLine: axisStyle.axisLine
+        },
+        series: [0, 1, 2, 3, 4, 5].map(z => ({
+            name: `Zone ${z}`,
+            type: 'bar',
+            stack: 'total',
+            data: [sessionB[`z${z}`], sessionA[`z${z}`]],
+            itemStyle: { color: colors[z] },
+            barMaxWidth: 50
+        }))
+    };
+
+    return (
+        <div className="w-full h-full">
+            <ReactECharts key={`pairwise-zones-${isDark}`} option={option} notMerge={true} style={{ height: '240px' }} />
+        </div>
+    );
+};

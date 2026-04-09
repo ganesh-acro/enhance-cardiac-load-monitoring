@@ -100,3 +100,25 @@ def profiles_summary(
         })
 
     return results
+
+
+@router.get("/{athlete_id}/report")
+def athlete_session_report(
+    athlete_id: str,
+    db: Session = Depends(get_db),
+    allowed_ids: Optional[List[str]] = Depends(get_allowed_athlete_ids),
+):
+    """Returns the deep snapshot for the 'Latest Session Report' popup."""
+    from core.compute import get_latest_session_report
+    
+    # 1. Access check
+    if allowed_ids is not None and athlete_id not in allowed_ids:
+        return {"error": "Access denied"}
+        
+    # 2. Fetch rows
+    rows = read_athlete_sessions(db, athlete_id)
+    if not rows:
+        return {}
+        
+    # 3. Compute report
+    return get_latest_session_report(rows)

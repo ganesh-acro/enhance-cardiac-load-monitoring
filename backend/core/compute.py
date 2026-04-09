@@ -1074,3 +1074,261 @@ def prepare_monthly_flags(rows: List[Dict]) -> List[Dict]:
         })
 
     return result
+
+
+# -- Pairwise Comparison Engine (Athlete A vs Athlete B) -------------------
+
+def _generate_readiness_feedback(row: Dict, name_a: str, name_b: str) -> str:
+    rmssd_a, rmssd_b = row.get("rmssd_a"), row.get("rmssd_b")
+    rest_a, rest_b = row.get("rest_hr_a"), row.get("rest_hr_b")
+    avg_hr_a, avg_hr_b = row.get("avg_hr_a"), row.get("avg_hr_b")
+
+    lines = []
+    if rmssd_a is not None and rmssd_b is not None:
+        leader = name_a if rmssd_a > rmssd_b else name_b
+        diff = abs(rmssd_a - rmssd_b)
+        lines.append(f"RMSSD gap {rmssd_a:.1f} vs {rmssd_b:.1f} (Δ {diff:.1f}) favors {leader} for readiness.")
+
+    if rest_a is not None and rest_b is not None:
+        lines.append(f"{name_a} rest HR {rest_a:.1f} vs {name_b} {rest_b:.1f} (lower is better).")
+
+    if avg_hr_a is not None and avg_hr_b is not None:
+        favors = name_a if avg_hr_a < avg_hr_b else name_b
+        lines.append(f"Avg HR {avg_hr_a:.1f}/{avg_hr_b:.1f} shows better efficiency for {favors}.")
+
+    return " | ".join(lines) if lines else "No overlapping readiness metrics on this date."
+
+
+def _generate_training_feedback(row: Dict, name_a: str, name_b: str) -> str:
+    acwr_a, acwr_b = row.get("acwr_a", 0), row.get("acwr_b", 0)
+    epoc_a, epoc_b = row.get("epoc_a", 0), row.get("epoc_b", 0)
+
+    lines = []
+    gap_acwr = (acwr_a or 0) - (acwr_b or 0)
+    if abs(gap_acwr) > 0.1:
+        leader = name_a if gap_acwr > 0 else name_b
+        lines.append(f"ACWR gap ({abs(gap_acwr):.2f}) indicates {leader} is pushing higher chronic load.")
+    
+    gap_epoc = (epoc_a or 0) - (epoc_b or 0)
+    if abs(gap_epoc) > 50:
+        leader = name_a if gap_epoc > 0 else name_b
+        lines.append(f"EPOC difference ({abs(gap_epoc):.0f}) shows {leader} had higher physiological strain.")
+
+    return " | ".join(lines) if lines else "Sessions are closely matched in intensity."
+
+
+def compare_athletes_pairwise(rows_a: List[Dict], rows_b: List[Dict], name_a: str, name_b: str) -> Dict:
+    """
+    Merge sessions by date and produce pairwise readiness and training summaries.
+    Matching the algo team's logic for feedback and gaps.
+    """
+    # Group by date for both
+    def by_date(rows):
+        d = defaultdict(list)
+        for r in rows:
+            dt = r.get("date")
+            if dt:
+                d[dt].append(r)
+        return d
+
+    data_a = by_date(rows_a)
+    data_b = by_date(rows_b)
+    all_dates = sorted(set(data_a.keys()) | set(data_b.keys()))
+
+    readiness_comparisons = []
+    training_comparisons = []
+
+    for d in all_dates:
+        def find_sess(rows, t_list):
+            return next((r for r in rows if str(r.get("session_type", "")).strip().casefold() in [t.casefold() for t in t_list]), None)
+
+        session_a = find_sess(data_a[d], ("Readiness", "Light Activity"))
+        session_b = find_sess(data_b[d], ("Readiness", "Light Activity"))
+
+        if session_a and session_b:
+            rec = {
+                "date": d.isoformat(),
+                "rmssd_a": pf(session_a.get("rmssd")),
+                "rmssd_b": pf(session_b.get("rmssd")),
+                "rmssd_gap": pf((session_a.get("rmssd") or 0) - (session_b.get("rmssd") or 0)),
+                "rest_hr_a": pf(session_a.get("rest_hr")),
+                "rest_hr_b": pf(session_b.get("rest_hr")),
+                "avg_hr_a": pf(session_a.get("avg_hr")),
+                "avg_hr_b": pf(session_b.get("avg_hr")),
+            }
+            rec["feedback"] = _generate_readiness_feedback(rec, name_a, name_b)
+            readiness_comparisons.append(rec)
+
+        # Training merge
+        train_a = find_sess(data_a[d], ("Training",))
+        train_b = find_sess(data_b[d], ("Training",))
+
+        if train_a and train_b:
+            rec = {
+                "date": d.isoformat(),
+                "acwr_a": pf(train_a.get("acwr")),
+                "acwr_b": pf(train_b.get("acwr")),
+                "acwr_gap": pf((train_a.get("acwr") or 0) - (train_b.get("acwr") or 0)),
+                "epoc_a": pf(train_a.get("epoc_total")),
+                "epoc_b": pf(train_b.get("epoc_total")),
+                "epoc_gap": pf((train_a.get("epoc_total") or 0) - (train_b.get("epoc_total") or 0)),
+                "duration_a": pf(train_a.get("exercise_duration")),
+                "duration_b": pf(train_b.get("exercise_duration")),
+                "zones_a": {f"z{i}": pf(train_a.get(f"zone_{i}_pct")) for i in range(6)},
+                "zones_b": {f"z{i}": pf(train_b.get(f"zone_{i}_pct")) for i in range(6)},
+            }
+            rec["feedback"] = _generate_training_feedback(rec, name_a, name_b)
+            training_comparisons.append(rec)
+
+    return {
+        "readiness": readiness_comparisons[-30:],
+        "training": training_comparisons[-30:],
+    }
+
+
+# -- Latest Session Report (Athlete Snapshot) ------------------------------
+
+def get_latest_session_report(rows: List[Dict]) -> Dict:
+    """
+    Produces the high-fidelity 'Latest Session Report' data seen in the premium UI.
+    Identifies the latest Readiness and Training sessions separately.
+    """
+    from core.flags import (
+        classify_readiness, classify_training_load, classify_exertion, compute_baselines
+    )
+
+    if not rows:
+        return {}
+
+    # 1. Base readiness data
+    readiness_rows = _readiness_rows(rows)
+    latest_r = readiness_rows[-1] if readiness_rows else None
+    
+    # 2. Base training data
+    training_rows = _training_rows(rows)
+    latest_t = training_rows[-1] if training_rows else None
+    
+    # 3. Overall latest session for "Last Session" section
+    latest_any = rows[-1]
+
+    # --- Readiness Logic ---
+    readiness_score = 0
+    readiness_status = "N/A"
+    readiness_reasoning = "No recent data"
+    
+    if latest_r:
+        bl = compute_baselines(readiness_rows, latest_r["date"])
+        r_result = classify_readiness(latest_r, bl)
+        readiness_status = r_result["status"]
+        
+        # Reasoning (HRV + RHR vs baselines)
+        rmssd = pf(latest_r.get("rmssd"))
+        rhr = pf(latest_r.get("rest_hr"))
+        bl_rmssd = bl.get("rmssd_mean_30") or rmssd
+        bl_rhr = bl.get("rhr_mean_30") or rhr
+        
+        r_lines = []
+        if rmssd > bl_rmssd: r_lines.append("HRV elevated")
+        elif rmssd < bl_rmssd * 0.9: r_lines.append("HRV suppressed")
+        else: r_lines.append("HRV stable")
+        
+        if rhr < bl_rhr: r_lines.append("Resting HR within baseline")
+        else: r_lines.append("Resting HR slightly elevated")
+        
+        readiness_reasoning = " · ".join(r_lines)
+        
+        # Weighted Score (proxied from quality + HRV vs baseline)
+        quality = pf(latest_r.get("session_quality"), 70)
+        hrv_pct = (rmssd / bl_rmssd * 100) if bl_rmssd > 0 else 100
+        # Score = 70% quality, 30% HRV deviation
+        readiness_score = int((quality * 0.7) + (min(hrv_pct, 100) * 0.3))
+
+    # --- Training Logic ---
+    load_flag = "N/A"
+    exertion_level = "N/A"
+    if latest_t:
+        tl_result = classify_training_load(latest_t)
+        ex_result = classify_exertion(latest_t)
+        load_flag = tl_result["flag"]
+        raw_level = ex_result["level"]
+        exertion_level = raw_level.split(" - ")[1] if " - " in raw_level else raw_level
+
+    # --- Metrics Logic ---
+    # RHR
+    rhr_val = pf(latest_any.get("rest_hr"))
+    rhr_baseline = bl.get("rhr_mean_30") if latest_r else rhr_val
+    rhr_diff = int(rhr_val - rhr_baseline)
+    
+    # RMSSD
+    rmssd_val = pf(latest_any.get("rmssd"))
+    rmssd_week = bl.get("rmssd_mean_7") if latest_r else rmssd_val
+    rmssd_diff = int(rmssd_val - rmssd_week)
+    
+    # ACWR
+    acwr_val = pf(latest_any.get("acwr"))
+    
+    # --- Last Session Section ---
+    duration = int(latest_any.get("exercise_duration") or 0)
+    epoc = int(latest_any.get("epoc_total") or 0)
+    
+    # ACWR Delta (vs previous session's ACWR)
+    acwr_prev = pf(rows[-2].get("acwr")) if len(rows) > 1 else acwr_val
+    acwr_delta = acwr_val - acwr_prev
+
+    # --- 7-Day ACWR Trend (Calendar-based) ---
+    days_map = {0: "MO", 1: "TU", 2: "WE", 3: "TH", 4: "FR", 5: "SA", 6: "SU"}
+    end_date = latest_any["date"]
+    trend = []
+    
+    # Sort rows by date for easier lookup
+    sorted_rows = sorted(rows, key=lambda x: x["date"])
+    
+    for i in range(6, -1, -1):
+        target_dt = end_date - timedelta(days=i)
+        
+        # Find last known row on or before target_dt
+        last_known_row = None
+        for r in sorted_rows:
+            if r["date"] <= target_dt:
+                last_known_row = r
+            else:
+                break
+        
+        acwr = pf(last_known_row.get("acwr")) if last_known_row else 0
+        status = "Optimal"
+        if acwr > 1.3: status = "Danger"
+        elif acwr < 0.8: status = "Low"
+        
+        trend.append({
+            "day": days_map[target_dt.weekday()],
+            "val": acwr,
+            "status": status,
+            "date": target_dt.isoformat()
+        })
+
+    return {
+        "readiness": {
+            "score": readiness_score,
+            "status": readiness_status,
+            "reasoning": readiness_reasoning,
+        },
+        "training": {
+            "load": load_flag,
+            "exertion": exertion_level,
+        },
+        "metrics": {
+            "rhr": rhr_val,
+            "rhr_diff": rhr_diff,
+            "rmssd": rmssd_val,
+            "rmssd_diff": rmssd_diff,
+            "acwr": acwr_val,
+        },
+        "lastSession": {
+            "type": latest_any.get("session_type", "Training"),
+            "date": latest_any["date"].strftime("%b %d, %Y") if latest_any.get("date") else "N/A",
+            "duration": duration,
+            "epoc": epoc,
+            "acwr_delta": acwr_delta,
+        },
+        "trend": trend
+    }
