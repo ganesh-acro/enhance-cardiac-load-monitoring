@@ -256,6 +256,15 @@ def classify_readiness(row: Dict, baselines: Dict) -> Dict:
         else:
             status = R_PARTIALLY
 
+    # -- Population sanity floor ------------------------------------------
+    # If strict personal SWC flags NOT READY but RMSSD is still inside the
+    # population "partial" range (>= 20 ms), soften to PARTIALLY READY.
+    # Rationale: a significant personal drop is worth flagging, but an
+    # absolute RMSSD that would still be considered healthy/partial across
+    # the population shouldn't be classified as fully NOT READY.
+    if status == R_NOT_READY and rmssd is not None and rmssd >= 20:
+        status = R_PARTIALLY
+
     # -- S3: 7-Day RMSSD Trend (SWC-adaptive) -----------------------------
     if rmssd is not None and rmssd_mean_7 is not None:
         drop = rmssd_mean_7 - rmssd  # positive = today below 7-day avg

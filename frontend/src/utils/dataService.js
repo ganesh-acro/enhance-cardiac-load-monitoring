@@ -104,7 +104,10 @@ export const fetchGroupSummary = (dateFrom, dateTo) => {
 
 export const fetchTeamSummary = () => apiFetch('/profiles/summary');
 
-export const fetchAthleteReport = (athleteId) => apiFetch(`/profiles/${athleteId}/report`);
+export const fetchAthleteReport = (athleteId, date) => {
+    const qs = date ? `?date=${encodeURIComponent(date)}` : '';
+    return apiFetch(`/profiles/${athleteId}/report${qs}`);
+};
 
 // ── Reports page ─────────────────────────────────────────────────────────────
 

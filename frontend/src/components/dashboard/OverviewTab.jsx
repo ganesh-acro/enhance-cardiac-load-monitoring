@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { TrendingUp, Dumbbell, ClipboardCheck, Calendar, Info, Heart, BarChart2, Shield, Zap, X, ChevronRight } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
@@ -96,7 +97,7 @@ function useChartTheme() {
     return resolvedTheme === 'dark';
 }
 
-function FlagComparisonChart({ flagId, months, isSideLayout }) {
+function FlagComparisonChart({ flagId, months }) {
     const isDark = useChartTheme();
     const labels = months.map(m => m.month);
 
@@ -104,7 +105,7 @@ function FlagComparisonChart({ flagId, months, isSideLayout }) {
         const common = {
             backgroundColor: 'transparent',
             tooltip: { ...getTooltipStyle(isDark), trigger: 'axis' },
-            grid: getGridStyle({ top: 40, bottom: isSideLayout ? 20 : 40, left: 40, right: 20 }),
+            grid: getGridStyle({ top: 40, bottom: 40, left: 40, right: 20 }),
             xAxis: {
                 type: 'category',
                 data: labels,
@@ -186,12 +187,12 @@ function FlagComparisonChart({ flagId, months, isSideLayout }) {
         }
 
         return common;
-    }, [flagId, months, isDark, labels, isSideLayout]);
+    }, [flagId, months, isDark, labels]);
 
     return (
-        <div className={`w-full ${isSideLayout ? "" : "mt-8 border-t border-border/50 pt-8"}`}>
+        <div className="w-full">
             <h4 className="text-sm font-semibold text-foreground mb-4 px-2">4-Month Trend</h4>
-            <div className={`${isSideLayout ? "h-[400px]" : "h-[250px]"} w-full`}>
+            <div className="h-[260px] w-full">
                 <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
             </div>
         </div>
@@ -218,7 +219,6 @@ function FlagDetailModal({ flagId, months, onClose }) {
 
     // Limit to last 4 months for comparison
     const recentMonths = useMemo(() => months.slice(-4), [months]);
-    const isSideLayout = flagId !== 'f5';
     const isCompliance = flagId === 'f5';
 
     // State for nested violation popup
@@ -238,9 +238,9 @@ function FlagDetailModal({ flagId, months, onClose }) {
         return () => { document.body.style.overflow = ""; };
     }, []);
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div ref={ref} className={`bg-card border border-border rounded-2xl shadow-2xl w-full max-h-[90vh] overflow-y-auto relative ${isSideLayout ? "max-w-5xl" : "max-w-4xl"}`}>
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div ref={ref} className="bg-card border border-border rounded-2xl shadow-2xl w-full max-h-[90vh] overflow-y-auto relative max-w-5xl">
                 {/* Header */}
                 <div className="sticky top-0 bg-card border-b border-border/50 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
                     <div className="flex items-center gap-3">
@@ -257,39 +257,25 @@ function FlagDetailModal({ flagId, months, onClose }) {
                     </button>
                 </div>
 
-                {/* Content */}
-                <div className="p-6">
-                    {isSideLayout ? (
-                        <div className="flex flex-col lg:flex-row gap-8">
-                            {/* Left: Month cards (Vertical) */}
-                            <div className="lg:w-80 flex flex-col gap-4">
-                                {recentMonths.map((m) => (
-                                    <DetailMonthCard key={m.rawMonth} flagId={flagId} month={m.month} data={m[meta.key]} />
-                                ))}
-                            </div>
+                {/* Content — horizontal cards on top, chart below */}
+                <div className="p-6 space-y-6">
+                    {/* Top: 4 month cards in a row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {recentMonths.map((m) => (
+                            <DetailMonthCard
+                                key={m.rawMonth}
+                                flagId={flagId}
+                                month={m.month}
+                                data={m[meta.key]}
+                                onCardClick={(data) => isCompliance && setSelectedMonthViolations({ month: m.month, ...data })}
+                            />
+                        ))}
+                    </div>
 
-                            {/* Right: Chart */}
-                            <div className="flex-1">
-                                <FlagComparisonChart flagId={flagId} months={recentMonths} isSideLayout />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="space-y-8">
-                            {/* Top row / Single Grid: Month cards */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {recentMonths.map((m) => (
-                                    <DetailMonthCard
-                                        key={m.rawMonth}
-                                        flagId={flagId}
-                                        month={m.month}
-                                        data={m[meta.key]}
-                                        onCardClick={(data) => isCompliance && setSelectedMonthViolations({ month: m.month, ...data })}
-                                    />
-                                ))}
-                            </div>
-
-                            {/* Bottom: Chart (except for Compliance) */}
-                            {!isCompliance && <FlagComparisonChart flagId={flagId} months={recentMonths} />}
+                    {/* Bottom: Chart (skipped for Compliance) */}
+                    {!isCompliance && (
+                        <div className="border-t border-border/50 pt-6">
+                            <FlagComparisonChart flagId={flagId} months={recentMonths} />
                         </div>
                     )}
                 </div>
@@ -337,7 +323,8 @@ function FlagDetailModal({ flagId, months, onClose }) {
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
@@ -719,27 +706,31 @@ export const OverviewTab = ({ summaryData, athleteSummary, primaryChartData, mon
 
 
 
-                    {/* Monthly Charts Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-                        <div className="lg:col-span-2 xl:col-span-2 p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
+                    {/* Monthly Charts — Zone distribution full-width, then HR + Movement side-by-side */}
+                    <div className="flex flex-col gap-4 lg:gap-6">
+                        {/* Row 1: Zone distribution full-width */}
+                        <div className="p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
                             <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6 inline-flex items-center">
                                 Zone distribution<ChartInfoPopup chartKey="zones" />
                             </h5>
                             <MonthlyZoneStackChart data={primaryChartData?.monthly} />
                         </div>
 
-                        <div className="lg:col-span-2 xl:col-span-1 p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
-                            <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6 inline-flex items-center">
-                                Heart rate stats<ChartInfoPopup chartKey="heartRate" />
-                            </h5>
-                            <MonthlyHRAvgRangeChart data={primaryChartData?.monthly} />
-                        </div>
+                        {/* Row 2: HR stats + Movement intensity & load — equally spaced */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                            <div className="p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
+                                <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6 inline-flex items-center">
+                                    Heart rate stats<ChartInfoPopup chartKey="heartRate" />
+                                </h5>
+                                <MonthlyHRAvgRangeChart data={primaryChartData?.monthly} />
+                            </div>
 
-                        <div className="lg:col-span-2 xl:col-span-3 p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
-                            <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6 inline-flex items-center">
-                                Movement intensity & load<ChartInfoPopup chartKey="movement" />
-                            </h5>
-                            <MonthlyMovementComboChart data={primaryChartData?.monthly} />
+                            <div className="p-5 lg:p-8 rounded-xl bg-card border border-border shadow-md hover:shadow-lg transition-all">
+                                <h5 className="text-2xl font-normal text-foreground dark:text-white mb-6 inline-flex items-center">
+                                    Movement intensity & load<ChartInfoPopup chartKey="movement" />
+                                </h5>
+                                <MonthlyMovementComboChart data={primaryChartData?.monthly} />
+                            </div>
                         </div>
                     </div>
                 </div>

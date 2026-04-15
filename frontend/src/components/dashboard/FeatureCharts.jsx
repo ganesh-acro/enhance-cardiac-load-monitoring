@@ -7,7 +7,7 @@ import { ZoomIn } from 'lucide-react';
 import {
     BRAND_ORANGE, SECONDARY_BLUE, FONT_FAMILY, getBrandColor,
     getTooltipStyle, getAxisStyle, getLegendStyle, getGridStyle,
-    getLineSeriesStyle, getBarItemStyle
+    getLineSeriesStyle, getBarItemStyle, getResponsiveXAxis,
 } from '../../utils/chartStyles';
 
 // Register ECharts themes directly
@@ -183,11 +183,7 @@ export const HeartRateChart = ({ data }) => {
             ...getLegendStyle(isDark),
         },
         grid: getGridStyle({ top: 80, bottom: 60, left: 50, right: 20 }),
-        xAxis: {
-            type: 'category',
-            data: dates,
-            ...getAxisStyle(isDark),
-        },
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: {
             type: 'value',
             name: 'BPM',
@@ -208,56 +204,105 @@ export const HeartRateChart = ({ data }) => {
     );
 };
 
-// 2. Training Load Trend (Bar + Line)
-export const TrainingLoadTrendChart = ({ data }) => {
+// 2. Training Load Trend (Bar/Line/Area + optional Intensity overlay + threshold bands)
+export const TrainingLoadTrendChart = ({ data, preferences }) => {
     const isDark = useChartTheme();
     if (!data || data.length === 0) return null;
     const dates = data.map(d => d.date);
 
+    const {
+        chartType = 'bar',          // 'bar' | 'line' | 'area'
+        showIntensity = true,
+        showThresholds = false,
+    } = preferences || {};
+
+    const loadColor = '#10b981';
+    let loadSeries;
+    if (chartType === 'line' || chartType === 'area') {
+        loadSeries = {
+            name: 'Training load',
+            type: 'line',
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 6,
+            data: data.map(d => d.training_load),
+            itemStyle: { color: loadColor },
+            lineStyle: { width: 3, color: loadColor },
+            ...(chartType === 'area' ? {
+                areaStyle: {
+                    color: {
+                        type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+                        colorStops: [
+                            { offset: 0, color: 'rgba(16,185,129,0.35)' },
+                            { offset: 1, color: 'rgba(16,185,129,0.02)' },
+                        ],
+                    },
+                },
+            } : {}),
+        };
+    } else {
+        loadSeries = {
+            name: 'Training load',
+            type: 'bar',
+            data: data.map(d => d.training_load),
+            itemStyle: getBarItemStyle(loadColor),
+        };
+    }
+
+    // Threshold bands (Low < 84 / Moderate 84-128 / High > 128)
+    if (showThresholds) {
+        loadSeries.markArea = {
+            silent: true,
+            itemStyle: { opacity: 0.08 },
+            data: [
+                [{ yAxis: 0, itemStyle: { color: '#10b981' } }, { yAxis: 84 }],
+                [{ yAxis: 84, itemStyle: { color: '#eab308' } }, { yAxis: 128 }],
+                [{ yAxis: 128, itemStyle: { color: '#ef4444' } }, { yAxis: 'max' }],
+            ],
+        };
+    }
+
+    const series = [loadSeries];
+    if (showIntensity) {
+        series.push({
+            name: 'Training intensity',
+            type: 'line',
+            yAxisIndex: 1,
+            smooth: true,
+            data: data.map(d => d.training_intensity),
+            itemStyle: { color: '#f97316' },
+            lineStyle: { width: 3 },
+        });
+    }
+
+    const yAxis = [
+        {
+            type: 'value',
+            name: 'Load',
+            splitLine: { show: false },
+            nameTextStyle: getAxisStyle(isDark).nameTextStyle,
+            axisLabel: getAxisStyle(isDark).axisLabel,
+            splitNumber: 5,
+        },
+    ];
+    if (showIntensity) {
+        yAxis.push({
+            type: 'value',
+            name: 'Intensity',
+            position: 'right',
+            splitLine: { show: false },
+            nameTextStyle: getAxisStyle(isDark).nameTextStyle,
+            axisLabel: getAxisStyle(isDark).axisLabel,
+            splitNumber: 5,
+        });
+    }
+
     const option = {
         ...getCommonOptions('Training load trend', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            ...getAxisStyle(isDark),
-        },
-        yAxis: [
-            {
-                type: 'value',
-                name: 'Load',
-                splitLine: { show: false },
-                nameTextStyle: getAxisStyle(isDark).nameTextStyle,
-                axisLabel: getAxisStyle(isDark).axisLabel,
-                splitNumber: 5,
-            },
-            {
-                type: 'value',
-                name: 'Intensity',
-                position: 'right',
-                splitLine: { show: false },
-                nameTextStyle: getAxisStyle(isDark).nameTextStyle,
-                axisLabel: getAxisStyle(isDark).axisLabel,
-                splitNumber: 5,
-            }
-        ],
-        series: [
-            {
-                name: 'Training load',
-                type: 'bar',
-                data: data.map(d => d.training_load),
-                itemStyle: getBarItemStyle('#10b981'),
-            },
-            {
-                name: 'Training intensity',
-                type: 'line',
-                yAxisIndex: 1,
-                smooth: true,
-                data: data.map(d => d.training_intensity),
-                itemStyle: { color: '#f97316' },
-                lineStyle: { width: 3 }
-            }
-        ]
+        xAxis: getResponsiveXAxis(isDark, dates),
+        yAxis,
+        series,
     };
     return (
         <div className="w-full h-full">
@@ -276,12 +321,7 @@ export const HRVMultiLineChart = ({ data }) => {
     const option = {
         ...getCommonOptions('HRV trend', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            boundaryGap: false,
-            ...getAxisStyle(isDark),
-        },
+        xAxis: getResponsiveXAxis(isDark, dates, { boundaryGap: false }),
         yAxis: {
             type: 'value',
             name: 'ms',
@@ -326,12 +366,7 @@ export const OxygenDebtChart = ({ data }) => {
             ...getLegendStyle(isDark),
         },
         grid: getGridStyle({ top: 50, bottom: 60, left: 50, right: 20 }),
-        xAxis: {
-            type: 'category',
-            data: dates,
-            boundaryGap: false,
-            ...getAxisStyle(isDark),
-        },
+        xAxis: getResponsiveXAxis(isDark, dates, { boundaryGap: false }),
         yAxis: {
             type: 'value',
             name: 'EPOC',
@@ -380,12 +415,7 @@ export const EnergyChart = ({ data }) => {
     const option = {
         ...getCommonOptions('Energy expenditure', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            boundaryGap: false,
-            ...getAxisStyle(isDark),
-        },
+        xAxis: getResponsiveXAxis(isDark, dates, { boundaryGap: false }),
         yAxis: {
             type: 'value',
             name: 'kcal',
@@ -419,11 +449,7 @@ export const MovementTrendChart = ({ data }) => {
     const option = {
         ...getCommonOptions('Movement trend', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            ...getAxisStyle(isDark),
-        },
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: [
             {
                 type: 'value',
@@ -492,12 +518,7 @@ export const OxygenConsumptionChart = ({ data }) => {
             bottom: 0,
             ...getLegendStyle(isDark),
         },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLabel: axisStyle.axisLabel,
-            axisLine: axisStyle.axisLine,
-        },
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: {
             type: 'value',
             name: 'ml/kg/min',
@@ -582,12 +603,7 @@ export const ZoneDistributionChart = ({ data }) => {
             ...getTooltipStyle(isDark),
             axisPointer: { type: 'shadow' }
         },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLabel: axisStyle.axisLabel,
-            axisLine: axisStyle.axisLine,
-        },
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: {
             type: 'value',
             min: 0,
@@ -648,11 +664,7 @@ export const RecoveryBeatsChart = ({ data }) => {
             }
         },
         grid: getGridStyle({ top: 50, bottom: '15%' }),
-        xAxis: {
-            type: 'category',
-            data: dates,
-            ...getAxisStyle(isDark),
-        },
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: [
             // Dot strip (fixed single row)
             {
@@ -744,12 +756,7 @@ export const RMSSDChart = ({ data }) => {
     const option = {
         ...getCommonOptions('RMSSD', isDark, data),
         tooltip: getTooltipStyle(isDark),
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLabel: axisStyle.axisLabel,
-            axisLine: axisStyle.axisLine,
-        },
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: {
             type: 'value',
             name: 'ms',
@@ -822,12 +829,7 @@ export const ACWRChartCombined = ({ data }) => {
             }
         },
         grid: getGridStyle({ top: 60, right: 20, bottom: 20, left: 40 }),
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLine: { show: false },
-            axisTick: { show: false },
-            axisLabel: axisStyle.axisLabel,
+        xAxis: { ...getResponsiveXAxis(isDark, dates), axisLine: { show: false }, axisTick: { show: false },
             boundaryGap: false
         },
         yAxis: {
@@ -956,13 +958,7 @@ export const MonthlyLoadCombinedChart = ({ data }) => {
             bottom: 0,
             ...getLegendStyle(isDark)
         },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLabel: axisStyle.axisLabel,
-            axisLine: axisStyle.axisLine,
-            axisPointer: { type: 'shadow' }
-        },
+        xAxis: getResponsiveXAxis(isDark, dates, { axisPointer: { type: 'shadow' } }),
         yAxis: [
             {
                 type: 'value',
@@ -1088,12 +1084,7 @@ export const WeeklyZoneStackChart = ({ data }) => {
             padding: [0, 50, 0, 0]
         },
         grid: getGridStyle({ top: 120, right: 20, bottom: 60, left: 50 }),
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLabel: axisStyle.axisLabel,
-            axisLine: axisStyle.axisLine
-        },
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: {
             type: 'value',
             name: 'Time',
@@ -1167,12 +1158,7 @@ export const MonthlyZoneStackChart = ({ data }) => {
             bottom: 0,
             ...getLegendStyle(isDark)
         },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLabel: axisStyle.axisLabel,
-            axisLine: axisStyle.axisLine
-        },
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: {
             type: 'value',
             name: 'Time',
@@ -1223,15 +1209,11 @@ export const MonthlyHRAvgRangeChart = ({ data }) => {
             }
         },
         legend: {
-            bottom: 0,
-            ...getLegendStyle(isDark)
+            top: 30,
+            ...getLegendStyle(isDark),
         },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLabel: axisStyle.axisLabel,
-            axisLine: axisStyle.axisLine
-        },
+        grid: getGridStyle({ top: 80, bottom: 60, left: 50, right: 20 }),
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: {
             type: 'value',
             name: 'BPM',
@@ -1267,7 +1249,7 @@ export const MonthlyHRAvgRangeChart = ({ data }) => {
     return (
         <div className="w-full h-full">
             <h5 className="text-xl font-semibold text-foreground mb-6 text-center" style={{ fontFamily: FONT_FAMILY }}>Monthly HR Range (Avg)</h5>
-            <ZoomableChart option={option} style={{ height: '350px', width: '100%' }} />
+            <ZoomableChart option={option} style={{ height: '380px', width: '100%' }} />
         </div>
     );
 };
@@ -1321,13 +1303,7 @@ export const MonthlyACWRChart = ({ data }) => {
             }
         },
         grid: getGridStyle({ top: 40, right: 20, bottom: 20, left: 40 }),
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLine: { show: false },
-            axisTick: { show: false },
-            axisLabel: axisStyle.axisLabel
-        },
+        xAxis: getResponsiveXAxis(isDark, dates, { axisLine: { show: false }, axisTick: { show: false } }),
         yAxis: {
             type: 'value',
             min: 0,
@@ -1412,12 +1388,7 @@ export const MonthlyMovementComboChart = ({ data }) => {
             bottom: 0,
             ...getLegendStyle(isDark)
         },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLabel: axisStyle.axisLabel,
-            axisLine: axisStyle.axisLine
-        },
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: [
             {
                 type: 'value',
@@ -1487,12 +1458,7 @@ export const TrainingEffectChart = ({ data }) => {
                 return tip;
             }
         },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            boundaryGap: false,
-            ...getAxisStyle(isDark),
-        },
+        xAxis: getResponsiveXAxis(isDark, dates, { boundaryGap: false }),
         yAxis: {
             type: 'value',
             name: 'TE Value',
@@ -1561,12 +1527,7 @@ export const ExerciseDurationChart = ({ data }) => {
                 return tip;
             }
         },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            boundaryGap: false,
-            ...getAxisStyle(isDark),
-        },
+        xAxis: getResponsiveXAxis(isDark, dates, { boundaryGap: false }),
         yAxis: {
             type: 'value',
             name: 'Minutes',
@@ -1621,12 +1582,7 @@ export const RestingHRChart = ({ data }) => {
     const option = {
         ...getCommonOptions('Resting HR', isDark, data),
         tooltip: { ...getTooltipStyle(isDark) },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            boundaryGap: false,
-            ...getAxisStyle(isDark),
-        },
+        xAxis: getResponsiveXAxis(isDark, dates, { boundaryGap: false }),
         yAxis: [
             {
                 type: 'value',
@@ -1714,11 +1670,7 @@ export const HRRecoveryChart = ({ data }) => {
                     <div style="color:${devColor}; font-weight:600;">Deviation: ${devLabel} BPM</div>`;
             }
         },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            ...getAxisStyle(isDark),
-        },
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: {
             type: 'value',
             name: 'vs Baseline (BPM)',

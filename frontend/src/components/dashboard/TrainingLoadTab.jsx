@@ -10,6 +10,8 @@ import {
     TrainingEffectChart,
     ExerciseDurationChart
 } from './FeatureCharts';
+import { ChartCustomizer, PrefLabel, PrefSegmented, PrefToggle } from './ChartCustomizer';
+import { useChartPrefs } from '../../hooks/useChartPrefs';
 
 const CHART_INFO = {
     trainingLoad: {
@@ -79,6 +81,13 @@ function ChartInfoPopup({ chartKey }) {
 
 export const TrainingLoadTab = ({ primaryChartData }) => {
 
+    // Per-user preferences for the Training Load Trend chart
+    const [loadPrefs, setLoadPrefs, resetLoadPrefs] = useChartPrefs('trainingLoadTrend', {
+        chartType: 'bar',       // 'bar' | 'line' | 'area'
+        showIntensity: true,
+        showThresholds: false,
+    });
+
     if (!primaryChartData) {
         return (
             <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -92,11 +101,47 @@ export const TrainingLoadTab = ({ primaryChartData }) => {
             <div className="grid grid-cols-1 gap-12">
                 {/* 1. Training Load Trend */}
                 <div className="p-6 rounded-xl border border-border bg-card shadow-sm min-h-[450px]">
-                    <h5 className="text-2xl font-normal text-foreground dark:text-white mb-4 inline-flex items-center">
-                        Training load trend<ChartInfoPopup chartKey="trainingLoad" />
-                    </h5>
+                    <div className="flex items-start justify-between mb-4">
+                        <h5 className="text-2xl font-normal text-foreground dark:text-white inline-flex items-center">
+                            Training load trend<ChartInfoPopup chartKey="trainingLoad" />
+                        </h5>
+                        <ChartCustomizer onReset={resetLoadPrefs}>
+                            {() => (
+                                <>
+                                    <div>
+                                        <PrefLabel>Chart type</PrefLabel>
+                                        <PrefSegmented
+                                            value={loadPrefs.chartType}
+                                            onChange={v => setLoadPrefs({ chartType: v })}
+                                            options={[
+                                                { value: 'bar', label: 'Bar' },
+                                                { value: 'line', label: 'Line' },
+                                                { value: 'area', label: 'Area' },
+                                            ]}
+                                        />
+                                    </div>
+                                    <div className="pt-2 border-t border-border/50">
+                                        <PrefToggle
+                                            checked={loadPrefs.showIntensity}
+                                            onChange={v => setLoadPrefs({ showIntensity: v })}
+                                            label="Intensity overlay"
+                                            description="Show the orange intensity line on the right axis."
+                                        />
+                                    </div>
+                                    <div>
+                                        <PrefToggle
+                                            checked={loadPrefs.showThresholds}
+                                            onChange={v => setLoadPrefs({ showThresholds: v })}
+                                            label="Threshold bands"
+                                            description="Shade Low / Moderate / High AU reference zones."
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </ChartCustomizer>
+                    </div>
                     {primaryChartData.training && primaryChartData.training.length > 0 ? (
-                        <TrainingLoadTrendChart data={primaryChartData.training} />
+                        <TrainingLoadTrendChart data={primaryChartData.training} preferences={loadPrefs} />
                     ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
                             No training load data found for this period.

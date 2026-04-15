@@ -3,11 +3,12 @@ routers/profiles.py — GET /profiles/summary
 Serves the Profiles listing page.
 """
 from typing import Optional, List
-from fastapi import APIRouter, Depends
+from datetime import date as date_type
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.data import get_athletes, read_athlete_sessions, pf
+from core.data import get_athletes, get_athlete_by_id, read_athlete_sessions, pf
 from core.compute import _training_rows, _readiness_rows
 from core.flags import classify_readiness, classify_training_load, classify_exertion, compute_baselines
 from core.security.dependencies import get_allowed_athlete_ids
@@ -105,20 +106,22 @@ def profiles_summary(
 @router.get("/{athlete_id}/report")
 def athlete_session_report(
     athlete_id: str,
+    date: Optional[date_type] = Query(None, description="Target day (YYYY-MM-DD). Defaults to the athlete's latest session date."),
     db: Session = Depends(get_db),
     allowed_ids: Optional[List[str]] = Depends(get_allowed_athlete_ids),
 ):
-    """Returns the deep snapshot for the 'Latest Session Report' popup."""
-    from core.compute import get_latest_session_report
-    
+    """Returns the deep snapshot for the day-report popup."""
+    from core.compute import get_day_report
+
     # 1. Access check
     if allowed_ids is not None and athlete_id not in allowed_ids:
         return {"error": "Access denied"}
-        
-    # 2. Fetch rows
+
+    # 2. Fetch rows + athlete metadata
     rows = read_athlete_sessions(db, athlete_id)
     if not rows:
         return {}
-        
-    # 3. Compute report
-    return get_latest_session_report(rows)
+    athlete_meta = get_athlete_by_id(db, athlete_id, allowed_ids) or {}
+
+    # 3. Compute report for the requested day
+    return get_day_report(rows, target_date=date, athlete_meta=athlete_meta)

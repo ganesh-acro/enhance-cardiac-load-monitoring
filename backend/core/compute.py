@@ -1186,12 +1186,79 @@ def compare_athletes_pairwise(rows_a: List[Dict], rows_b: List[Dict], name_a: st
     }
 
 
-# -- Latest Session Report (Athlete Snapshot) ------------------------------
+# -- Day Report (Athlete Snapshot for a specific date) ---------------------
 
-def get_latest_session_report(rows: List[Dict]) -> Dict:
+def _session_metrics(row: Optional[Dict]) -> Optional[Dict]:
+    """Extract all displayable metrics from a single session row."""
+    if not row:
+        return None
+    d = row.get("date")
+    return {
+        "session_type": row.get("session_type"),
+        "session_hour": row.get("session_hour"),
+        "session_quality": pf(row.get("session_quality")),
+        "date": d.isoformat() if d else None,
+        # Heart rate
+        "avg_hr": pf(row.get("avg_hr")),
+        "min_hr": pf(row.get("min_hr")),
+        "max_hr": pf(row.get("max_hr")),
+        "rest_hr": pf(row.get("rest_hr")),
+        "hr_std": pf(row.get("hr_std")),
+        "max_hr_pct": pf(row.get("max_hr_pct")),
+        "hr_recovery_60s": pf(row.get("hr_recovery_60s")),
+        "recovery_beats": pf(row.get("recovery_beats")),
+        # HRV
+        "rmssd": pf(row.get("rmssd")),
+        "sdnn": pf(row.get("sdnn")),
+        "pnn50": pf(row.get("pnn50")),
+        # Load
+        "training_load": pf(row.get("training_load")),
+        "training_intensity": pf(row.get("training_intensity")),
+        "acute_load": pf(row.get("acute_load")),
+        "chronic_load": pf(row.get("chronic_load")),
+        "acwr": pf(row.get("acwr")),
+        # Duration
+        "exercise_duration": pf(row.get("exercise_duration")),
+        # EPOC
+        "epoc_total": pf(row.get("epoc_total")),
+        "epoc_peak": pf(row.get("epoc_peak")),
+        # Energy / VO2
+        "ee_men": pf(row.get("ee_men")),
+        "vo2": pf(row.get("vo2")),
+        "vo2_max": pf(row.get("vo2_max")),
+        # Movement
+        "movement_load": pf(row.get("movement_load")),
+        "movement_load_intensity": pf(row.get("movement_load_intensity")),
+        # Training Effect
+        "aerobic_te_value": pf(row.get("aerobic_te_value")),
+        "aerobic_te_comment": row.get("aerobic_te_comment") or "",
+        "anaerobic_te_value": pf(row.get("anaerobic_te_value")),
+        "anaerobic_te_comment": row.get("anaerobic_te_comment") or "",
+        # Zones (durations in minutes + percentages)
+        "zones": {
+            "z0": {"min": round(pf(row.get("zone_0_d")) / 60000, 1), "pct": pf(row.get("zone_0_pct"))},
+            "z1": {"min": round(pf(row.get("zone_1_d")) / 60000, 1), "pct": pf(row.get("zone_1_pct"))},
+            "z2": {"min": round(pf(row.get("zone_2_d")) / 60000, 1), "pct": pf(row.get("zone_2_pct"))},
+            "z3": {"min": round(pf(row.get("zone_3_d")) / 60000, 1), "pct": pf(row.get("zone_3_pct"))},
+            "z4": {"min": round(pf(row.get("zone_4_d")) / 60000, 1), "pct": pf(row.get("zone_4_pct"))},
+            "z5": {"min": round(pf(row.get("zone_5_d")) / 60000, 1), "pct": pf(row.get("zone_5_pct"))},
+        },
+    }
+
+
+def get_day_report(
+    rows: List[Dict],
+    target_date: Optional[date] = None,
+    athlete_meta: Optional[Dict] = None,
+) -> Dict:
     """
-    Produces the high-fidelity 'Latest Session Report' data seen in the premium UI.
-    Identifies the latest Readiness and Training sessions separately.
+    Day-level snapshot for the report popup.
+
+    Parameters
+    ----------
+    rows         : all sessions for the athlete (chronological)
+    target_date  : the day to report on. Defaults to the latest session's date.
+    athlete_meta : athlete metadata (name, age, sport, height, weight, gender)
     """
     from core.flags import (
         classify_readiness, classify_training_load, classify_exertion, compute_baselines
@@ -1200,113 +1267,153 @@ def get_latest_session_report(rows: List[Dict]) -> Dict:
     if not rows:
         return {}
 
-    # 1. Base readiness data
-    readiness_rows = _readiness_rows(rows)
-    latest_r = readiness_rows[-1] if readiness_rows else None
-    
-    # 2. Base training data
-    training_rows = _training_rows(rows)
-    latest_t = training_rows[-1] if training_rows else None
-    
-    # 3. Overall latest session for "Last Session" section
-    latest_any = rows[-1]
+    # Available dates (unique, sorted descending) — frontend date picker
+    available_dates = sorted({r["date"] for r in rows if r.get("date")}, reverse=True)
 
-    # --- Readiness Logic ---
+    # Resolve target date
+    if target_date is None:
+        target_date = available_dates[0]
+
+    selected_date_iso = target_date.isoformat()
+
+    # Sessions for the selected day
+    day_rows = [r for r in rows if r.get("date") == target_date]
+    day_readiness = next((r for r in day_rows if r.get("session_type") in ("Readiness", "Light Activity")), None)
+    day_training = next((r for r in day_rows if r.get("session_type") == "Training"), None)
+
+    # Baselines anchored at target_date (uses all prior readiness sessions)
+    readiness_rows = _readiness_rows(rows)
+    bl = compute_baselines(readiness_rows, target_date)
+
+    # --- Readiness ---
     readiness_score = 0
     readiness_status = "N/A"
-    readiness_reasoning = "No recent data"
-    
-    if latest_r:
-        bl = compute_baselines(readiness_rows, latest_r["date"])
-        r_result = classify_readiness(latest_r, bl)
+    readiness_reasoning = "No readiness session recorded"
+
+    if day_readiness:
+        r_result = classify_readiness(day_readiness, bl)
         readiness_status = r_result["status"]
-        
-        # Reasoning (HRV + RHR vs baselines)
-        rmssd = pf(latest_r.get("rmssd"))
-        rhr = pf(latest_r.get("rest_hr"))
+
+        rmssd = pf(day_readiness.get("rmssd"))
+        rhr = pf(day_readiness.get("rest_hr"))
         bl_rmssd = bl.get("rmssd_mean_30") or rmssd
         bl_rhr = bl.get("rhr_mean_30") or rhr
-        
+
         r_lines = []
-        if rmssd > bl_rmssd: r_lines.append("HRV elevated")
-        elif rmssd < bl_rmssd * 0.9: r_lines.append("HRV suppressed")
-        else: r_lines.append("HRV stable")
-        
-        if rhr < bl_rhr: r_lines.append("Resting HR within baseline")
-        else: r_lines.append("Resting HR slightly elevated")
-        
+        if rmssd > bl_rmssd:
+            r_lines.append("HRV elevated")
+        elif rmssd < bl_rmssd * 0.9:
+            r_lines.append("HRV suppressed")
+        else:
+            r_lines.append("HRV stable")
+
+        if rhr < bl_rhr:
+            r_lines.append("Resting HR within baseline")
+        else:
+            r_lines.append("Resting HR slightly elevated")
+
         readiness_reasoning = " · ".join(r_lines)
-        
-        # Weighted Score (proxied from quality + HRV vs baseline)
-        quality = pf(latest_r.get("session_quality"), 70)
-        hrv_pct = (rmssd / bl_rmssd * 100) if bl_rmssd > 0 else 100
-        # Score = 70% quality, 30% HRV deviation
+
+        quality = pf(day_readiness.get("session_quality"), 70)
+        hrv_pct = (rmssd / bl_rmssd * 100) if bl_rmssd else 100
         readiness_score = int((quality * 0.7) + (min(hrv_pct, 100) * 0.3))
 
-    # --- Training Logic ---
+    # --- Training flags ---
     load_flag = "N/A"
     exertion_level = "N/A"
-    if latest_t:
-        tl_result = classify_training_load(latest_t)
-        ex_result = classify_exertion(latest_t)
-        load_flag = tl_result["flag"]
+    sub_type = None
+    if day_training:
+        tl_result = classify_training_load(day_training)
+        ex_result = classify_exertion(day_training)
+        load_flag = tl_result["flag"] or "N/A"
         raw_level = ex_result["level"]
         exertion_level = raw_level.split(" - ")[1] if " - " in raw_level else raw_level
+        sub_type = ex_result.get("sub_type")
 
-    # --- Metrics Logic ---
-    # RHR
-    rhr_val = pf(latest_any.get("rest_hr"))
-    rhr_baseline = bl.get("rhr_mean_30") if latest_r else rhr_val
-    rhr_diff = int(rhr_val - rhr_baseline)
-    
-    # RMSSD
-    rmssd_val = pf(latest_any.get("rmssd"))
-    rmssd_week = bl.get("rmssd_mean_7") if latest_r else rmssd_val
-    rmssd_diff = int(rmssd_val - rmssd_week)
-    
-    # ACWR
-    acwr_val = pf(latest_any.get("acwr"))
-    
-    # --- Last Session Section ---
-    duration = int(latest_any.get("exercise_duration") or 0)
-    epoc = int(latest_any.get("epoc_total") or 0)
-    
-    # ACWR Delta (vs previous session's ACWR)
-    acwr_prev = pf(rows[-2].get("acwr")) if len(rows) > 1 else acwr_val
-    acwr_delta = acwr_val - acwr_prev
+    # --- Metric summary (prefer readiness-sourced values for RHR/HRV) ---
+    primary = day_readiness or day_training or day_rows[-1] if day_rows else None
+    rhr_val = pf((day_readiness or primary or {}).get("rest_hr"))
+    rmssd_val = pf((day_readiness or primary or {}).get("rmssd"))
+    acwr_val = pf((day_training or primary or {}).get("acwr"))
 
-    # --- 7-Day ACWR Trend (Calendar-based) ---
+    rhr_baseline = bl.get("rhr_mean_30") or rhr_val
+    rmssd_week = bl.get("rmssd_mean_7") or rmssd_val
+    rhr_diff = int(rhr_val - rhr_baseline) if rhr_baseline else 0
+    rmssd_diff = int(rmssd_val - rmssd_week) if rmssd_week else 0
+
+    # --- Last-session-of-the-day summary ---
+    last_session_row = day_training or day_readiness
+    duration = int((last_session_row or {}).get("exercise_duration") or 0)
+    epoc = int((last_session_row or {}).get("epoc_total") or 0)
+
+    # ACWR delta vs the previous session in chronological history
+    current_idx = next(
+        (i for i, r in enumerate(rows) if r is last_session_row),
+        len(rows) - 1,
+    )
+    acwr_prev = pf(rows[current_idx - 1].get("acwr")) if current_idx > 0 else acwr_val
+    acwr_delta = acwr_val - acwr_prev if acwr_val else 0
+
+    # --- 7-day ACWR trend ending on target_date ---
     days_map = {0: "MO", 1: "TU", 2: "WE", 3: "TH", 4: "FR", 5: "SA", 6: "SU"}
-    end_date = latest_any["date"]
+    sorted_rows = sorted(rows, key=lambda x: x["date"])
     trend = []
     
-    # Sort rows by date for easier lookup
-    sorted_rows = sorted(rows, key=lambda x: x["date"])
-    
+    # We want the last known valid ACWR for each of the 7 days
     for i in range(6, -1, -1):
-        target_dt = end_date - timedelta(days=i)
+        d_target = target_date - timedelta(days=i)
+        last_acwr = 0.0
         
-        # Find last known row on or before target_dt
-        last_known_row = None
+        # Find the most recent session on or before d_target that HAS an acwr value
         for r in sorted_rows:
-            if r["date"] <= target_dt:
-                last_known_row = r
+            if r["date"] <= d_target:
+                val = r.get("acwr")
+                if val is not None and val != "" and val != 0:
+                    last_acwr = pf(val)
             else:
                 break
-        
-        acwr = pf(last_known_row.get("acwr")) if last_known_row else 0
+                
         status = "Optimal"
-        if acwr > 1.3: status = "Danger"
-        elif acwr < 0.8: status = "Low"
-        
+        if last_acwr > 1.3:
+            status = "Danger"
+        elif last_acwr < 0.8:
+            status = "Low"
+            
         trend.append({
-            "day": days_map[target_dt.weekday()],
-            "val": acwr,
+            "day": days_map[d_target.weekday()],
+            "val": last_acwr,
             "status": status,
-            "date": target_dt.isoformat()
+            "date": d_target.isoformat(),
         })
 
+    # --- Athlete metadata ---
+    athlete_card = None
+    if athlete_meta:
+        athlete_card = {
+            "id": athlete_meta.get("id"),
+            "name": athlete_meta.get("name"),
+            "age": athlete_meta.get("age"),
+            "sport": athlete_meta.get("sport"),
+            "gender": athlete_meta.get("gender"),
+            "height": athlete_meta.get("height"),
+            "weight": athlete_meta.get("weight"),
+        }
+
+    # --- Sessions on the selected day (for sidebar list) ---
+    day_sessions = [
+        {
+            "type": r.get("session_type"),
+            "duration": int(r.get("exercise_duration") or 0),
+            "hour": r.get("session_hour"),
+        }
+        for r in day_rows
+    ]
+
     return {
+        "selectedDate": selected_date_iso,
+        "availableDates": [d.isoformat() for d in available_dates],
+        "athlete": athlete_card,
+        "daySessions": day_sessions,
         "readiness": {
             "score": readiness_score,
             "status": readiness_status,
@@ -1315,20 +1422,21 @@ def get_latest_session_report(rows: List[Dict]) -> Dict:
         "training": {
             "load": load_flag,
             "exertion": exertion_level,
+            "sub_type": sub_type,
         },
         "metrics": {
             "rhr": rhr_val,
             "rhr_diff": rhr_diff,
+            "rhr_baseline": rhr_baseline,
             "rmssd": rmssd_val,
             "rmssd_diff": rmssd_diff,
+            "rmssd_week": rmssd_week,
             "acwr": acwr_val,
         },
-        "lastSession": {
-            "type": latest_any.get("session_type", "Training"),
-            "date": latest_any["date"].strftime("%b %d, %Y") if latest_any.get("date") else "N/A",
-            "duration": duration,
-            "epoc": epoc,
-            "acwr_delta": acwr_delta,
-        },
-        "trend": trend
+        "trend": trend,
+        "zones": _session_metrics(day_training)["zones"] if day_training else None,
     }
+
+
+# Backward-compat alias for any older import paths
+get_latest_session_report = get_day_report

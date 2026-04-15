@@ -10,62 +10,87 @@ export const SECONDARY_BLUE = '#1f77b4';
 // ─── Typography ──────────────────────────────────────────────────────────────
 export const FONT_FAMILY = 'Inter, Outfit, sans-serif';
 
+// ─── Responsive breakpoints ─────────────────────────────────────────────────
+// Call getResponsiveSizes(containerWidth) to get scaled font/spacing values.
+// If no width is provided, falls back to window.innerWidth.
+export const getResponsiveSizes = (w) => {
+    const width = w || (typeof window !== 'undefined' ? window.innerWidth : 1440);
+    if (width < 640) {
+        return { fontSize: 10, legendFontSize: 9, titleFontSize: 12, tooltipFontSize: 12, itemGap: 4, itemWidth: 8, itemHeight: 8 };
+    }
+    if (width < 1024) {
+        return { fontSize: 11, legendFontSize: 10, titleFontSize: 13, tooltipFontSize: 12, itemGap: 6, itemWidth: 10, itemHeight: 10 };
+    }
+    if (width < 1440) {
+        return { fontSize: 12, legendFontSize: 11, titleFontSize: 14, tooltipFontSize: 13, itemGap: 8, itemWidth: 10, itemHeight: 10 };
+    }
+    return { fontSize: 13, legendFontSize: 12, titleFontSize: 14, tooltipFontSize: 14, itemGap: 10, itemWidth: 12, itemHeight: 10 };
+};
+
 // ─── Tooltip ─────────────────────────────────────────────────────────────────
-/**
- * Returns a standardised tooltip config.
- * Always white background in light mode; dark card in dark mode.
- */
-export const getTooltipStyle = (isDark, extra = {}) => ({
-    trigger: 'axis',
-    backgroundColor: isDark ? '#1e293b' : '#ffffff',
-    borderColor: isDark ? '#334155' : '#e0e0e0',
-    borderWidth: 1,
-    textStyle: {
-        color: isDark ? '#f1f5f9' : '#111111',
-        fontSize: 14,
-        fontWeight: 500,
-        fontFamily: FONT_FAMILY,
-    },
-    extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px;',
-    ...extra,
-});
+export const getTooltipStyle = (isDark, extra = {}) => {
+    const s = getResponsiveSizes();
+    return {
+        trigger: 'axis',
+        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+        borderColor: isDark ? '#334155' : '#e0e0e0',
+        borderWidth: 1,
+        textStyle: {
+            color: isDark ? '#f1f5f9' : '#111111',
+            fontSize: s.tooltipFontSize,
+            fontWeight: 500,
+            fontFamily: FONT_FAMILY,
+        },
+        extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px;',
+        ...extra,
+    };
+};
 
 // ─── Axis ────────────────────────────────────────────────────────────────────
-export const getAxisStyle = (isDark) => ({
-    axisLine: {
-        lineStyle: { color: isDark ? 'rgba(71,85,105,0.4)' : 'rgba(0,0,0,0.1)' },
-    },
-    splitLine: {
-        lineStyle: {
-            color: isDark ? 'rgba(51,65,85,0.3)' : 'rgba(0,0,0,0.07)',
-            type: 'dashed',
+export const getAxisStyle = (isDark) => {
+    const s = getResponsiveSizes();
+    return {
+        axisLine: {
+            lineStyle: { color: isDark ? 'rgba(71,85,105,0.4)' : 'rgba(0,0,0,0.1)' },
         },
-    },
-    splitNumber: 5,
-    axisLabel: {
-        fontSize: 13,
-        fontWeight: 500,
-        color: isDark ? '#cbd5e1' : '#333333',
-        fontFamily: FONT_FAMILY,
-    },
-    nameTextStyle: {
-        fontSize: 13,
-        fontWeight: 500,
-        color: isDark ? '#cbd5e1' : '#333333',
-        fontFamily: FONT_FAMILY,
-    },
-});
+        splitLine: {
+            lineStyle: {
+                color: isDark ? 'rgba(51,65,85,0.3)' : 'rgba(0,0,0,0.07)',
+                type: 'dashed',
+            },
+        },
+        splitNumber: 5,
+        axisLabel: {
+            fontSize: s.fontSize,
+            fontWeight: 500,
+            color: isDark ? '#cbd5e1' : '#333333',
+            fontFamily: FONT_FAMILY,
+        },
+        nameTextStyle: {
+            fontSize: s.fontSize,
+            fontWeight: 500,
+            color: isDark ? '#cbd5e1' : '#333333',
+            fontFamily: FONT_FAMILY,
+        },
+    };
+};
 
 // ─── Legend ──────────────────────────────────────────────────────────────────
-export const getLegendStyle = (isDark, extra = {}) => ({
-    textStyle: {
-        fontSize: 13,
-        fontWeight: 500,
-        color: isDark ? '#cbd5e1' : '#333333',
-        fontFamily: FONT_FAMILY,
-    },
-    ...extra,
-});
+export const getLegendStyle = (isDark, extra = {}) => {
+    const s = getResponsiveSizes();
+    return {
+        textStyle: {
+            fontSize: s.legendFontSize,
+            fontWeight: 500,
+            color: isDark ? '#cbd5e1' : '#333333',
+            fontFamily: FONT_FAMILY,
+        },
+        itemGap: s.itemGap,
+        itemWidth: s.itemWidth,
+        itemHeight: s.itemHeight,
+        ...extra,
+    };
+};
 
 // ─── Grid ────────────────────────────────────────────────────────────────────
 export const getGridStyle = (overrides = {}) => ({
@@ -76,6 +101,27 @@ export const getGridStyle = (overrides = {}) => ({
     containLabel: true,
     ...overrides,
 });
+
+// ─── Responsive x-axis helper ───────────────────────────────────────────────
+// Builds a category x-axis config that auto-rotates labels when there are many.
+export const getResponsiveXAxis = (isDark, labels, overrides = {}) => {
+    const count = labels?.length ?? 0;
+    const s = getResponsiveSizes();
+    const base = getAxisStyle(isDark);
+    return {
+        type: 'category',
+        data: labels,
+        axisLine: base.axisLine,
+        axisLabel: {
+            ...base.axisLabel,
+            fontSize: count > 20 ? Math.max(s.fontSize - 2, 9) : s.fontSize,
+            rotate: count > 15 ? 45 : 0,
+            overflow: 'truncate',
+            width: count > 20 ? 50 : 70,
+        },
+        ...overrides,
+    };
+};
 
 // ─── Line Series ─────────────────────────────────────────────────────────────
 /**

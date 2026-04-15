@@ -10,7 +10,8 @@ import {
     getLegendStyle,
     getGridStyle,
     getLineSeriesStyle,
-    getBarItemStyle
+    getBarItemStyle,
+    getResponsiveXAxis,
 } from '../../utils/chartStyles';
 
 function useChartTheme() {
@@ -107,15 +108,7 @@ const createMonthlyComparison = (title, unit, data1, data2, primaryName, seconda
             top: 50,
         },
         grid: getGridStyle({ left: '10%', right: '10%', top: '25%', bottom: '15%' }),
-        xAxis: {
-            type: 'category',
-            data: months,
-            axisLabel: {
-                ...axisStyle.axisLabel,
-                rotate: months.length > 6 ? 45 : 0
-            },
-            axisLine: axisStyle.axisLine
-        },
+        xAxis: getResponsiveXAxis(isDark, months),
         yAxis: {
             type: 'value',
             name: unit,
@@ -176,12 +169,7 @@ const createPeriodOverlay = (title, unit, data1, data2, primaryName, secondaryNa
             top: 55,
         },
         grid: getGridStyle({ left: '8%', right: '8%', top: '25%', bottom: '15%' }),
-        xAxis: {
-            type: 'category',
-            data: dayLabels,
-            axisLabel: axisStyle.axisLabel,
-            axisLine: axisStyle.axisLine
-        },
+        xAxis: getResponsiveXAxis(isDark, dayLabels),
         yAxis: {
             type: 'value',
             name: unit,
@@ -603,15 +591,7 @@ export const ZoneComparisonChart = ({ primaryData, secondaryData, primaryName, s
             formatter: (name) => name
         },
         grid: getGridStyle({ left: '8%', right: '8%', top: '25%', bottom: '15%' }),
-        xAxis: {
-            type: 'category',
-            data: allMonths,
-            axisLabel: {
-                ...axisStyle.axisLabel,
-                rotate: allMonths.length > 6 ? 45 : 0
-            },
-            axisLine: axisStyle.axisLine
-        },
+        xAxis: getResponsiveXAxis(isDark, allMonths),
         yAxis: {
             type: 'value',
             name: '%',
@@ -715,7 +695,11 @@ export const PairwiseGapChart = ({ data, metricKey, label, unit, primaryName, se
     const isDark = useChartTheme();
     if (!data || !data.length) return <div className="h-64 flex items-center justify-center text-muted-foreground uppercase text-xs font-bold tracking-widest">No matching dates for {label} comparison</div>;
 
-    const dates = data.map(d => d.date);
+    const dates = data.map(d => {
+        const dt = new Date(d.date);
+        if (isNaN(dt)) return d.date;
+        return dt.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).replace(' ', '-');
+    });
     const gaps = data.map(d => d[`${metricKey}_gap`]);
     const axisStyle = getAxisStyle(isDark);
 
@@ -742,13 +726,8 @@ export const PairwiseGapChart = ({ data, metricKey, label, unit, primaryName, se
                 `;
             }
         },
-        grid: getGridStyle({ left: '8%', right: '8%', top: '15%', bottom: '15%' }),
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLabel: axisStyle.axisLabel,
-            axisLine: axisStyle.axisLine
-        },
+        grid: getGridStyle({ left: '8%', right: '8%', top: '15%', bottom: '20%' }),
+        xAxis: getResponsiveXAxis(isDark, dates),
         yAxis: {
             type: 'value',
             name: `Δ ${unit}`,
@@ -782,6 +761,10 @@ export const PairwiseZoneComparison = ({ sessionA, sessionB, primaryName, second
     if (!sessionA || !sessionB) return null;
 
     const colors = ['#d1d5db', '#9ca3af', '#3b82f6', '#22c55e', '#eab308', '#ef4444'];
+    // Short labels for legend to prevent overlap on smaller screens
+    const zoneLabelsShort = ['Z0', 'Z1', 'Z2', 'Z3', 'Z4', 'Z5'];
+    // Full labels for tooltips
+    const zoneNamesFull = ['Z0 · Recovery', 'Z1 · Easy', 'Z2 · Aerobic', 'Z3 · Threshold', 'Z4 · VO2', 'Z5 · Anaerobic'];
     const axisStyle = getAxisStyle(isDark);
 
     const option = {
@@ -789,13 +772,31 @@ export const PairwiseZoneComparison = ({ sessionA, sessionB, primaryName, second
         tooltip: {
             ...getTooltipStyle(isDark),
             trigger: 'axis',
-            axisPointer: { type: 'shadow' }
+            axisPointer: { type: 'shadow' },
+            formatter: (params) => {
+                const header = `<div style="font-weight:bold; margin-bottom:6px; font-family: Inter, sans-serif;">${params[0].axisValue}</div>`;
+                const rows = params
+                    .filter(p => p.value > 0)
+                    .map(p => {
+                        const idx = zoneLabelsShort.indexOf(p.seriesName);
+                        const fullName = idx >= 0 ? zoneNamesFull[idx] : p.seriesName;
+                        return `
+                        <div style="display:flex; justify-content:space-between; gap:16px; font-size:12px;">
+                            <span>${p.marker} ${fullName}</span>
+                            <span style="font-weight:bold;">${p.value.toFixed(1)}%</span>
+                        </div>`;
+                    }).join('');
+                return header + rows;
+            }
         },
         legend: {
-            ...getLegendStyle(isDark),
-            top: 0
+            ...getLegendStyle(isDark, { textStyle: { ...getLegendStyle(isDark).textStyle, fontSize: 11 } }),
+            top: 0,
+            itemWidth: 10,
+            itemHeight: 10,
+            itemGap: 6,
         },
-        grid: getGridStyle({ left: '8%', right: '8%', top: '20%', bottom: '10%' }),
+        grid: getGridStyle({ left: '12%', right: '8%', top: '20%', bottom: '10%' }),
         xAxis: {
             type: 'value',
             max: 100,
@@ -805,22 +806,35 @@ export const PairwiseZoneComparison = ({ sessionA, sessionB, primaryName, second
         yAxis: {
             type: 'category',
             data: [secondaryName, primaryName],
-            axisLabel: axisStyle.axisLabel,
+            axisLabel: { ...axisStyle.axisLabel, fontWeight: 'bold' },
             axisLine: axisStyle.axisLine
         },
         series: [0, 1, 2, 3, 4, 5].map(z => ({
-            name: `Zone ${z}`,
+            name: zoneLabelsShort[z],
             type: 'bar',
             stack: 'total',
             data: [sessionB[`z${z}`], sessionA[`z${z}`]],
             itemStyle: { color: colors[z] },
-            barMaxWidth: 50
+            barMaxWidth: 50,
+            label: {
+                show: true,
+                position: 'inside',
+                // Only show label for segments >= 15% (tooltip shows exact value for all)
+                formatter: (p) => p.value >= 15 ? `${p.value.toFixed(0)}%` : '',
+                fontSize: 10,
+                fontWeight: 'bold',
+                color: '#ffffff',
+                textShadowColor: 'rgba(0,0,0,0.35)',
+                textShadowBlur: 2,
+                // Prevent labels overflowing their segment boundary
+                overflow: 'truncate',
+            }
         }))
     };
 
     return (
         <div className="w-full h-full">
-            <ReactECharts key={`pairwise-zones-${isDark}`} option={option} notMerge={true} style={{ height: '240px' }} />
+            <ReactECharts key={`pairwise-zones-${isDark}`} option={option} notMerge={true} style={{ height: '260px' }} />
         </div>
     );
 };
