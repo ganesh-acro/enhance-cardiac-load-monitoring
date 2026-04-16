@@ -12,6 +12,10 @@ import {
 } from './FeatureCharts';
 import { ChartCustomizer, PrefLabel, PrefSegmented, PrefToggle } from './ChartCustomizer';
 import { useChartPrefs } from '../../hooks/useChartPrefs';
+import { useDashboardLayout } from '../../hooks/useDashboardLayout';
+import { CustomChart } from './CustomChart';
+import { AddChartCard } from './AddChartCard';
+import { AddChartModal } from './AddChartModal';
 
 const CHART_INFO = {
     trainingLoad: {
@@ -87,6 +91,26 @@ export const TrainingLoadTab = ({ primaryChartData }) => {
         showIntensity: true,
         showThresholds: false,
     });
+
+    // Per-user customisable widgets for this tab (persisted in localStorage,
+    // keyed by auth email). Only user-added widgets live here; the default
+    // charts above stay as-is.
+    const { items: customWidgets, addItem, removeItem, updateItem } = useDashboardLayout('training');
+    const [modalState, setModalState] = useState({ open: false, editingId: null });
+
+    const openAddModal = () => setModalState({ open: true, editingId: null });
+    const openEditModal = (id) => setModalState({ open: true, editingId: id });
+    const closeModal = () => setModalState({ open: false, editingId: null });
+
+    const editingWidget = customWidgets.find(w => w.id === modalState.editingId);
+
+    const handleSubmit = ({ title, series }) => {
+        if (modalState.editingId) {
+            updateItem(modalState.editingId, { title, series });
+        } else {
+            addItem({ title, series });
+        }
+    };
 
     if (!primaryChartData) {
         return (
@@ -246,7 +270,35 @@ export const TrainingLoadTab = ({ primaryChartData }) => {
                         </div>
                     )}
                 </div>
+
+                {/* User-added custom charts (persisted per user) */}
+                {customWidgets.map(w => (
+                    <CustomChart
+                        key={w.id}
+                        widget={w}
+                        data={primaryChartData}
+                        onDelete={() => {
+                            if (window.confirm('Delete this custom chart?')) {
+                                removeItem(w.id);
+                            }
+                        }}
+                        onEdit={() => openEditModal(w.id)}
+                    />
+                ))}
+
+                {/* Add-chart tile — always last */}
+                <AddChartCard onClick={openAddModal} />
             </div>
+
+            <AddChartModal
+                open={modalState.open}
+                onClose={closeModal}
+                onSubmit={handleSubmit}
+                tab="training"
+                initial={editingWidget
+                    ? { title: editingWidget.title, series: editingWidget.series }
+                    : null}
+            />
         </div>
     );
 };

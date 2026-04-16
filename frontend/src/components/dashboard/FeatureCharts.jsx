@@ -17,7 +17,7 @@ import {
 
 // Calculate the zoom start percentage to show the last 2 months of data.
 // `data` can be an array of date strings OR an array of objects with fullDate/date fields.
-function getDefaultZoomStart(data) {
+export function getDefaultZoomStart(data) {
     if (!data || data.length <= 1) return 0;
 
     // Extract ISO dates: prefer fullDate field, fall back to weekKey/rawDate, then the string itself
@@ -50,7 +50,7 @@ function fmtMins(m) {
 }
 
 // Common Chart Options
-const getCommonOptions = (title, isDark, data) => {
+export const getCommonOptions = (title, isDark, data) => {
     const zoomStart = data ? getDefaultZoomStart(data) : 0;
     return {
         backgroundColor: 'transparent',
@@ -103,7 +103,7 @@ function useChartTheme() {
 
 // Wrapper: adds a scroll-zoom toggle button to any chart.
 // Scroll zoom is OFF by default — click the button to activate, click again to deactivate.
-const ZoomableChart = ({ option, style, ...props }) => {
+export const ZoomableChart = ({ option, style, ...props }) => {
     const [zoomActive, setZoomActive] = useState(false);
 
     const enhancedOption = useMemo(() => {
